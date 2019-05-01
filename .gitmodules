@@ -1,0 +1,3 @@
+[submodule "submodules/bash-preexec"]
+	path = submodules/bash-preexec
+	url = git@github.com:rcaloras/bash-preexec.git
