@@ -1,22 +1,13 @@
 package main
 
 import (
-    "fmt"
     "os"
     "os/exec"
     "log"
     "strconv"
     "strings"
+    common "github.com/curusarn/resh/common"
 )
-
-type record struct {
-    CmdLine string
-    Pwd string
-    GitWorkTree string
-    Shell string
-    ExitCode int
-    //Logs string[]
-}
 
 func main() {
     exitCode, err := strconv.Atoi(os.Args[1])
@@ -26,14 +17,14 @@ func main() {
     }
     pwd := os.Args[2]
     cmdLine := os.Args[3]
-    rec := record{
+    rec := common.Record{
         CmdLine: cmdLine,
         Pwd: pwd,
         GitWorkTree: getGitDir(),
         Shell: os.Getenv("SHELL"),
         ExitCode: exitCode,
     }
-    rec.send()
+    rec.Send()
 }
 
 func getGitDir() string {
@@ -59,9 +50,3 @@ func getGitDir() string {
     return strings.TrimSuffix(string(out), "\n")
 }
 
-func (r record) send() {
-    fmt.Println("cmd:", r.CmdLine)
-    fmt.Println("pwd:", r.Pwd)
-    fmt.Println("git:", r.GitWorkTree)
-    fmt.Println("exit_code:", r.ExitCode)
-}

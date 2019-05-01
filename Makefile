@@ -1,18 +1,25 @@
 SHELL=/bin/bash
 
-build: submodules resh-collect
+build: submodules resh-collect resh-daemon
 
 install: build $(HOME)/.resh $(HOME)/.resh/bin
-	cp submodules/bash-preexec/bash-preexec.sh ~/.bash-preexec.sh
-	cp src/bashrc.sh ~/.resh/bashrc
-	cp resh-collect ~/.resh/bin/
+	cp submodules/bash-preexec/bash-preexec.sh ~/.bash-preexec.sh -f
+	cp bashrc.sh ~/.resh/bashrc -f
+	cp resh-* ~/.resh/bin/ -f
 	grep '[[ -f ~/.resh/bashrc ]] && source ~/.resh/bashrc' ~/.bashrc ||\
 		echo '[[ -f ~/.resh/bashrc ]] && source ~/.resh/bashrc' >> ~/.bashrc
 	grep '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' ~/.bashrc ||\
 		echo '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' >> ~/.bashrc
+#	-pkill resh-daemon
+#	resh-daemon &
 
-resh-collect: src/resh-collect.go
-	go build -o resh-collect src/resh-collect.go
+
+resh-daemon: daemon/resh-daemon.go common/resh-common.go
+	go build -o $@ $<
+
+resh-collect: collect/resh-collect.go common/resh-common.go
+	go build -o $@ $<
+
 
 $(HOME)/.resh:
 	mkdir $(HOME)/.resh
