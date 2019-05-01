@@ -19,19 +19,19 @@ type Record struct {
 func (r Record) Send() {
     recJson, err := json.Marshal(r)
     if err != nil {
-        log.Fatal("1", err)
+        log.Fatal("1 ", err)
     }
 
     req, err := http.NewRequest("POST", "http://localhost:8888",
                                 bytes.NewBuffer(recJson))
     if err != nil {
-        log.Fatal("2", err)
+        log.Fatal("2 ", err)
     }
 	req.Header.Set("Content-Type", "application/json")
 
     client := &http.Client{}
     _, err = client.Do(req)
 	if err != nil {
-		log.Fatal("3", err)
+        log.Fatal("resh-daemon is not running :(")
 	}
 }
