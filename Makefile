@@ -29,9 +29,9 @@ $(HOME)/.resh/bin:
 
 .PHONY: submodules build install
 
-submodules: submodules/bash-preexec/bash-preexec.sh
-	# this is always run and updates submodules
-	git submodule update --recursive
+submodules:
+	# update (and intialize) submodules (recursively)
+	git submodule update --init --recursive
 
-submodules/%:
-	git submodule init
+submodules_to_latest_commit:
+	git submodule foreach --recursive git pull origin master
