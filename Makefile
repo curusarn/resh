@@ -31,6 +31,7 @@ $(HOME)/.resh/bin:
 
 .PHONY: submodules build install
 
+
 submodules: | submodules/bash-preexec/bash-preexec.sh
 	@# sets submodule.recurse to true if unset
 	@# sets status.submoduleSummary to true if unset
@@ -43,4 +44,5 @@ submodules: | submodules/bash-preexec/bash-preexec.sh
 
 submodules/%:
 	git submodule sync --recursive 
-	git submodule update --init --recursive 
+	git submodule update --init --recursive
+

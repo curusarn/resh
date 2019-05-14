@@ -1,9 +1,12 @@
 package main
 
 import (
+    "bytes"
+    "encoding/json"
     "os"
     "os/exec"
     "log"
+    "net/http"
     "strconv"
     "strings"
     common "github.com/curusarn/resh/common"
@@ -24,7 +27,27 @@ func main() {
         Shell: os.Getenv("SHELL"),
         ExitCode: exitCode,
     }
-    rec.Send()
+    sendRecord(rec)
+}
+
+func sendRecord(r common.Record) {
+    recJson, err := json.Marshal(r)
+    if err != nil {
+        log.Fatal("1 ", err)
+    }
+
+    req, err := http.NewRequest("POST", "http://localhost:8888",
+                                bytes.NewBuffer(recJson))
+    if err != nil {
+        log.Fatal("2 ", err)
+    }
+	req.Header.Set("Content-Type", "application/json")
+
+    client := &http.Client{}
+    _, err = client.Do(req)
+	if err != nil {
+        log.Fatal("resh-daemon is not running :(")
+	}
 }
 
 func getGitDir() string {

@@ -13,6 +13,7 @@ func main() {
 }
 
 func recordHandler(w http.ResponseWriter, r *http.Request) {
+    w.Write([]byte("OK\n"))
     record := common.Record{}
 
     jsn, err := ioutil.ReadAll(r.Body)
@@ -32,7 +33,6 @@ func recordHandler(w http.ResponseWriter, r *http.Request) {
     // fmt.Println("pwd:", r.Pwd)
     // fmt.Println("git:", r.GitWorkTree)
     // fmt.Println("exit_code:", r.ExitCode)
-    w.Write([]byte("OK\n"))
 }
 
 func server() {
