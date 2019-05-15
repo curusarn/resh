@@ -21,10 +21,10 @@ func main() {
     configPath := filepath.Join(dir, "/.config/resh.toml")
 
     var config common.Config
-	if _, err := toml.DecodeFile(configPath, &config); err != nil {
-		log.Println("Error reading config", err)
-		return
-	}
+    if _, err := toml.DecodeFile(configPath, &config); err != nil {
+        log.Println("Error reading config", err)
+        return
+    }
 
     exitCode, err := strconv.Atoi(os.Args[1])
     if err != nil {
@@ -54,13 +54,13 @@ func sendRecord(r common.Record, port string) {
     if err != nil {
         log.Fatal("2 ", err)
     }
-	req.Header.Set("Content-Type", "application/json")
+    req.Header.Set("Content-Type", "application/json")
 
     client := &http.Client{}
     _, err = client.Do(req)
-	if err != nil {
+    if err != nil {
         log.Fatal("resh-daemon is not running :(")
-	}
+    }
 }
 
 func getGitDir() string {

@@ -23,16 +23,17 @@ func main() {
     usr, _ := user.Current()
     dir := usr.HomeDir
     pidfilePath := filepath.Join(dir, ".resh/resh.pid")
-    configPath := filepath.Join(dir, "/.config/resh.toml")
+    configPath := filepath.Join(dir, ".config/resh.toml")
+    outputPath := filepath.Join(dir, ".resh/history.json")
 
     var config common.Config
-	if _, err := toml.DecodeFile(configPath, &config); err != nil {
-		log.Println("Error reading config", err)
-		return
-	}
+    if _, err := toml.DecodeFile(configPath, &config); err != nil {
+        log.Println("Error reading config", err)
+        return
+    }
     res, err := isDaemonRunning(config.Port)
     if err != nil {
-	    log.Println("Error while checking if the daemon is runnnig", err)
+        log.Println("Error while checking if the daemon is runnnig", err)
     }
     if res {
         log.Println("Daemon is already runnnig - exiting!")
@@ -40,7 +41,7 @@ func main() {
     }
     _, err = os.Stat(pidfilePath)
     if err == nil {
-		log.Println("Pidfile exists")
+        log.Println("Pidfile exists")
         // kill daemon
         err = killDaemon(pidfilePath)
         if err != nil {
@@ -49,12 +50,12 @@ func main() {
     }
     err = ioutil.WriteFile(pidfilePath, []byte(strconv.Itoa(os.Getpid())), 0644)
     if err != nil {
-		log.Fatal("Could not create pidfile", err)
+        log.Fatal("Could not create pidfile", err)
     }
-    server(config.Port)
+    runServer(config.Port, outputPath)
     err = os.Remove(pidfilePath)
     if err != nil {
-		log.Println("Could not delete pidfile", err)
+        log.Println("Could not delete pidfile", err)
     }
 }
 
@@ -63,34 +64,50 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
     log.Printf("Status OK\n")
 }
 
-func recordHandler(w http.ResponseWriter, r *http.Request) {
+type recordHandler struct {
+    OutputPath string
+}
+
+func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("OK\n"))
     record := common.Record{}
 
     jsn, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Println("Error reading the body", err)
+    if err != nil {
+        log.Println("Error reading the body", err)
         return
-	}
+    }
 
     err = json.Unmarshal(jsn, &record)
-	if err != nil {
-		log.Println("Decoding error: ", err)
-		log.Println("Payload: ", jsn)
+    if err != nil {
+        log.Println("Decoding error: ", err)
+        log.Println("Payload: ", jsn)
         return
-	}
-
+    }
+    f, err := os.OpenFile(h.OutputPath,
+                          os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+    if err != nil {
+        log.Println("Could not open file", err)
+        return
+    }
+    defer f.Close()
+    _, err = f.Write(append(jsn, []byte("\n")...))
+    if err != nil {
+        log.Printf("Error while writing: %v, %s\n", record, err)
+        return
+    }
     log.Printf("Received: %v\n", record)
+
     // fmt.Println("cmd:", r.CmdLine)
     // fmt.Println("pwd:", r.Pwd)
     // fmt.Println("git:", r.GitWorkTree)
     // fmt.Println("exit_code:", r.ExitCode)
 }
 
-func server(port int) {
-	http.HandleFunc("/status", statusHandler)
-	http.HandleFunc("/record", recordHandler)
-	http.ListenAndServe(":" + strconv.Itoa(port) , nil)
+func runServer(port int, outputPath string) {
+    http.HandleFunc("/status", statusHandler)
+    http.Handle("/record", &recordHandler{OutputPath: outputPath})
+    http.ListenAndServe(":" + strconv.Itoa(port) , nil)
 }
 
 func killDaemon(pidfile string) error {
@@ -104,7 +121,7 @@ func killDaemon(pidfile string) error {
         log.Fatal("Pidfile contents are malformed", err)
     }
     cmd := exec.Command("kill", strconv.Itoa(pid))
-	err = cmd.Run()
+    err = cmd.Run()
     if err != nil {
         log.Printf("Command finished with error: %v", err)
         return err
