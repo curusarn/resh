@@ -5,14 +5,27 @@ import (
     "encoding/json"
     "os"
     "os/exec"
+    "os/user"
+    "path/filepath"
     "log"
     "net/http"
     "strconv"
     "strings"
     common "github.com/curusarn/resh/common"
+    "github.com/BurntSushi/toml"
 )
 
 func main() {
+    usr, _ := user.Current()
+    dir := usr.HomeDir
+    configPath := filepath.Join(dir, "/.config/resh.toml")
+
+    var config common.Config
+	if _, err := toml.DecodeFile(configPath, &config); err != nil {
+		log.Println("Error reading config", err)
+		return
+	}
+
     exitCode, err := strconv.Atoi(os.Args[1])
     if err != nil {
         // log this 
@@ -27,16 +40,16 @@ func main() {
         Shell: os.Getenv("SHELL"),
         ExitCode: exitCode,
     }
-    sendRecord(rec)
+    sendRecord(rec, strconv.Itoa(config.Port))
 }
 
-func sendRecord(r common.Record) {
+func sendRecord(r common.Record, port string) {
     recJson, err := json.Marshal(r)
     if err != nil {
         log.Fatal("1 ", err)
     }
 
-    req, err := http.NewRequest("POST", "http://localhost:8888",
+    req, err := http.NewRequest("POST", "http://localhost:" + port + "/record",
                                 bytes.NewBuffer(recJson))
     if err != nil {
         log.Fatal("2 ", err)

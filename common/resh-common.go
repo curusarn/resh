@@ -9,3 +9,6 @@ type Record struct {
     Logs []string      `json: logs`
 }
 
+type Config struct {
+    Port int
+}

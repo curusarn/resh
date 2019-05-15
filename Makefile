@@ -4,8 +4,9 @@ SHELL=/bin/bash
 build: submodules resh-collect resh-daemon
 
 
-install: build | $(HOME)/.resh $(HOME)/.resh/bin
+install: build | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config/resh
 	cp submodules/bash-preexec/bash-preexec.sh ~/.bash-preexec.sh -f
+	cp config.toml ~/.config/resh.toml -f
 	cp bashrc.sh ~/.resh/bashrc -f
 	cp resh-* ~/.resh/bin/ -f
 	grep '[[ -f ~/.resh/bashrc ]] && source ~/.resh/bashrc' ~/.bashrc ||\
@@ -23,11 +24,8 @@ resh-collect: collect/resh-collect.go common/resh-common.go
 	go build -o $@ $<
 
 
-$(HOME)/.resh:
-	mkdir $(HOME)/.resh
-
-$(HOME)/.resh/bin:
-	mkdir $(HOME)/.resh/bin
+$(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config/resh:
+	mkdir -p $@
 
 .PHONY: submodules build install
 
