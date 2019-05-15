@@ -7,6 +7,7 @@ import (
     "os/exec"
     "os/user"
     "path/filepath"
+    "flag"
     "log"
     "net/http"
     "strconv"
@@ -26,19 +27,32 @@ func main() {
         return
     }
 
-    exitCode, err := strconv.Atoi(os.Args[1])
+    cmdLine := flag.String("cmd", "", "command line")
+    exitCode := flag.Int("status", -1, "exit code")
+    pwd := flag.String("pwd", "", "present working directory")
+    rtb := flag.String("realtimeBefore", "-1", "before $EPOCHREALTIME")
+    rta := flag.String("realtimeAfter", "-1", "after $EPOCHREALTIME")
+    flag.Parse()
+
+    realtimeAfter, err := strconv.ParseFloat(*rta, 64)
+    realtimeBefore, err := strconv.ParseFloat(*rtb, 64)
+    realtimeDuration := realtimeAfter - realtimeBefore
     if err != nil {
-        // log this 
-        log.Fatal("First arg is not a number! (expecting $?)", err)
+        log.Fatal("Flag Parsing error:", err)
     }
-    pwd := os.Args[2]
-    cmdLine := os.Args[3]
+    if err != nil {
+        log.Fatal("Flag Parsing error:", err)
+    }
+
     rec := common.Record{
-        CmdLine: cmdLine,
-        Pwd: pwd,
+        CmdLine: *cmdLine,
+        Pwd: *pwd,
         GitWorkTree: getGitDir(),
         Shell: os.Getenv("SHELL"),
-        ExitCode: exitCode,
+        ExitCode: *exitCode,
+        RealtimeBefore: realtimeBefore,
+        RealtimeAfter: realtimeAfter,
+        RealtimeDuration: realtimeDuration,
     }
     sendRecord(rec, strconv.Itoa(config.Port))
 }

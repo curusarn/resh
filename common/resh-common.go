@@ -6,6 +6,9 @@ type Record struct {
     GitWorkTree string `json:"gitWorkTree"`
     Shell string       `json:"shell"`
     ExitCode int       `json:"exitCode"`
+    RealtimeBefore float64 `json:"realtimeBefore"`
+    RealtimeAfter float64 `json:"realtimeAfter"`
+    RealtimeDuration float64 `json:"realtimeDuration"`
     //Logs []string      `json: "logs"`
 }
 
