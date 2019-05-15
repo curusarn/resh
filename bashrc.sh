@@ -1,5 +1,6 @@
 
 PATH=$PATH:~/.resh/bin
+#resh-daemon & disown
 
 preexec() {
     __RESH_COLLECT=1
