@@ -32,8 +32,7 @@ preexec() {
     __RESH_MACHTYPE="$MACHTYPE"
 
     # time
-    __RESH_TZ_BEFORE="$TZ" # posix
-    __RESH_SECS_UTC_BEFORE=$(date +%s -u)
+    __RESH_TZ_BEFORE=$(date +%:z)
     __RESH_RT_BEFORE="$EPOCHREALTIME"
 }
 
@@ -41,7 +40,7 @@ precmd() {
     __RESH_EXIT_CODE=$?
     __RESH_RT_AFTER=$EPOCHREALTIME
     __RESH_SECS_UTC_AFTER=$(date +%s -u)
-    __RESH_TZ_AFTER="$TZ"
+    __RESH_TZ_AFTER=$(date +%:z)
     if [ ! -z ${__RESH_COLLECT+x} ]; then
         resh-collect -cmdLine "$__RESH_CMDLINE" -exitCode "$__RESH_EXIT_CODE" \
                      -cols "$__RESH_COLS" \
@@ -62,8 +61,6 @@ precmd() {
                      -machtype "$__RESH_MACHTYPE" \
                      -realtimeBefore "$__RESH_RT_BEFORE" \
                      -realtimeAfter "$__RESH_RT_AFTER" \
-                     -secsUtcBefore "$__RESH_SECS_UTC_BEFORE" \
-                     -secsUtcAfter "$__RESH_SECS_UTC_AFTER" \
                      -realtimeSession "$__RESH_RT_SESSION" \
                      -realtimeSessSinceBoot "$__RESH_RT_SESS_SINCE_BOOT" \
                      -timezoneBefore "$__RESH_TZ_BEFORE" \

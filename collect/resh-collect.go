@@ -54,11 +54,9 @@ func main() {
     machtype := flag.String("machtype", "", "$MACHTYPE")
 
     // before after
-    timezoneBefore := flag.String("timezoneBefore", "", "before $TZ")
-    timezoneAfter := flag.String("timezoneAfter", "", "after $TZ")
+    timezoneBefore := flag.String("timezoneBefore", "", "")
+    timezoneAfter := flag.String("timezoneAfter", "", "")
 
-    secondsUtcBefore := flag.Int("secsUtcBefore", -1, "secs utc")
-    secondsUtcAfter := flag.Int("secsUtcAfter", -1, "secs utc")
     rtb := flag.String("realtimeBefore", "-1", "before $EPOCHREALTIME")
     rta := flag.String("realtimeAfter", "-1", "after $EPOCHREALTIME")
     rtsess := flag.String("realtimeSession", "-1",
@@ -74,6 +72,12 @@ func main() {
     realtimeDuration := realtimeAfter - realtimeBefore
     realtimeSinceSessionStart := realtimeBefore - realtimeSessionStart
     realtimeSinceBoot := realtimeSessSinceBoot + realtimeSinceSessionStart
+
+    timezoneBeforeOffset := getTimezoneOffsetInSeconds(*timezoneBefore)
+    timezoneAfterOffset := getTimezoneOffsetInSeconds(*timezoneAfter)
+    realtimeBeforeLocal := realtimeBefore + timezoneBeforeOffset
+    realtimeAfterLocal := realtimeAfter + timezoneAfterOffset
+
 
     if err != nil {
         log.Fatal("Flag Parsing error:", err)
@@ -115,8 +119,9 @@ func main() {
 
         RealtimeBefore: realtimeBefore,
         RealtimeAfter: realtimeAfter,
-        SecondsUtcBefore: *secondsUtcBefore,
-        SecondsUtcAfter: *secondsUtcAfter,
+        RealtimeBeforeLocal: realtimeBeforeLocal,
+        RealtimeAfterLocal: realtimeAfterLocal,
+
         RealtimeDuration: realtimeDuration,
         RealtimeSinceSessionStart: realtimeSinceSessionStart,
         RealtimeSinceBoot: realtimeSinceBoot,
@@ -167,5 +172,21 @@ func getGitDir() string {
         }
     }
     return strings.TrimSuffix(string(out), "\n")
+}
+
+func getTimezoneOffsetInSeconds(zone string) float64 {
+    hours_mins := strings.Split(zone, ":")
+    hours, err := strconv.Atoi(hours_mins[0])
+    if err != nil {
+        log.Println("err while parsing hours in timezone offset:", err)
+        return -1
+    }
+    mins, err := strconv.Atoi(hours_mins[1])
+    if err != nil {
+        log.Println("err while parsing mins in timezone offset:", err)
+        return -1
+    }
+    secs := ( (hours * 60) + mins ) * 60
+    return float64(secs)
 }
 

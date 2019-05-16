@@ -32,8 +32,9 @@ type Record struct {
 
     RealtimeBefore float64 `json:"realtimeBefore"`
     RealtimeAfter float64 `json:"realtimeAfter"`
-    SecondsUtcBefore int `json:"secondsUtcBefore"`
-    SecondsUtcAfter int `json:"secondsUtcAfter"`
+    RealtimeBeforeLocal float64 `json:"realtimeBeforeLocal"`
+    RealtimeAfterLocal float64 `json:"realtimeAfterLocal"`
+
     RealtimeDuration float64 `json:"realtimeDuration"`
     RealtimeSinceSessionStart float64 `json:"realtimeSinceSessionStart"`
     RealtimeSinceBoot float64 `json:"realtimeSinceBoot"`
