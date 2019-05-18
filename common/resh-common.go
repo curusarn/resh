@@ -18,7 +18,7 @@ type Record struct {
     Term string `json:"term"`
 
     // non-posix"`
-    RealpathPwd string `json:"realpathPwd"`
+    RealPwd string `json:"realPwd"`
     Pid int `json:"pid"`
     ShellPid int `json:"shellPid"`
     WindowId int `json:"windowId"`

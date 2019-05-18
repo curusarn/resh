@@ -53,7 +53,6 @@ func main() {
 	windowId := flag.Int("windowId", -1, "$WINDOWID - session id")
 	shlvl := flag.Int("shlvl", -1, "$SHLVL")
 
-	realPwd := flag.String("realPwd", "", "realpath $PWD")
 	host := flag.String("host", "", "$HOSTNAME")
 	hosttype := flag.String("hosttype", "", "$HOSTTYPE")
 	ostype := flag.String("ostype", "", "$OSTYPE")
@@ -95,6 +94,12 @@ func main() {
 	realtimeBeforeLocal := realtimeBefore + timezoneBeforeOffset
 	realtimeAfterLocal := realtimeAfter + timezoneAfterOffset
 
+	realPwd, err := filepath.EvalSymlinks(*pwd)
+	if err != nil {
+		log.Println("err while handling realpath:", err)
+		realPwd = ""
+	}
+
 	gitDir, gitRealDir := getGitDirs(*gitCdup, *gitCdupExitCode, *pwd)
 	if *gitRemoteExitCode != 0 {
 		*gitRemote = ""
@@ -119,15 +124,15 @@ func main() {
 		Term:  *term,
 
 		// non-posix
-		RealpathPwd: *realPwd,
-		Pid:         *pid,
-		ShellPid:    *shellPid,
-		WindowId:    *windowId,
-		Host:        *host,
-		Hosttype:    *hosttype,
-		Ostype:      *ostype,
-		Machtype:    *machtype,
-		Shlvl:       *shlvl,
+		RealPwd:  realPwd,
+		Pid:      *pid,
+		ShellPid: *shellPid,
+		WindowId: *windowId,
+		Host:     *host,
+		Hosttype: *hosttype,
+		Ostype:   *ostype,
+		Machtype: *machtype,
+		Shlvl:    *shlvl,
 
 		// before after
 		TimezoneBefore: *timezoneBefore,

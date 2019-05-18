@@ -59,7 +59,6 @@ precmd() {
                      -login "$__RESH_LOGIN" \
                      -path "$__RESH_PATH" \
                      -pwd "$__RESH_PWD" \
-                     -realPwd "$(realpath $__RESH_PWD)" \
                      -shell "$__RESH_SHELL" \
                      -term "$__RESH_TERM" \
                      -pid "$__RESH_PID" -shellPid "$__RESH_SHELL_PID" \
