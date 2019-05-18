@@ -9,14 +9,14 @@ install: build | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config $(HOME)/.resh/r
 	cp config.toml ~/.config/resh.toml -f
 	cp shellrc.sh ~/.resh/shellrc -f
 	cp resh-* ~/.resh/bin/ -f
-	[ -f ~/.resh-history.json ] && mv ~/resh-history.json ~/.resh/history.json 
+	[ ! -f ~/resh-history.json ] || mv ~/resh-history.json ~/.resh/history.json 
 	grep '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' ~/.bashrc ||\
 		echo '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' >> ~/.bashrc
 	grep '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' ~/.bashrc ||\
 		echo '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' >> ~/.bashrc
 	grep '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' ~/.zshrc ||\
 		echo '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' >> ~/.zshrc
-	kill -SIGTERM $$(cat ~/.resh/resh.pid)
+	[ ! -f ~/.resh/resh.pid ] || kill -SIGTERM $$(cat ~/.resh/resh.pid)
 	nohup resh-daemon &>/dev/null & disown
 
 uninstall:
