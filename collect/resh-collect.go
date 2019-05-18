@@ -23,8 +23,7 @@ func main() {
 
     var config common.Config
     if _, err := toml.DecodeFile(configPath, &config); err != nil {
-        log.Println("Error reading config", err)
-        return
+        log.Fatal("Error reading config:", err)
     }
 
     cmdLine := flag.String("cmdLine", "", "command line")
@@ -47,6 +46,7 @@ func main() {
     pid := flag.Int("pid", -1, "$PID")
     sessionPid := flag.Int("sessionPid", -1, "$$")
     windowId := flag.Int("windowId", -1, "$WINDOWID - session id")
+    shlvl := flag.Int("shlvl", -1, "$SHLVL")
 
     host := flag.String("host", "", "$HOSTNAME")
     hosttype := flag.String("hosttype", "", "$HOSTTYPE")
@@ -68,7 +68,13 @@ func main() {
     realtimeAfter, err := strconv.ParseFloat(*rta, 64)
     realtimeBefore, err := strconv.ParseFloat(*rtb, 64)
     realtimeSessionStart, err := strconv.ParseFloat(*rtsess, 64)
+    if err != nil {
+        log.Fatal("Flag Parsing error (1):", err)
+    }
     realtimeSessSinceBoot, err := strconv.ParseFloat(*rtsessboot, 64)
+    if err != nil {
+        log.Fatal("Flag Parsing error (2):", err)
+    }
     realtimeDuration := realtimeAfter - realtimeBefore
     realtimeSinceSessionStart := realtimeBefore - realtimeSessionStart
     realtimeSinceBoot := realtimeSessSinceBoot + realtimeSinceSessionStart
@@ -78,13 +84,6 @@ func main() {
     realtimeBeforeLocal := realtimeBefore + timezoneBeforeOffset
     realtimeAfterLocal := realtimeAfter + timezoneAfterOffset
 
-
-    if err != nil {
-        log.Fatal("Flag Parsing error:", err)
-    }
-    if err != nil {
-        log.Fatal("Flag Parsing error:", err)
-    }
 
     rec := common.Record{
         // core
@@ -112,6 +111,7 @@ func main() {
         Hosttype: *hosttype,
         Ostype: *ostype,
         Machtype: *machtype,
+        Shlvl: *shlvl,
 
         // before after
         TimezoneBefore: *timezoneBefore,
@@ -134,13 +134,13 @@ func main() {
 func sendRecord(r common.Record, port string) {
     recJson, err := json.Marshal(r)
     if err != nil {
-        log.Fatal("1 ", err)
+        log.Fatal("send err 1", err)
     }
 
     req, err := http.NewRequest("POST", "http://localhost:" + port + "/record",
                                 bytes.NewBuffer(recJson))
     if err != nil {
-        log.Fatal("2 ", err)
+        log.Fatal("send err 2", err)
     }
     req.Header.Set("Content-Type", "application/json")
 

@@ -25,6 +25,7 @@ type Record struct {
     Hosttype string `json:"hosttype"`
     Ostype string `json:"ostype"`
     Machtype string `json:"machtype"`
+    Shlvl int `json:"shlvl"`
 
     // before after
     TimezoneBefore string `json:"timezoneBefore"`

@@ -11,13 +11,10 @@ import (
     "os/user"
     "strconv"
     "strings"
-    //"syscall"
     "net/http"
     common "github.com/curusarn/resh/common"
     "github.com/BurntSushi/toml"
 )
-
-
 
 func main() {
     usr, _ := user.Current()
@@ -25,6 +22,16 @@ func main() {
     pidfilePath := filepath.Join(dir, ".resh/resh.pid")
     configPath := filepath.Join(dir, ".config/resh.toml")
     outputPath := filepath.Join(dir, ".resh/history.json")
+    logPath := filepath.Join(dir, ".resh/daemon.log")
+
+    f, err := os.OpenFile(logPath, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0644)
+    if err != nil {
+        log.Fatal("Error opening file:", err)
+    }
+    defer f.Close()
+
+    log.SetOutput(f)
+    log.SetPrefix(strconv.Itoa(os.Getpid()) + " | ")
 
     var config common.Config
     if _, err := toml.DecodeFile(configPath, &config); err != nil {
@@ -36,7 +43,7 @@ func main() {
         log.Println("Error while checking if the daemon is runnnig", err)
     }
     if res {
-        log.Println("Daemon is already runnnig - exiting!")
+        log.Println("Daemon is already running - exiting!")
         return
     }
     _, err = os.Stat(pidfilePath)
@@ -61,7 +68,7 @@ func main() {
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("OK\n"))
-    log.Printf("Status OK\n")
+    log.Println("Status OK")
 }
 
 type recordHandler struct {
@@ -96,7 +103,7 @@ func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         log.Printf("Error while writing: %v, %s\n", record, err)
         return
     }
-    log.Printf("Received: %v\n", record)
+    log.Println("Received: ", record.CmdLine)
 
     // fmt.Println("cmd:", r.CmdLine)
     // fmt.Println("pwd:", r.Pwd)
@@ -134,7 +141,7 @@ func isDaemonRunning(port int) (bool, error) {
     resp, err := http.Get(url)
     if err != nil {
         log.Println("Error while checking daemon status - " +
-                    "it's probably not runnig!", err)
+                    "it's probably not running!", err)
         return false, err
     }
     defer resp.Body.Close()

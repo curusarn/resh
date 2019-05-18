@@ -13,9 +13,8 @@ install: build | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config/resh
 		echo '[[ -f ~/.resh/bashrc ]] && source ~/.resh/bashrc' >> ~/.bashrc
 	grep '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' ~/.bashrc ||\
 		echo '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' >> ~/.bashrc
-	#-pkill resh-daemon
-	#resh-daemon & disown
-
+	-pkill resh-daemon
+	nohup resh-daemon &>/dev/null & disown
 
 resh-daemon: daemon/resh-daemon.go common/resh-common.go
 	go build -o $@ $<

@@ -2,7 +2,7 @@
 PATH=$PATH:~/.resh/bin
 export __RESH_RT_SESSION=$EPOCHREALTIME
 export __RESH_RT_SESS_SINCE_BOOT=$(cat /proc/uptime | cut -d' ' -f1)
-#resh-daemon & disown
+nohup resh-daemon &>/dev/null & disown
 
 preexec() {
     # core
@@ -30,6 +30,7 @@ preexec() {
     __RESH_HOSTTYPE="$HOSTTYPE"
     __RESH_OSTYPE="$OSTYPE"
     __RESH_MACHTYPE="$MACHTYPE"
+    __RESH_SHLVL="$SHLVL"
 
     # time
     __RESH_TZ_BEFORE=$(date +%:z)
@@ -59,6 +60,7 @@ precmd() {
                      -hosttype "$__RESH_HOSTTYPE" \
                      -ostype "$__RESH_OSTYPE" \
                      -machtype "$__RESH_MACHTYPE" \
+                     -shlvl "$__RESH_SHLVL" \
                      -realtimeBefore "$__RESH_RT_BEFORE" \
                      -realtimeAfter "$__RESH_RT_AFTER" \
                      -realtimeSession "$__RESH_RT_SESSION" \
