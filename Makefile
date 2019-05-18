@@ -7,13 +7,15 @@ build: submodules resh-collect resh-daemon
 install: build | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config $(HOME)/.resh/resh-uuid
 	cp submodules/bash-preexec/bash-preexec.sh ~/.bash-preexec.sh -f
 	cp config.toml ~/.config/resh.toml -f
-	cp bashrc.sh ~/.resh/bashrc -f
+	cp shellrc.sh ~/.resh/shellrc -f
 	cp resh-* ~/.resh/bin/ -f
-	grep '[[ -f ~/.resh/bashrc ]] && source ~/.resh/bashrc' ~/.bashrc ||\
-		echo '[[ -f ~/.resh/bashrc ]] && source ~/.resh/bashrc' >> ~/.bashrc
+	grep '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' ~/.bashrc ||\
+		echo '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' >> ~/.bashrc
 	grep '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' ~/.bashrc ||\
 		echo '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' >> ~/.bashrc
-	-pkill resh-daemon
+	grep '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' ~/.zshrc ||\
+		echo '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' >> ~/.zshrc
+	kill -SIGTERM $$(cat ~/.resh/resh.pid)
 	nohup resh-daemon &>/dev/null & disown
 
 resh-daemon: daemon/resh-daemon.go common/resh-common.go

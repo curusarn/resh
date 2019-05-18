@@ -32,6 +32,7 @@ func main() {
 
 	cmdLine := flag.String("cmdLine", "", "command line")
 	exitCode := flag.Int("exitCode", -1, "exit code")
+	shell := flag.String("shell", "", "actual shell")
 
 	// posix variables
 	cols := flag.Int("cols", -1, "$COLUMNS")
@@ -43,7 +44,7 @@ func main() {
 	login := flag.String("login", "", "$LOGIN")
 	path := flag.String("path", "", "$PATH")
 	pwd := flag.String("pwd", "", "$PWD - present working directory")
-	shell := flag.String("shell", "", "$SHELL")
+	shellEnv := flag.String("shellEnv", "", "$SHELL")
 	term := flag.String("term", "", "$TERM")
 
 	// non-posix
@@ -76,14 +77,20 @@ func main() {
 	flag.Parse()
 
 	realtimeAfter, err := strconv.ParseFloat(*rta, 64)
+	if err != nil {
+		log.Fatal("Flag Parsing error (rta):", err)
+	}
 	realtimeBefore, err := strconv.ParseFloat(*rtb, 64)
+	if err != nil {
+		log.Fatal("Flag Parsing error (rtb):", err)
+	}
 	realtimeSessionStart, err := strconv.ParseFloat(*rtsess, 64)
 	if err != nil {
-		log.Fatal("Flag Parsing error (1):", err)
+		log.Fatal("Flag Parsing error (rt sess):", err)
 	}
 	realtimeSessSinceBoot, err := strconv.ParseFloat(*rtsessboot, 64)
 	if err != nil {
-		log.Fatal("Flag Parsing error (2):", err)
+		log.Fatal("Flag Parsing error (rt sess boot):", err)
 	}
 	realtimeDuration := realtimeAfter - realtimeBefore
 	realtimeSinceSessionStart := realtimeBefore - realtimeSessionStart
@@ -109,19 +116,20 @@ func main() {
 		// core
 		CmdLine:  *cmdLine,
 		ExitCode: *exitCode,
+		Shell:    *shell,
 
 		// posix
 		Cols:  *cols,
 		Lines: *lines,
 
-		Home:  *home,
-		Lang:  *lang,
-		LcAll: *lcAll,
-		Login: *login,
-		Path:  *path,
-		Pwd:   *pwd,
-		Shell: *shell,
-		Term:  *term,
+		Home:     *home,
+		Lang:     *lang,
+		LcAll:    *lcAll,
+		Login:    *login,
+		Path:     *path,
+		Pwd:      *pwd,
+		ShellEnv: *shellEnv,
+		Term:     *term,
 
 		// non-posix
 		RealPwd:  realPwd,

@@ -4,6 +4,7 @@ type Record struct {
     // core
     CmdLine string     `json:"cmdLine"`
     ExitCode int       `json:"exitCode"`
+    Shell string       `json:"shell"`
 
     // posix
     Cols int `json:"cols"`
@@ -14,7 +15,7 @@ type Record struct {
     Login string `json:"login"`
     Path string `json:"path"`
     Pwd string `json:"pwd"`
-    Shell string `json:"shell"`
+    ShellEnv string `json:"shellEnv"`
     Term string `json:"term"`
 
     // non-posix"`
