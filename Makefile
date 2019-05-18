@@ -9,6 +9,7 @@ install: build | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config $(HOME)/.resh/r
 	cp config.toml ~/.config/resh.toml -f
 	cp shellrc.sh ~/.resh/shellrc -f
 	cp resh-* ~/.resh/bin/ -f
+	[ -f ~/.resh-history.json ] && mv ~/resh-history.json ~/.resh/history.json 
 	grep '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' ~/.bashrc ||\
 		echo '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' >> ~/.bashrc
 	grep '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' ~/.bashrc ||\
@@ -17,6 +18,10 @@ install: build | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config $(HOME)/.resh/r
 		echo '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' >> ~/.zshrc
 	kill -SIGTERM $$(cat ~/.resh/resh.pid)
 	nohup resh-daemon &>/dev/null & disown
+
+uninstall:
+	-mv ~/.resh/history.json ~/resh-history.json
+	-rm -rf ~/.resh
 
 resh-daemon: daemon/resh-daemon.go common/resh-common.go
 	go build -o $@ $<
