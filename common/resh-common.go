@@ -18,6 +18,7 @@ type Record struct {
     Term string `json:"term"`
 
     // non-posix"`
+    RealpathPwd string `json:"realpathPwd"`
     Pid int `json:"pid"`
     ShellPid int `json:"shellPid"`
     WindowId int `json:"windowId"`
@@ -41,8 +42,11 @@ type Record struct {
     RealtimeSinceBoot float64 `json:"realtimeSinceBoot"`
     //Logs []string      `json: "logs"`
 
-    GitWorkTree string `json:"gitWorkTree"`
+    GitDir string `json:"gitDir"`
+    GitRealDir string `json:"gitRealDir"`
+    GitOriginRemote string `json:"gitOriginRemote"`
     MachineId string `json:"machineId"`
+    ReshUuid string `json:"reshUuid"`
 }
 
 type Config struct {

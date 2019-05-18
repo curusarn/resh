@@ -4,7 +4,7 @@ SHELL=/bin/bash
 build: submodules resh-collect resh-daemon
 
 
-install: build | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config/resh
+install: build | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config $(HOME)/.resh/resh-uuid
 	cp submodules/bash-preexec/bash-preexec.sh ~/.bash-preexec.sh -f
 	cp config.toml ~/.config/resh.toml -f
 	cp bashrc.sh ~/.resh/bashrc -f
@@ -23,8 +23,11 @@ resh-collect: collect/resh-collect.go common/resh-common.go
 	go build -o $@ $<
 
 
-$(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config/resh:
+$(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config:
 	mkdir -p $@
+
+$(HOME)/.resh/resh-uuid:
+	cat /proc/sys/kernel/random/uuid > $@
 
 .PHONY: submodules build install
 

@@ -2,7 +2,7 @@
 PATH=$PATH:~/.resh/bin
 export __RESH_RT_SESSION=$EPOCHREALTIME
 export __RESH_RT_SESS_SINCE_BOOT=$(cat /proc/uptime | cut -d' ' -f1)
-export __RESH_SESSION_ID=$RANDOM
+export __RESH_SESSION_ID=$(cat /proc/sys/kernel/random/uuid)
 nohup resh-daemon &>/dev/null & disown
 
 preexec() {
@@ -32,6 +32,12 @@ preexec() {
     __RESH_OSTYPE="$OSTYPE"
     __RESH_MACHTYPE="$MACHTYPE"
     __RESH_SHLVL="$SHLVL"
+    __RESH_GIT_CDUP="$(git rev-parse --show-cdup 2>/dev/null)"
+    __RESH_GIT_CDUP_EXIT_CODE=$?
+    __RESH_GIT_REMOTE="$(git remote get-url origin 2>/dev/null)"
+    __RESH_GIT_REMOTE_EXIT_CODE=$?
+    #__RESH_GIT_TOPLEVEL="$(git rev-parse --show-toplevel)"
+    #__RESH_GIT_TOPLEVEL_EXIT_CODE=$?
 
     # time
     __RESH_TZ_BEFORE=$(date +%:z)
@@ -53,6 +59,7 @@ precmd() {
                      -login "$__RESH_LOGIN" \
                      -path "$__RESH_PATH" \
                      -pwd "$__RESH_PWD" \
+                     -realPwd "$(realpath $__RESH_PWD)" \
                      -shell "$__RESH_SHELL" \
                      -term "$__RESH_TERM" \
                      -pid "$__RESH_PID" -shellPid "$__RESH_SHELL_PID" \
@@ -62,6 +69,10 @@ precmd() {
                      -ostype "$__RESH_OSTYPE" \
                      -machtype "$__RESH_MACHTYPE" \
                      -shlvl "$__RESH_SHLVL" \
+                     -gitCdup "$__RESH_GIT_CDUP" \
+                     -gitCdupExitCode "$__RESH_GIT_CDUP_EXIT_CODE" \
+                     -gitRemote "$__RESH_GIT_REMOTE" \
+                     -gitRemoteExitCode "$__RESH_GIT_REMOTE_EXIT_CODE" \
                      -realtimeBefore "$__RESH_RT_BEFORE" \
                      -realtimeAfter "$__RESH_RT_AFTER" \
                      -realtimeSession "$__RESH_RT_SESSION" \

@@ -9,8 +9,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
-	"os/exec"
+	//	"os"
+	//  "os/exec"
 	"os/user"
 	"path/filepath"
 	"strconv"
@@ -21,6 +21,9 @@ func main() {
 	usr, _ := user.Current()
 	dir := usr.HomeDir
 	configPath := filepath.Join(dir, "/.config/resh.toml")
+	reshUuidPath := filepath.Join(dir, "/.resh/resh-uuid")
+
+	machineIdPath := "/etc/machine-id"
 
 	var config common.Config
 	if _, err := toml.DecodeFile(configPath, &config); err != nil {
@@ -50,10 +53,16 @@ func main() {
 	windowId := flag.Int("windowId", -1, "$WINDOWID - session id")
 	shlvl := flag.Int("shlvl", -1, "$SHLVL")
 
+	realPwd := flag.String("realPwd", "", "realpath $PWD")
 	host := flag.String("host", "", "$HOSTNAME")
 	hosttype := flag.String("hosttype", "", "$HOSTTYPE")
 	ostype := flag.String("ostype", "", "$OSTYPE")
 	machtype := flag.String("machtype", "", "$MACHTYPE")
+	gitCdup := flag.String("gitCdup", "", "git rev-parse --show-cdup")
+	gitRemote := flag.String("gitRemote", "", "git remote get-url origin")
+
+	gitCdupExitCode := flag.Int("gitCdupExitCode", -1, "... $?")
+	gitRemoteExitCode := flag.Int("gitRemoteExitCode", -1, "... $?")
 
 	// before after
 	timezoneBefore := flag.String("timezoneBefore", "", "")
@@ -86,6 +95,11 @@ func main() {
 	realtimeBeforeLocal := realtimeBefore + timezoneBeforeOffset
 	realtimeAfterLocal := realtimeAfter + timezoneAfterOffset
 
+	gitDir, gitRealDir := getGitDirs(*gitCdup, *gitCdupExitCode, *pwd)
+	if *gitRemoteExitCode != 0 {
+		*gitRemote = ""
+	}
+
 	rec := common.Record{
 		// core
 		CmdLine:  *cmdLine,
@@ -105,14 +119,15 @@ func main() {
 		Term:  *term,
 
 		// non-posix
-		Pid:      *pid,
-		ShellPid: *shellPid,
-		WindowId: *windowId,
-		Host:     *host,
-		Hosttype: *hosttype,
-		Ostype:   *ostype,
-		Machtype: *machtype,
-		Shlvl:    *shlvl,
+		RealpathPwd: *realPwd,
+		Pid:         *pid,
+		ShellPid:    *shellPid,
+		WindowId:    *windowId,
+		Host:        *host,
+		Hosttype:    *hosttype,
+		Ostype:      *ostype,
+		Machtype:    *machtype,
+		Shlvl:       *shlvl,
 
 		// before after
 		TimezoneBefore: *timezoneBefore,
@@ -127,8 +142,11 @@ func main() {
 		RealtimeSinceSessionStart: realtimeSinceSessionStart,
 		RealtimeSinceBoot:         realtimeSinceBoot,
 
-		GitWorkTree: getGitDir(),
-		MachineId:   getMachineId(),
+		GitDir:          gitDir,
+		GitRealDir:      gitRealDir,
+		GitOriginRemote: *gitRemote,
+		MachineId:       readFileContent(machineIdPath),
+		ReshUuid:        readFileContent(reshUuidPath),
 	}
 	sendRecord(rec, strconv.Itoa(config.Port))
 }
@@ -153,35 +171,25 @@ func sendRecord(r common.Record, port string) {
 	}
 }
 
-func getMachineId() string {
-	dat, err := ioutil.ReadFile("/etc/machine-id")
+func readFileContent(path string) string {
+	dat, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Fatal("failed to open /etc/machine-id")
+		log.Fatal("failed to open " + path)
 	}
 	return strings.TrimSuffix(string(dat), "\n")
 }
 
-func getGitDir() string {
-	// assume we are in pwd
-	gitWorkTree := os.Getenv("GIT_WORK_TREE")
-
-	if gitWorkTree != "" {
-		return gitWorkTree
+func getGitDirs(cdup string, exitCode int, pwd string) (string, string) {
+	if exitCode != 0 {
+		return "", ""
 	}
-	// we should look up the git directory ourselves
-	// OR leave it to resh daemon to not slow down user
-	out, err := exec.Command("git", "rev-parse", "--show-toplevel").Output()
+	abspath := filepath.Clean(filepath.Join(pwd, cdup))
+	realpath, err := filepath.EvalSymlinks(abspath)
 	if err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
-			if exitError.ExitCode() == 128 {
-				return ""
-			}
-			log.Fatal("git cmd failed")
-		} else {
-			log.Fatal("git cmd failed w/o exit code")
-		}
+		log.Println("err while handling git dir paths:", err)
+		return "", ""
 	}
-	return strings.TrimSuffix(string(out), "\n")
+	return abspath, realpath
 }
 
 func getTimezoneOffsetInSeconds(zone string) float64 {
@@ -199,3 +207,41 @@ func getTimezoneOffsetInSeconds(zone string) float64 {
 	secs := ((hours * 60) + mins) * 60
 	return float64(secs)
 }
+
+// func getGitRemote() string {
+// 	out, err := exec.Command("git", "remote", "get-url", "origin").Output()
+// 	if err != nil {
+// 		if exitError, ok := err.(*exec.ExitError); ok {
+// 			if exitError.ExitCode() == 128 {
+// 				return ""
+// 			}
+// 			log.Fatal("git remote cmd failed")
+// 		} else {
+// 			log.Fatal("git remote cmd failed w/o exit code")
+// 		}
+// 	}
+// 	return strings.TrimSuffix(string(out), "\n")
+// }
+//
+// func getGitDir() string {
+// 	// assume we are in pwd
+// 	gitWorkTree := os.Getenv("GIT_WORK_TREE")
+//
+// 	if gitWorkTree != "" {
+// 		return gitWorkTree
+// 	}
+// 	// we should look up the git directory ourselves
+// 	// OR leave it to resh daemon to not slow down user
+// 	out, err := exec.Command("git", "rev-parse", "--show-toplevel").Output()
+// 	if err != nil {
+// 		if exitError, ok := err.(*exec.ExitError); ok {
+// 			if exitError.ExitCode() == 128 {
+// 				return ""
+// 			}
+// 			log.Fatal("git rev-parse cmd failed")
+// 		} else {
+// 			log.Fatal("git rev-parse cmd failed w/o exit code")
+// 		}
+// 	}
+// 	return strings.TrimSuffix(string(out), "\n")
+// }
