@@ -157,7 +157,7 @@ func getMachineId() string {
 	if err != nil {
 		log.Fatal("failed to open /etc/machine-id")
 	}
-	return string(dat)
+	return strings.TrimSuffix(string(dat), "\n")
 }
 
 func getGitDir() string {
