@@ -39,6 +39,14 @@ preexec() {
     #__RESH_GIT_TOPLEVEL="$(git rev-parse --show-toplevel)"
     #__RESH_GIT_TOPLEVEL_EXIT_CODE=$?
 
+    # TODO: we should evaluate symlinks in preexec
+    #       -> maybe create resh-precollect that could handle most of preexec
+    #           maybe even move resh-collect here and send data to daemon and 
+    #           send rest of the data ($?, timeAfter) to daemon in precmd 
+    #           daemon will combine the data and save the record
+    #           and save the unfinnished record even if it never finishes
+    #           detect if the command died with the parent ps and save it then
+
     # time
     __RESH_TZ_BEFORE=$(date +%:z)
     __RESH_RT_BEFORE="$EPOCHREALTIME"
@@ -47,7 +55,6 @@ preexec() {
 precmd() {
     __RESH_EXIT_CODE=$?
     __RESH_RT_AFTER=$EPOCHREALTIME
-    __RESH_SECS_UTC_AFTER=$(date +%s -u)
     __RESH_TZ_AFTER=$(date +%:z)
     if [ ! -z ${__RESH_COLLECT+x} ]; then
         resh-collect -cmdLine "$__RESH_CMDLINE" -exitCode "$__RESH_EXIT_CODE" \
