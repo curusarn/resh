@@ -42,6 +42,7 @@ type Record struct {
     //Logs []string      `json: "logs"`
 
     GitWorkTree string `json:"gitWorkTree"`
+    MachineId string `json:"machineId"`
 }
 
 type Config struct {
