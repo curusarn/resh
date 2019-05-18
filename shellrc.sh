@@ -1,10 +1,11 @@
 
 PATH=$PATH:~/.resh/bin
-if [ -n "$ZSH_VERSION" ]; then
-    zmodload zsh/datetime
-fi
+# if [ -n "$ZSH_VERSION" ]; then
+#     zmodload zsh/datetime
+# fi
 
-export __RESH_RT_SESSION=$EPOCHREALTIME
+# export __RESH_RT_SESSION=$EPOCHREALTIME
+export __RESH_RT_SESSION=$(date +%s.%N)
 export __RESH_RT_SESS_SINCE_BOOT=$(cat /proc/uptime | cut -d' ' -f1)
 export __RESH_SESSION_ID=$(cat /proc/sys/kernel/random/uuid)
 nohup resh-daemon &>/dev/null & disown
@@ -58,7 +59,8 @@ __resh_preexec() {
     fi
     # time
     __RESH_TZ_BEFORE=$(date +%:z)
-    __RESH_RT_BEFORE="$EPOCHREALTIME"
+    # __RESH_RT_BEFORE="$EPOCHREALTIME"
+    __RESH_RT_BEFORE="$(date +%s.%N)"
 
     # TODO: we should evaluate symlinks in preexec
     #       -> maybe create resh-precollect that could handle most of preexec
@@ -72,7 +74,8 @@ __resh_preexec() {
 
 __resh_precmd() {
     __RESH_EXIT_CODE=$?
-    __RESH_RT_AFTER=$EPOCHREALTIME
+    # __RESH_RT_AFTER=$EPOCHREALTIME
+    __RESH_RT_AFTER="$(date +%s.%N)"
     __RESH_TZ_AFTER=$(date +%:z)
     if [ ! -z ${__RESH_COLLECT+x} ]; then
         resh-collect -cmdLine "$__RESH_CMDLINE" -exitCode "$__RESH_EXIT_CODE" \
