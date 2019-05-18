@@ -2,6 +2,7 @@
 PATH=$PATH:~/.resh/bin
 export __RESH_RT_SESSION=$EPOCHREALTIME
 export __RESH_RT_SESS_SINCE_BOOT=$(cat /proc/uptime | cut -d' ' -f1)
+export __RESH_SESSION_ID=$RANDOM
 nohup resh-daemon &>/dev/null & disown
 
 preexec() {
@@ -24,7 +25,7 @@ preexec() {
     
     # non-posix
     __RESH_PID="$BASHPID" # current pid
-    __RESH_SESSION_PID="$$" # pid of original shell 
+    __RESH_SHELL_PID="$$" # pid but subshells don't affect it 
     __RESH_WINDOWID="$WINDOWID" # session 
     __RESH_HOST="$HOSTNAME"
     __RESH_HOSTTYPE="$HOSTTYPE"
@@ -54,7 +55,7 @@ precmd() {
                      -pwd "$__RESH_PWD" \
                      -shell "$__RESH_SHELL" \
                      -term "$__RESH_TERM" \
-                     -pid "$__RESH_PID" -sessionPid "$__RESH_SESSION_PID" \
+                     -pid "$__RESH_PID" -shellPid "$__RESH_SHELL_PID" \
                      -windowId "$__RESH_WINDOWID" \
                      -host "$__RESH_HOST" \
                      -hosttype "$__RESH_HOSTTYPE" \

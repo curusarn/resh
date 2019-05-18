@@ -19,7 +19,7 @@ type Record struct {
 
     // non-posix"`
     Pid int `json:"pid"`
-    SessionPid int `json:"sessionPid"`
+    ShellPid int `json:"shellPid"`
     WindowId int `json:"windowId"`
     Host string `json:"host"`
     Hosttype string `json:"hosttype"`

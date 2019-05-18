@@ -45,7 +45,8 @@ func main() {
 
 	// non-posix
 	pid := flag.Int("pid", -1, "$PID")
-	sessionPid := flag.Int("sessionPid", -1, "$$")
+	shellPid := flag.Int("shellPid", -1,
+		"$$ (pid but subshells don't affect it)")
 	windowId := flag.Int("windowId", -1, "$WINDOWID - session id")
 	shlvl := flag.Int("shlvl", -1, "$SHLVL")
 
@@ -104,14 +105,14 @@ func main() {
 		Term:  *term,
 
 		// non-posix
-		Pid:        *pid,
-		SessionPid: *sessionPid,
-		WindowId:   *windowId,
-		Host:       *host,
-		Hosttype:   *hosttype,
-		Ostype:     *ostype,
-		Machtype:   *machtype,
-		Shlvl:      *shlvl,
+		Pid:      *pid,
+		ShellPid: *shellPid,
+		WindowId: *windowId,
+		Host:     *host,
+		Hosttype: *hosttype,
+		Ostype:   *ostype,
+		Machtype: *machtype,
+		Shlvl:    *shlvl,
 
 		// before after
 		TimezoneBefore: *timezoneBefore,
@@ -127,7 +128,7 @@ func main() {
 		RealtimeSinceBoot:         realtimeSinceBoot,
 
 		GitWorkTree: getGitDir(),
-		MachineId: getMachineId(),
+		MachineId:   getMachineId(),
 	}
 	sendRecord(rec, strconv.Itoa(config.Port))
 }
