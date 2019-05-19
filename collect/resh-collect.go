@@ -44,6 +44,7 @@ func main() {
 	login := flag.String("login", "", "$LOGIN")
 	path := flag.String("path", "", "$PATH")
 	pwd := flag.String("pwd", "", "$PWD - present working directory")
+	pwdAfter := flag.String("pwdAfter", "", "$PWD after command")
 	shellEnv := flag.String("shellEnv", "", "$SHELL")
 	term := flag.String("term", "", "$TERM")
 
@@ -67,6 +68,14 @@ func main() {
 	// before after
 	timezoneBefore := flag.String("timezoneBefore", "", "")
 	timezoneAfter := flag.String("timezoneAfter", "", "")
+
+	osReleaseId := flag.String("osReleaseId", "", "/etc/os-release ID")
+	osReleaseVersionId := flag.String("osReleaseVersionId", "",
+		"/etc/os-release ID")
+	osReleaseIdLike := flag.String("osReleaseIdLike", "", "/etc/os-release ID")
+	osReleaseName := flag.String("osReleaseName", "", "/etc/os-release ID")
+	osReleasePrettyName := flag.String("osReleasePrettyName", "",
+		"/etc/os-release ID")
 
 	rtb := flag.String("realtimeBefore", "-1", "before $EPOCHREALTIME")
 	rta := flag.String("realtimeAfter", "-1", "after $EPOCHREALTIME")
@@ -103,13 +112,28 @@ func main() {
 
 	realPwd, err := filepath.EvalSymlinks(*pwd)
 	if err != nil {
-		log.Println("err while handling realpath:", err)
+		log.Println("err while handling pwd realpath:", err)
+		realPwd = ""
+	}
+	realPwdAfter, err := filepath.EvalSymlinks(*pwdAfter)
+	if err != nil {
+		log.Println("err while handling pwdAfter realpath:", err)
 		realPwd = ""
 	}
 
 	gitDir, gitRealDir := getGitDirs(*gitCdup, *gitCdupExitCode, *pwd)
 	if *gitRemoteExitCode != 0 {
 		*gitRemote = ""
+	}
+
+	if *osReleaseId == "" {
+		*osReleaseId = "linux"
+	}
+	if *osReleaseName == "" {
+		*osReleaseName = "Linux"
+	}
+	if *osReleasePrettyName == "" {
+		*osReleasePrettyName = "Linux"
 	}
 
 	rec := common.Record{
@@ -128,19 +152,21 @@ func main() {
 		Login:    *login,
 		Path:     *path,
 		Pwd:      *pwd,
+		PwdAfter: *pwdAfter,
 		ShellEnv: *shellEnv,
 		Term:     *term,
 
 		// non-posix
-		RealPwd:  realPwd,
-		Pid:      *pid,
-		ShellPid: *shellPid,
-		WindowId: *windowId,
-		Host:     *host,
-		Hosttype: *hosttype,
-		Ostype:   *ostype,
-		Machtype: *machtype,
-		Shlvl:    *shlvl,
+		RealPwd:      realPwd,
+		RealPwdAfter: realPwdAfter,
+		Pid:          *pid,
+		ShellPid:     *shellPid,
+		WindowId:     *windowId,
+		Host:         *host,
+		Hosttype:     *hosttype,
+		Ostype:       *ostype,
+		Machtype:     *machtype,
+		Shlvl:        *shlvl,
 
 		// before after
 		TimezoneBefore: *timezoneBefore,
@@ -160,6 +186,12 @@ func main() {
 		GitOriginRemote: *gitRemote,
 		MachineId:       readFileContent(machineIdPath),
 		ReshUuid:        readFileContent(reshUuidPath),
+
+		OsReleaseId:         *osReleaseId,
+		OsReleaseVersionId:  *osReleaseVersionId,
+		OsReleaseIdLike:     *osReleaseIdLike,
+		OsReleaseName:       *osReleaseName,
+		OsReleasePrettyName: *osReleasePrettyName,
 	}
 	sendRecord(rec, strconv.Itoa(config.Port))
 }

@@ -15,11 +15,13 @@ type Record struct {
     Login string `json:"login"`
     Path string `json:"path"`
     Pwd string `json:"pwd"`
+    PwdAfter string `json:"pwdAfter"`
     ShellEnv string `json:"shellEnv"`
     Term string `json:"term"`
 
     // non-posix"`
     RealPwd string `json:"realPwd"`
+    RealPwdAfter string `json:"realPwdAfter"`
     Pid int `json:"pid"`
     ShellPid int `json:"shellPid"`
     WindowId int `json:"windowId"`
@@ -48,6 +50,12 @@ type Record struct {
     GitOriginRemote string `json:"gitOriginRemote"`
     MachineId string `json:"machineId"`
     ReshUuid string `json:"reshUuid"`
+
+    OsReleaseId string `json:"osReleaseId"`
+    OsReleaseVersionId string `json:"osReleaseVersionId"`
+    OsReleaseIdLike string `json:"osReleaseIdLike"`
+    OsReleaseName string `json:"osReleaseName"`
+    OsReleasePrettyName string `json:"osReleasePrettyName"`
 }
 
 type Config struct {

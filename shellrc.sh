@@ -8,6 +8,11 @@ PATH=$PATH:~/.resh/bin
 export __RESH_RT_SESSION=$(date +%s.%N)
 export __RESH_RT_SESS_SINCE_BOOT=$(cat /proc/uptime | cut -d' ' -f1)
 export __RESH_SESSION_ID=$(cat /proc/sys/kernel/random/uuid)
+export __RESH_OS_RELEASE_ID=$(source /etc/os-release; echo $ID)
+export __RESH_OS_RELEASE_VERSION_ID=$(source /etc/os-release; echo $VERSION_ID)
+export __RESH_OS_RELEASE_ID_LIKE=$(source /etc/os-release; echo $ID_LIKE)
+export __RESH_OS_RELEASE_NAME=$(source /etc/os-release; echo $NAME)
+export __RESH_OS_RELEASE_PRETTY_NAME=$(source /etc/os-release; echo $PRETTY_NAME)
 nohup resh-daemon &>/dev/null & disown
 
 __resh_preexec() {
@@ -77,6 +82,7 @@ __resh_precmd() {
     # __RESH_RT_AFTER=$EPOCHREALTIME
     __RESH_RT_AFTER="$(date +%s.%N)"
     __RESH_TZ_AFTER=$(date +%:z)
+    __RESH_PWD_AFTER="$PWD"
     if [ ! -z ${__RESH_COLLECT+x} ]; then
         resh-collect -cmdLine "$__RESH_CMDLINE" -exitCode "$__RESH_EXIT_CODE" \
                      -shell "$__RESH_SHELL" \
@@ -88,6 +94,7 @@ __resh_precmd() {
                      -login "$__RESH_LOGIN" \
                      -path "$__RESH_PATH" \
                      -pwd "$__RESH_PWD" \
+                     -pwdAfter "$__RESH_PWD_AFTER" \
                      -shellEnv "$__RESH_SHELL_ENV" \
                      -term "$__RESH_TERM" \
                      -pid "$__RESH_PID" -shellPid "$__RESH_SHELL_PID" \
@@ -106,7 +113,12 @@ __resh_precmd() {
                      -realtimeSession "$__RESH_RT_SESSION" \
                      -realtimeSessSinceBoot "$__RESH_RT_SESS_SINCE_BOOT" \
                      -timezoneBefore "$__RESH_TZ_BEFORE" \
-                     -timezoneAfter "$__RESH_TZ_AFTER"
+                     -timezoneAfter "$__RESH_TZ_AFTER" \
+                     -osReleaseId "$__RESH_OS_RELEASE_ID" \
+                     -osReleaseVersionId "$__RESH_OS_RELEASE_VERSION_ID" \
+                     -osReleaseIdLike "$__RESH_OS_RELEASE_ID_LIKE" \
+                     -osReleaseName "$__RESH_OS_RELEASE_NAME" \
+                     -osReleasePrettyName "$__RESH_OS_RELEASE_PRETTY_NAME"
     fi
     unset __RESH_COLLECT
 }
