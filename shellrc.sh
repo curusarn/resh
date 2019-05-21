@@ -8,11 +8,20 @@ PATH=$PATH:~/.resh/bin
 export __RESH_RT_SESSION=$(date +%s.%N)
 export __RESH_RT_SESS_SINCE_BOOT=$(cat /proc/uptime | cut -d' ' -f1)
 export __RESH_SESSION_ID=$(cat /proc/sys/kernel/random/uuid)
-export __RESH_OS_RELEASE_ID=$(source /etc/os-release; echo $ID)
-export __RESH_OS_RELEASE_VERSION_ID=$(source /etc/os-release; echo $VERSION_ID)
-export __RESH_OS_RELEASE_ID_LIKE=$(source /etc/os-release; echo $ID_LIKE)
-export __RESH_OS_RELEASE_NAME=$(source /etc/os-release; echo $NAME)
-export __RESH_OS_RELEASE_PRETTY_NAME=$(source /etc/os-release; echo $PRETTY_NAME)
+
+if [ $(uname) == "Darvin" ]; then
+    export __RESH_OS_RELEASE_ID="macos"
+    export __RESH_OS_RELEASE_VERSION_ID=$(sw_vers -productVersion 2>/dev/null)
+    export __RESH_OS_RELEASE_NAME="macOS"
+    export __RESH_OS_RELEASE_PRETTY_NAME="Mac OS X"
+else
+    export __RESH_OS_RELEASE_ID=$(source /etc/os-release; echo $ID)
+    export __RESH_OS_RELEASE_VERSION_ID=$(source /etc/os-release; echo $VERSION_ID)
+    export __RESH_OS_RELEASE_ID_LIKE=$(source /etc/os-release; echo $ID_LIKE)
+    export __RESH_OS_RELEASE_NAME=$(source /etc/os-release; echo $NAME)
+    export __RESH_OS_RELEASE_PRETTY_NAME=$(source /etc/os-release; echo $PRETTY_NAME)
+fi
+
 nohup resh-daemon &>/dev/null & disown
 
 __resh_preexec() {
