@@ -5,15 +5,17 @@ PATH=$PATH:~/.resh/bin
 # fi
 
 # export __RESH_RT_SESSION=$EPOCHREALTIME
-export __RESH_RT_SESSION=$(date +%s.%N)
-export __RESH_RT_SESS_SINCE_BOOT=$(cat /proc/uptime | cut -d' ' -f1)
+export __RESH_RT_SESSION=$(date +%s)
+#export __RESH_RT_SESS_SINCE_BOOT=$(cat /proc/uptime | cut -d' ' -f1)
+export __RESH_RT_SESS_SINCE_BOOT=1
 export __RESH_SESSION_ID=$(cat /proc/sys/kernel/random/uuid)
 
-if [ $(uname) == "Darvin" ]; then
+if [ $(uname) = "Darwin" ]; then
     export __RESH_OS_RELEASE_ID="macos"
     export __RESH_OS_RELEASE_VERSION_ID=$(sw_vers -productVersion 2>/dev/null)
     export __RESH_OS_RELEASE_NAME="macOS"
     export __RESH_OS_RELEASE_PRETTY_NAME="Mac OS X"
+    export __RESH_WINDOWID="1" # session 
 else
     export __RESH_OS_RELEASE_ID=$(source /etc/os-release; echo $ID)
     export __RESH_OS_RELEASE_VERSION_ID=$(source /etc/os-release; echo $VERSION_ID)
@@ -44,7 +46,7 @@ __resh_preexec() {
     
     # non-posix
     __RESH_SHELL_PID="$$" # pid (subshells don't affect it)
-    __RESH_WINDOWID="$WINDOWID" # session 
+#    __RESH_WINDOWID="$WINDOWID" # session 
     __RESH_OSTYPE="$OSTYPE" 
     __RESH_MACHTYPE="$MACHTYPE"
     __RESH_SHLVL="$SHLVL"
@@ -72,9 +74,10 @@ __resh_preexec() {
         echo "resh PANIC unrecognized shell"
     fi
     # time
-    __RESH_TZ_BEFORE=$(date +%:z)
+    #__RESH_TZ_BEFORE=$(date +%:z)
+    __RESH_TZ_BEFORE=2:00
     # __RESH_RT_BEFORE="$EPOCHREALTIME"
-    __RESH_RT_BEFORE="$(date +%s.%N)"
+    __RESH_RT_BEFORE="$(date +%s)"
 
     # TODO: we should evaluate symlinks in preexec
     #       -> maybe create resh-precollect that could handle most of preexec
@@ -89,8 +92,9 @@ __resh_preexec() {
 __resh_precmd() {
     __RESH_EXIT_CODE=$?
     # __RESH_RT_AFTER=$EPOCHREALTIME
-    __RESH_RT_AFTER="$(date +%s.%N)"
-    __RESH_TZ_AFTER=$(date +%:z)
+    __RESH_RT_AFTER="$(date +%s.0)"
+    #__RESH_TZ_AFTER=$(date +%:z)
+    __RESH_TZ_AFTER=2:00
     __RESH_PWD_AFTER="$PWD"
     if [ ! -z ${__RESH_COLLECT+x} ]; then
         resh-collect -cmdLine "$__RESH_CMDLINE" -exitCode "$__RESH_EXIT_CODE" \
