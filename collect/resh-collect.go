@@ -50,7 +50,7 @@ func main() {
 	term := flag.String("term", "", "$TERM")
 
 	// non-posix
-	pid := flag.Int("pid", -1, "$PID")
+	pid := flag.Int("pid", -1, "$$")
 	sessionPid := flag.Int("sessionPid", -1, "$$ at session start")
 	shlvl := flag.Int("shlvl", -1, "$SHLVL")
 

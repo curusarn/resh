@@ -26,7 +26,6 @@ type Record struct {
 	RealPwdAfter string `json:"realPwdAfter"`
 	Pid          int    `json:"pid"`
 	SessionPid   int    `json:"sessionPid"`
-	WindowId     int    `json:"windowId"`
 	Host         string `json:"host"`
 	Hosttype     string `json:"hosttype"`
 	Ostype       string `json:"ostype"`
