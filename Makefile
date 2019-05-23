@@ -1,6 +1,10 @@
 SHELL=/bin/bash
 
 
+autoinstall: 
+	./install_helper.sh
+
+
 build: submodules resh-collect resh-daemon
 
 
