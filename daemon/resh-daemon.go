@@ -21,7 +21,7 @@ func main() {
 	dir := usr.HomeDir
 	pidfilePath := filepath.Join(dir, ".resh/resh.pid")
 	configPath := filepath.Join(dir, ".config/resh.toml")
-	outputPath := filepath.Join(dir, ".resh/history.json")
+	outputPath := filepath.Join(dir, ".resh_history.json")
 	logPath := filepath.Join(dir, ".resh/daemon.log")
 
 	f, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
