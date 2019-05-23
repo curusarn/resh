@@ -67,7 +67,7 @@ else
             echo "Continue? (Any key to continue / Ctrl+C to cancel)" 
             read x
         fi
-        cp -rf ./* "$project_path" && echo "Copied files to $project_path"
+        cp -rf ./* .git* "$project_path" && echo "Copied files to $project_path"
         cd "$project_path"
     fi
 
