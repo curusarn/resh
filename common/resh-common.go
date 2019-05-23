@@ -2,13 +2,15 @@ package common
 
 type Record struct {
 	// core
-	CmdLine  string `json:"cmdLine"`
-	ExitCode int    `json:"exitCode"`
-	Shell    string `json:"shell"`
+	CmdLine   string `json:"cmdLine"`
+	ExitCode  int    `json:"exitCode"`
+	Shell     string `json:"shell"`
+	Uname     string `json:"uname"`
+	SessionId string `json:"sessionId"`
 
 	// posix
-	Cols     int    `json:"cols"`
-	Lines    int    `json:"lines"`
+	Cols     string `json:"cols"`
+	Lines    string `json:"lines"`
 	Home     string `json:"home"`
 	Lang     string `json:"lang"`
 	LcAll    string `json:"lcAll"`
@@ -23,7 +25,7 @@ type Record struct {
 	RealPwd      string `json:"realPwd"`
 	RealPwdAfter string `json:"realPwdAfter"`
 	Pid          int    `json:"pid"`
-	ShellPid     int    `json:"shellPid"`
+	SessionPid   int    `json:"sessionPid"`
 	WindowId     int    `json:"windowId"`
 	Host         string `json:"host"`
 	Hosttype     string `json:"hosttype"`

@@ -33,11 +33,12 @@ func main() {
 	cmdLine := flag.String("cmdLine", "", "command line")
 	exitCode := flag.Int("exitCode", -1, "exit code")
 	shell := flag.String("shell", "", "actual shell")
+	uname := flag.String("uname", "", "uname")
+	sessionId := flag.String("sessionId", "", "resh generated session id")
 
 	// posix variables
-	cols := flag.Int("cols", -1, "$COLUMNS")
-	lines := flag.Int("lines", -1, "$LINES")
-
+	cols := flag.String("cols", "-1", "$COLUMNS")
+	lines := flag.String("lines", "-1", "$LINES")
 	home := flag.String("home", "", "$HOME")
 	lang := flag.String("lang", "", "$LANG")
 	lcAll := flag.String("lcAll", "", "$LC_ALL")
@@ -50,9 +51,7 @@ func main() {
 
 	// non-posix
 	pid := flag.Int("pid", -1, "$PID")
-	shellPid := flag.Int("shellPid", -1,
-		"$$ (pid but subshells don't affect it)")
-	windowId := flag.Int("windowId", -1, "$WINDOWID - session id")
+	sessionPid := flag.Int("sessionPid", -1, "$$ at session start")
 	shlvl := flag.Int("shlvl", -1, "$SHLVL")
 
 	host := flag.String("host", "", "$HOSTNAME")
@@ -138,9 +137,11 @@ func main() {
 
 	rec := common.Record{
 		// core
-		CmdLine:  *cmdLine,
-		ExitCode: *exitCode,
-		Shell:    *shell,
+		CmdLine:   *cmdLine,
+		ExitCode:  *exitCode,
+		Shell:     *shell,
+		Uname:     *uname,
+		SessionId: *sessionId,
 
 		// posix
 		Cols:  *cols,
@@ -160,8 +161,7 @@ func main() {
 		RealPwd:      realPwd,
 		RealPwdAfter: realPwdAfter,
 		Pid:          *pid,
-		ShellPid:     *shellPid,
-		WindowId:     *windowId,
+		SessionPid:   *sessionPid,
 		Host:         *host,
 		Hosttype:     *hosttype,
 		Ostype:       *ostype,
@@ -219,7 +219,8 @@ func sendRecord(r common.Record, port string) {
 func readFileContent(path string) string {
 	dat, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Fatal("failed to open " + path)
+		return ""
+		//log.Fatal("failed to open " + path)
 	}
 	return strings.TrimSuffix(string(dat), "\n")
 }
@@ -238,13 +239,15 @@ func getGitDirs(cdup string, exitCode int, pwd string) (string, string) {
 }
 
 func getTimezoneOffsetInSeconds(zone string) float64 {
-	hours_mins := strings.Split(zone, ":")
-	hours, err := strconv.Atoi(hours_mins[0])
+	// date +%z -> "+0200"
+	hours_str := zone[:3]
+	mins_str := zone[3:]
+	hours, err := strconv.Atoi(hours_str)
 	if err != nil {
 		log.Println("err while parsing hours in timezone offset:", err)
 		return -1
 	}
-	mins, err := strconv.Atoi(hours_mins[1])
+	mins, err := strconv.Atoi(mins_str)
 	if err != nil {
 		log.Println("err while parsing mins in timezone offset:", err)
 		return -1

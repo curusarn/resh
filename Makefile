@@ -5,10 +5,11 @@ build: submodules resh-collect resh-daemon
 
 
 install: build | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config $(HOME)/.resh/resh-uuid
-	cp submodules/bash-preexec/bash-preexec.sh ~/.bash-preexec.sh -f
-	cp config.toml ~/.config/resh.toml -f
-	cp shellrc.sh ~/.resh/shellrc -f
-	cp resh-* ~/.resh/bin/ -f
+	cp -f submodules/bash-preexec/bash-preexec.sh ~/.bash-preexec.sh
+	cp -f config.toml ~/.config/resh.toml
+	cp -f shellrc.sh ~/.resh/shellrc
+	cp -f uuid.sh ~/.resh/bin/resh-uuid
+	cp -f resh-* ~/.resh/bin/
 	[ ! -f ~/resh-history.json ] || mv ~/resh-history.json ~/.resh/history.json 
 	grep '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' ~/.bashrc ||\
 		echo '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' >> ~/.bashrc
@@ -34,7 +35,7 @@ $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config:
 	mkdir -p $@
 
 $(HOME)/.resh/resh-uuid:
-	cat /proc/sys/kernel/random/uuid > $@
+	cat /proc/sys/kernel/random/uuid > $@ 2>/dev/null || ./uuid.sh 
 
 .PHONY: submodules build install
 
