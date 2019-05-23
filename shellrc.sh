@@ -4,11 +4,11 @@ PATH=$PATH:~/.resh/bin
 #     zmodload zsh/datetime
 # fi
 
-get_uuid() {
+__resh_get_uuid() {
     cat /proc/sys/kernel/random/uuid 2>/dev/null || resh-uuid
 }
 
-get_epochrealtime() {
+__resh_get_epochrealtime() {
     if date +%s.%N | grep -vq 'N'; then
         # GNU date
         date +%s.%N
@@ -21,7 +21,7 @@ get_epochrealtime() {
             zmodload zsh/datetime
             __RESH_ZSH_LOADED_DATETIME=1
         fi
-        echo $EPOCHREALTIME
+        echo "$EPOCHREALTIME"
     else
         # dumb date 
         # XXX: we lost precison beyond seconds
@@ -33,13 +33,20 @@ get_epochrealtime() {
     fi
 }
 
+__resh_run_daemon() {
+    if [ -n "$ZSH_VERSION" ]; then
+        setopt LOCAL_OPTIONS NO_NOTIFY NO_MONITOR
+    fi
+    nohup resh-daemon &>/dev/null & disown
+}
+
 __RESH_MACOS=0
 __RESH_LINUX=0
 __RESH_UNAME=$(uname)
 
-if [ $__RESH_UNAME = "Darwin" ]; then
+if [ "$__RESH_UNAME" = "Darwin" ]; then
     __RESH_MACOS=1
-elif [ $__RESH_UNAME = "Linux" ]; then
+elif [ "$__RESH_UNAME" = "Linux" ]; then
     __RESH_LINUX=1
 else
     echo "resh PANIC unrecognized OS"
@@ -58,7 +65,7 @@ else
 fi
 
 if [ -z "${__RESH_SESSION_ID+x}" ]; then
-    export __RESH_SESSION_ID=$(get_uuid)
+    export __RESH_SESSION_ID=$(__resh_get_uuid)
     export __RESH_SESSION_PID="$$"
     # TODO add sesson time
 fi
@@ -70,17 +77,17 @@ __RESH_SHELL_ENV="$SHELL"
 __RESH_TERM="$TERM"
 
 # non-posix
-__RESH_RT_SESSION=$(get_epochrealtime)
+__RESH_RT_SESSION=$(__resh_get_epochrealtime)
 __RESH_OSTYPE="$OSTYPE" 
 __RESH_MACHTYPE="$MACHTYPE"
 
 if [ $__RESH_LINUX -eq 1 ]; then
-    __RESH_OS_RELEASE_ID=$(source /etc/os-release; echo $ID)
-    __RESH_OS_RELEASE_VERSION_ID=$(source /etc/os-release; echo $VERSION_ID)
-    __RESH_OS_RELEASE_ID_LIKE=$(source /etc/os-release; echo $ID_LIKE)
-    __RESH_OS_RELEASE_NAME=$(source /etc/os-release; echo $NAME)
-    __RESH_OS_RELEASE_PRETTY_NAME=$(source /etc/os-release; echo $PRETTY_NAME)
-    __RESH_RT_SESS_SINCE_BOOT=$(cat /proc/uptime | cut -d' ' -f1)
+    __RESH_OS_RELEASE_ID=$(. /etc/os-release; echo "$ID")
+    __RESH_OS_RELEASE_VERSION_ID=$(. /etc/os-release; echo "$VERSION_ID")
+    __RESH_OS_RELEASE_ID_LIKE=$(. /etc/os-release; echo "$ID_LIKE")
+    __RESH_OS_RELEASE_NAME=$(. /etc/os-release; echo "$NAME")
+    __RESH_OS_RELEASE_PRETTY_NAME=$(. /etc/os-release; echo "$PRETTY_NAME")
+    __RESH_RT_SESS_SINCE_BOOT=$(cut -d' ' -f1 /proc/uptime)
 elif [ $__RESH_MACOS -eq 1 ]; then
     __RESH_OS_RELEASE_ID="macos"
     __RESH_OS_RELEASE_VERSION_ID=$(sw_vers -productVersion 2>/dev/null)
@@ -89,8 +96,7 @@ elif [ $__RESH_MACOS -eq 1 ]; then
     __RESH_RT_SESS_SINCE_BOOT=$(sysctl -n kern.boottime | awk '{print $4}' | sed 's/,//g')
 fi
 
-
-nohup resh-daemon &>/dev/null & disown
+__resh_run_daemon
 
 __resh_preexec() {
     # core
@@ -125,7 +131,7 @@ __resh_preexec() {
     # time
     __RESH_TZ_BEFORE=$(date +%z)
     # __RESH_RT_BEFORE="$EPOCHREALTIME"
-    __RESH_RT_BEFORE=$(get_epochrealtime)
+    __RESH_RT_BEFORE=$(__resh_get_epochrealtime)
 
     # TODO: we should evaluate symlinks in preexec
     #       -> maybe create resh-precollect that could handle most of preexec
@@ -139,11 +145,12 @@ __resh_preexec() {
 
 __resh_precmd() {
     __RESH_EXIT_CODE=$?
-    __RESH_RT_AFTER=$(get_epochrealtime)
+    __RESH_RT_AFTER=$(__resh_get_epochrealtime)
     __RESH_TZ_AFTER=$(date +%z)
     __RESH_PWD_AFTER="$PWD"
     if [ -n "${__RESH_COLLECT}" ]; then
-        resh-collect -cmdLine "$__RESH_CMDLINE" -exitCode "$__RESH_EXIT_CODE" \
+        resh-collect -cmdLine "$__RESH_CMDLINE" \
+                     -exitCode "$__RESH_EXIT_CODE" \
                      -shell "$__RESH_SHELL" \
                      -uname "$__RESH_UNAME" \
                      -sessionId "$__RESH_SESSION_ID" \
@@ -179,7 +186,8 @@ __resh_precmd() {
                      -osReleaseVersionId "$__RESH_OS_RELEASE_VERSION_ID" \
                      -osReleaseIdLike "$__RESH_OS_RELEASE_ID_LIKE" \
                      -osReleaseName "$__RESH_OS_RELEASE_NAME" \
-                     -osReleasePrettyName "$__RESH_OS_RELEASE_PRETTY_NAME"
+                     -osReleasePrettyName "$__RESH_OS_RELEASE_PRETTY_NAME" \
+                     &>~/.resh/client_last_run_out.txt || echo "resh ERROR: $(head -n 1 ~/.resh/client_last_run_out.txt)"
     fi
     unset __RESH_COLLECT
 }
