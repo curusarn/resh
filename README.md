@@ -43,8 +43,9 @@ Works in `bash` and `zsh`.
 
 Tested on:
 - Arch
-- Ubuntu
 - MacOS
+- Ubuntu (18.04)
+- really old Ubuntu (16.04)
 
 ## Examples
 
