@@ -52,6 +52,15 @@ else
     echo
     echo "==========================================================================="
     echo "Your Golang version is older than 1.11 - we can't use go modules for build!"
+    echo "It's RECOMMENDED to update your Golang! (press Ctrl+C and update Golang manually)"
+    
+    if [ "$(uname)" = "Linux" ]; then
+        . /etc/os-release
+        if [ "${ID}" = "ubuntu" ]; then
+            echo 'You can probably use `sudo snap install go --classic` to get latest Golang.'
+        fi
+    fi
+    echo
     echo "I will try to build the project using dep. (I will let you review each step.)"
     echo "Continue? (Any key to continue / Ctrl+C to cancel)" 
     read x
