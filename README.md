@@ -52,7 +52,7 @@ Resh history is saved to `~/.resh_history.json`
 
 You can look at it using e.g. `tail -f ~/.resh_history.json | jq`  
 
-![screenshot](img/screenshot.png)
+![screenshot](img/screen.png)
 
 ## Issues
 
