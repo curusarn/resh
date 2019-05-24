@@ -24,7 +24,7 @@ The idea is to provide following:
 ## Installation
 
 ### Simplest
-Just run `curl https://raw.githubusercontent.com/curusarn/resh/master/rawinstall.sh | bash` from anywhere.
+Just run `bash -c "$(wget -O - https://raw.githubusercontent.com/curusarn/resh/master/rawinstall.sh)"` from anywhere.
 
 ### Simple
 1. Run `git clone https://github.com/curusarn/resh.git && cd resh`
