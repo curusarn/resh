@@ -16,7 +16,7 @@ if ! go version &>/dev/null; then
         . /etc/os-release
         if [ "${ID}" = "ubuntu" ]; then
             echo 'You can probably use `sudo snap install go --classic` (gets latest golang - RECOMMENDED)'
-            echo 'OR `sudo apt install go` (this might give you old golang)' 
+            echo 'OR `sudo apt install golang` (this might give you old golang)' 
             echo
             echo "==========================================================================="
             echo
@@ -58,6 +58,7 @@ else
         . /etc/os-release
         if [ "${ID}" = "ubuntu" ]; then
             echo 'You can probably use `sudo snap install go --classic` to get latest Golang.'
+            echo 'It may also be necessary to run `sudo apt remove golang; sudo apt autoremove`.'
         fi
     fi
     echo
