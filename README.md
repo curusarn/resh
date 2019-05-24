@@ -23,10 +23,10 @@ The idea is to provide following:
 
 ## Installation
 
-Simplest:
-Just run `curl <placeholder> | bash` from anywhere.
+### Simplest
+Just run `curl https://raw.githubusercontent.com/curusarn/resh/master/rawinstall.sh | bash` from anywhere.
 
-Simple:
+### Simple
 1. Run `git clone https://github.com/curusarn/resh.git && cd resh`
 2. Run `make autoinstall` for assisted build & instalation. OR Run `make install` if you know how to build Golang projects.
 
