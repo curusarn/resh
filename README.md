@@ -4,7 +4,13 @@
 
 This project is the first phase of my master thesis.
 
-It records shell history with rich set of metadata.
+It records shell history with rich set of metadata and saves it locally.
+
+It doesn't change the way your shell and your shell history behaves.
+
+Even this first phase is fairly fast (~40ms).
+
+If you are not happy with it you can uninstall it with a single command (`rm -rf ~/.resh`).
 
 ## Why
 
@@ -28,7 +34,8 @@ Just run `bash -c "$(wget -O - https://raw.githubusercontent.com/curusarn/resh/m
 
 ### Simple
 1. Run `git clone https://github.com/curusarn/resh.git && cd resh`
-2. Run `make autoinstall` for assisted build & instalation. OR Run `make install` if you know how to build Golang projects.
+2. Run `make autoinstall` for assisted build & instalation.
+    - OR Run `make install` if you know how to build Golang projects.
 
 ## Compatibility
 
@@ -38,3 +45,21 @@ Tested on:
 - Arch
 - Ubuntu
 - MacOS
+
+## Examples
+
+Resh history is saved to `~/.resh_history.json`
+
+You can look at it using e.g. `tail -f ~/.resh_history.json | jq`  
+
+![screenshot](img/screenshot.png)
+
+## Issues
+
+You are welcome to create issues: https://github.com/curusarn/resh/issues
+
+## Uninstallation
+
+You can uninstall this project at any time by running `rm -rf ~/.resh/`
+
+You won't lose any recorded history by removing `~/.resh` directory because history is saved in `~/.resh_history.json`.
