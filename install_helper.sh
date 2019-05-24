@@ -6,19 +6,23 @@ if ! go version &>/dev/null; then
     echo
     if [ "$(uname)" = "Darwin" ]; then
         echo 'You can probably use `brew install go`.'
+        echo
         exit 1
     elif [ "$(uname)" = "Linux" ]; then
         . /etc/os-release
         if [ "${ID}" = "ubuntu" ]; then
             echo 'You can probably use `sudo snap install go --classic` (gets latest golang - RECOMMENDED)'
             echo 'OR `sudo apt install go` (this might give you old golang)' 
+            echo
             exit 1
         elif [ "${ID_LIKE}" = "debian" ]; then
             echo 'You can probably use `sudo apt install go`' 
+            echo
             exit 1
         fi
     fi
     echo "It's recomended to use your favourite package manager."
+    echo
     exit 1 
 fi
 
