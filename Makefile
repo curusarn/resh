@@ -29,6 +29,8 @@ install: build | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config $(HOME)/.resh/r
 	# Restarting resh daemon ...
 	[ ! -f ~/.resh/resh.pid ] || kill -SIGTERM $$(cat ~/.resh/resh.pid)
 	nohup resh-daemon &>/dev/null & disown
+	# Final touch
+	touch ~/.resh_history.json
 	#
 	##########################################################
 	#                                                        #
