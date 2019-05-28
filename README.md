@@ -25,7 +25,7 @@ The idea is to provide following:
 ## Prereqisities
 
 - `git`
-- `golang` (>1.11 if possible but we can deal with old ones as well )
+- `golang` (>1.11 if possible but we can deal with old ones as well)
 
 ## Installation
 
