@@ -8,7 +8,7 @@ It records shell history with rich set of metadata and saves it locally.
 
 It doesn't change the way your shell and your shell history behaves.
 
-Even this first phase is fairly fast (~40ms).
+Even this first version is fairly fast (~40ms).
 
 If you are not happy with it you can uninstall it with a single command (`rm -rf ~/.resh`).
 
