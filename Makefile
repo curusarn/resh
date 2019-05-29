@@ -1,5 +1,7 @@
 SHELL=/bin/bash
-
+VERSION=$(shell cat version)
+REVISION=$(shell [ -n "$(git status --untracked-files=no --porcelain)" ] && git rev-parse --short=12 HEAD || echo "no_revision")
+GOFLAGS=-ldflags "-X main.Version=${VERSION} -X main.Revision=${REVISION}"
 
 autoinstall: 
 	./install_helper.sh
@@ -39,7 +41,7 @@ install: build | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config $(HOME)/.resh/r
 	##########################################################
 	#
 	# WHAT'S NEXT
-	# Please close all open terminal windows (or reload your rc files)
+	# Please RESTART ALL OPEN TERMINAL WINDOWS (or reload your rc files)
 	# Your resh history is located in `~/.resh_history.json`
 	# You can look at it using e.g. `tail -f ~/.resh_history.json | jq`
 	#
@@ -54,10 +56,10 @@ uninstall:
 	-rm -rf ~/.resh/
 
 resh-daemon: daemon/resh-daemon.go common/resh-common.go
-	go build -o $@ $<
+	go build ${GOFLAGS} -o $@ $<
 
 resh-collect: collect/resh-collect.go common/resh-common.go
-	go build -o $@ $<
+	go build ${GOFLAGS} -o $@ $<
 
 
 $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config:

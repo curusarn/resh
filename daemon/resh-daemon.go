@@ -16,7 +16,13 @@ import (
 	"strings"
 )
 
+var Version string
+var Revision string
+
 func main() {
+	log.Println("Daemon starting... \n" +
+		"version: " + Version +
+		" revision: " + Revision)
 	usr, _ := user.Current()
 	dir := usr.HomeDir
 	pidfilePath := filepath.Join(dir, ".resh/resh.pid")
@@ -67,7 +73,8 @@ func main() {
 }
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("OK\n"))
+	w.Write([]byte("OK; version: " + Version +
+		"; revision: " + Revision + "\n"))
 	log.Println("Status OK")
 }
 

@@ -4,18 +4,22 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"github.com/BurntSushi/toml"
 	common "github.com/curusarn/resh/common"
 	"io/ioutil"
 	"log"
 	"net/http"
-	//	"os"
+	"os"
 	//  "os/exec"
 	"os/user"
 	"path/filepath"
 	"strconv"
 	"strings"
 )
+
+var Version string
+var Revision string
 
 func main() {
 	usr, _ := user.Current()
@@ -29,6 +33,11 @@ func main() {
 	if _, err := toml.DecodeFile(configPath, &config); err != nil {
 		log.Fatal("Error reading config:", err)
 	}
+	showVersion := flag.Bool("version", false, "Show version and exit")
+	showRevision := flag.Bool("revision", false, "Show git revision and exit")
+
+	requireVersion := flag.String("requireVersion", "", "abort if version doesn't match")
+	requireRevision := flag.String("requireRevision", "", "abort if revision doesn't match")
 
 	cmdLine := flag.String("cmdLine", "", "command line")
 	exitCode := flag.Int("exitCode", -1, "exit code")
@@ -84,6 +93,26 @@ func main() {
 		"on session start $EPOCHREALTIME")
 	flag.Parse()
 
+	if *showVersion == true {
+		fmt.Println(Version)
+		os.Exit(0)
+	}
+	if *showRevision == true {
+		fmt.Println(Revision)
+		os.Exit(0)
+	}
+	if *requireVersion != "" && *requireVersion != Version {
+		log.Fatal("Please restart/reload this terminal session " +
+			"(resh version: " + Version +
+			" resh version of this terminal session: " + *requireVersion +
+			")")
+	}
+	if *requireRevision != "" && *requireRevision != Revision {
+		log.Fatal("Please restart/reload this terminal session " +
+			"(resh revision: " + Revision +
+			" resh revision of this terminal session: " + *requireRevision +
+			")")
+	}
 	realtimeAfter, err := strconv.ParseFloat(*rta, 64)
 	if err != nil {
 		log.Fatal("Flag Parsing error (rta):", err)
@@ -185,13 +214,16 @@ func main() {
 		GitRealDir:      gitRealDir,
 		GitOriginRemote: *gitRemote,
 		MachineId:       readFileContent(machineIdPath),
-		ReshUuid:        readFileContent(reshUuidPath),
 
 		OsReleaseId:         *osReleaseId,
 		OsReleaseVersionId:  *osReleaseVersionId,
 		OsReleaseIdLike:     *osReleaseIdLike,
 		OsReleaseName:       *osReleaseName,
 		OsReleasePrettyName: *osReleasePrettyName,
+
+		ReshUuid:     readFileContent(reshUuidPath),
+		ReshVersion:  Version,
+		ReshRevision: Revision,
 	}
 	sendRecord(rec, strconv.Itoa(config.Port))
 }
@@ -292,4 +324,5 @@ func getTimezoneOffsetInSeconds(zone string) float64 {
 // 		}
 // 	}
 // 	return strings.TrimSuffix(string(out), "\n")
+// }
 // }
