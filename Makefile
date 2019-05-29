@@ -1,6 +1,6 @@
 SHELL=/bin/bash
 VERSION=$(shell cat version)
-REVISION=$(shell [ -n "$(git status --untracked-files=no --porcelain)" ] && git rev-parse --short=12 HEAD || echo "no_revision")
+REVISION=$(shell [ -z "$(git status --untracked-files=no --porcelain)" ] && git rev-parse --short=12 HEAD || echo "no_revision")
 GOFLAGS=-ldflags "-X main.Version=${VERSION} -X main.Revision=${REVISION}"
 
 autoinstall: 
