@@ -51,7 +51,11 @@ Tested on:
 
 Resh history is saved to `~/.resh_history.json`
 
-You can look at it using e.g. `tail -f ~/.resh_history.json | jq`  
+Each line is a JSON that represents one executed command line.
+
+This is how I view it `tail -f ~/.resh_history.json | jq` or `jq < ~/.resh_history.json`.  
+
+You can install `jq` using your favourite package manager or you can use other JSON parser to view the history.
 
 ![screenshot](img/screen.png)
 
