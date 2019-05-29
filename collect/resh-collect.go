@@ -102,14 +102,14 @@ func main() {
 		os.Exit(0)
 	}
 	if *requireVersion != "" && *requireVersion != Version {
-        fmt.Println("resh ERROR: Please restart/reload this terminal session " +
+        fmt.Println("Please restart/reload this terminal session " +
 			"(resh version: " + Version +
 			" resh version of this terminal session: " + *requireVersion +
 			")")
         os.Exit(3)
 	}
 	if *requireRevision != "" && *requireRevision != Revision {
-        fmt.Println("resh ERROR: Please restart/reload this terminal session " +
+        fmt.Println("Please restart/reload this terminal session " +
 			"(resh revision: " + Revision +
 			" resh revision of this terminal session: " + *requireRevision +
 			")")
