@@ -96,6 +96,9 @@ elif [ $__RESH_MACOS -eq 1 ]; then
     __RESH_RT_SESS_SINCE_BOOT=$(sysctl -n kern.boottime | awk '{print $4}' | sed 's/,//g')
 fi
 
+__RESH_VERSION=$(resh-collect -version)
+__RESH_REVISION=$(resh-collect -revision)
+
 __resh_run_daemon
 
 __resh_preexec() {
@@ -149,7 +152,9 @@ __resh_precmd() {
     __RESH_TZ_AFTER=$(date +%z)
     __RESH_PWD_AFTER="$PWD"
     if [ -n "${__RESH_COLLECT}" ]; then
-        resh-collect -cmdLine "$__RESH_CMDLINE" \
+        resh-collect -requireVersion "$__RESH_VERSION" \
+                     -requireRevision "$__RESH_REVISION" \
+                     -cmdLine "$__RESH_CMDLINE" \
                      -exitCode "$__RESH_EXIT_CODE" \
                      -shell "$__RESH_SHELL" \
                      -uname "$__RESH_UNAME" \

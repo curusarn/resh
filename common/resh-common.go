@@ -50,13 +50,16 @@ type Record struct {
 	GitRealDir      string `json:"gitRealDir"`
 	GitOriginRemote string `json:"gitOriginRemote"`
 	MachineId       string `json:"machineId"`
-	ReshUuid        string `json:"reshUuid"`
 
 	OsReleaseId         string `json:"osReleaseId"`
 	OsReleaseVersionId  string `json:"osReleaseVersionId"`
 	OsReleaseIdLike     string `json:"osReleaseIdLike"`
 	OsReleaseName       string `json:"osReleaseName"`
 	OsReleasePrettyName string `json:"osReleasePrettyName"`
+
+	ReshUuid     string `json:"reshUuid"`
+	ReshVersion  string `json:"reshVersion"`
+	ReshRevision string `json:"reshRevision"`
 }
 
 type Config struct {
