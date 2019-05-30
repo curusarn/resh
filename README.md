@@ -1,4 +1,4 @@
-# master thesis 
+# Rich Enhanced Shell History
 
 ## What
 
