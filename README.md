@@ -8,7 +8,7 @@ It records shell history with rich set of metadata and saves it locally.
 
 It doesn't change the way your shell and your shell history behaves.
 
-Even this first version is fairly fast (~40ms).
+You won't notice any delay in your shell (~40ms).
 
 If you are not happy with it you can uninstall it with a single command (`rm -rf ~/.resh`).
 
@@ -21,6 +21,16 @@ The idea is to provide following:
 - Simple way to search whole history by command itself and/or metadata
 - Synchronization across devices
 - And more ...
+
+In order to be able to develop a good history tool I will need to get some insight into real life shell usage patterns.
+
+That's why I ask YOU to install this tool to locally record your shell history.
+
+After some time (probably a few months) I will create a script to replace anything too personal in the recorded data by placeholders. 
+
+Then I will ask you to run the script against the recorded data and tell me if you are willing to share the resluts with me.
+
+I'm very thankful for anyone who is willing to support my thesis by providing their usage data!
 
 ## Prereqisities
 
