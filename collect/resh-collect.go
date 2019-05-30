@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/BurntSushi/toml"
-	common "github.com/curusarn/resh/common"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/BurntSushi/toml"
+	common "github.com/curusarn/resh/common"
+
 	//  "os/exec"
 	"os/user"
 	"path/filepath"
@@ -52,7 +54,7 @@ func main() {
 	lang := flag.String("lang", "", "$LANG")
 	lcAll := flag.String("lcAll", "", "$LC_ALL")
 	login := flag.String("login", "", "$LOGIN")
-	path := flag.String("path", "", "$PATH")
+	// path := flag.String("path", "", "$PATH")
 	pwd := flag.String("pwd", "", "$PWD - present working directory")
 	pwdAfter := flag.String("pwdAfter", "", "$PWD after command")
 	shellEnv := flag.String("shellEnv", "", "$SHELL")
@@ -102,18 +104,18 @@ func main() {
 		os.Exit(0)
 	}
 	if *requireVersion != "" && *requireVersion != Version {
-        fmt.Println("Please restart/reload this terminal session " +
+		fmt.Println("Please restart/reload this terminal session " +
 			"(resh version: " + Version +
 			" resh version of this terminal session: " + *requireVersion +
 			")")
-        os.Exit(3)
+		os.Exit(3)
 	}
 	if *requireRevision != "" && *requireRevision != Revision {
-        fmt.Println("Please restart/reload this terminal session " +
+		fmt.Println("Please restart/reload this terminal session " +
 			"(resh revision: " + Revision +
 			" resh revision of this terminal session: " + *requireRevision +
 			")")
-        os.Exit(3)
+		os.Exit(3)
 	}
 	realtimeAfter, err := strconv.ParseFloat(*rta, 64)
 	if err != nil {
@@ -178,11 +180,11 @@ func main() {
 		Cols:  *cols,
 		Lines: *lines,
 
-		Home:     *home,
-		Lang:     *lang,
-		LcAll:    *lcAll,
-		Login:    *login,
-		Path:     *path,
+		Home:  *home,
+		Lang:  *lang,
+		LcAll: *lcAll,
+		Login: *login,
+		// Path:     *path,
 		Pwd:      *pwd,
 		PwdAfter: *pwdAfter,
 		ShellEnv: *shellEnv,

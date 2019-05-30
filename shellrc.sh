@@ -112,7 +112,7 @@ __resh_preexec() {
     __RESH_LC_ALL="$LC_ALL"
     # other LC ?
     __RESH_LINES="$LINES"
-    __RESH_PATH="$PATH"
+    # __RESH_PATH="$PATH"
     __RESH_PWD="$PWD"
     
     # non-posix
@@ -165,7 +165,6 @@ __resh_precmd() {
                      -lcAll "$__RESH_LC_ALL" \
                      -lines "$__RESH_LINES" \
                      -login "$__RESH_LOGIN" \
-                     -path "$__RESH_PATH" \
                      -pwd "$__RESH_PWD" \
                      -pwdAfter "$__RESH_PWD_AFTER" \
                      -shellEnv "$__RESH_SHELL_ENV" \
@@ -193,6 +192,7 @@ __resh_precmd() {
                      -osReleaseName "$__RESH_OS_RELEASE_NAME" \
                      -osReleasePrettyName "$__RESH_OS_RELEASE_PRETTY_NAME" \
                      &>~/.resh/client_last_run_out.txt || echo "resh ERROR: $(head -n 1 ~/.resh/client_last_run_out.txt)"
+                    # -path "$__RESH_PATH" \
     fi
     unset __RESH_COLLECT
 }

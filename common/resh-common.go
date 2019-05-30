@@ -9,13 +9,13 @@ type Record struct {
 	SessionId string `json:"sessionId"`
 
 	// posix
-	Cols     string `json:"cols"`
-	Lines    string `json:"lines"`
-	Home     string `json:"home"`
-	Lang     string `json:"lang"`
-	LcAll    string `json:"lcAll"`
-	Login    string `json:"login"`
-	Path     string `json:"path"`
+	Cols  string `json:"cols"`
+	Lines string `json:"lines"`
+	Home  string `json:"home"`
+	Lang  string `json:"lang"`
+	LcAll string `json:"lcAll"`
+	Login string `json:"login"`
+	//Path     string `json:"path"`
 	Pwd      string `json:"pwd"`
 	PwdAfter string `json:"pwdAfter"`
 	ShellEnv string `json:"shellEnv"`
