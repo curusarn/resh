@@ -9,6 +9,12 @@ autoinstall:
 
 build: submodules resh-collect resh-daemon
 
+rebuild:
+	make clean
+	make build
+
+clean:
+	rm resh-*
 
 install: build submodules/bash-preexec/bash-preexec.sh shellrc.sh config.toml uuid.sh | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config
 	# Copying files to resh directory ...
@@ -70,7 +76,7 @@ $(HOME)/.resh/resh-uuid:
 	# Generating random uuid for this device ...
 	cat /proc/sys/kernel/random/uuid > $@ 2>/dev/null || ./uuid.sh 
 
-.PHONY: submodules build install
+.PHONY: submodules build install rebuild uninstall clean autoinstall
 
 
 submodules: | submodules/bash-preexec/bash-preexec.sh
