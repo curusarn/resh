@@ -153,9 +153,9 @@ __resh_precmd() {
     __RESH_PWD_AFTER="$PWD"
     if [ -n "${__RESH_COLLECT}" ]; then
         if [ "$__RESH_VERSION" != $(resh-collect -version) ]; then
-            echo "resh WARNING: You probably just updated RESH - please restart/reload this terminal session (resh version: $(resh-collect -version); resh version of this terminal session: ${__RESH_VERSION})"
+            echo "resh WARNING: You probably just updated RESH - please restart or reload this terminal session (resh version: $(resh-collect -version); resh version of this terminal session: ${__RESH_VERSION})"
         elif [ "$__RESH_REVISION" != $(resh-collect -revision) ]; then
-            echo "resh WARNING: You probably just updated RESH - please restart/reload this terminal session (resh version: $(resh-collect -revision); resh version of this terminal session: ${__RESH_REVISION})"
+            echo "resh WARNING: You probably just updated RESH - please restart or reload this terminal session (resh version: $(resh-collect -revision); resh version of this terminal session: ${__RESH_REVISION})"
         else
             resh-collect -requireVersion "$__RESH_VERSION" \
                         -requireRevision "$__RESH_REVISION" \
