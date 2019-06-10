@@ -10,7 +10,7 @@ autoinstall:
 build: submodules resh-collect resh-daemon
 
 
-install: build | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config $(HOME)/.resh/resh-uuid
+install: build submodules/bash-preexec/bash-preexec.sh shellrc.sh config.toml uuid.sh | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config
 	# Copying files to resh directory ...
 	cp -f submodules/bash-preexec/bash-preexec.sh ~/.bash-preexec.sh
 	cp -f config.toml ~/.config/resh.toml
@@ -55,10 +55,10 @@ uninstall:
 	# Uninstalling ...
 	-rm -rf ~/.resh/
 
-resh-daemon: daemon/resh-daemon.go common/resh-common.go
+resh-daemon: daemon/resh-daemon.go common/resh-common.go version
 	go build ${GOFLAGS} -o $@ $<
 
-resh-collect: collect/resh-collect.go common/resh-common.go
+resh-collect: collect/resh-collect.go common/resh-common.go version
 	go build ${GOFLAGS} -o $@ $<
 
 

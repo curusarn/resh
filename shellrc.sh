@@ -152,47 +152,53 @@ __resh_precmd() {
     __RESH_TZ_AFTER=$(date +%z)
     __RESH_PWD_AFTER="$PWD"
     if [ -n "${__RESH_COLLECT}" ]; then
-        resh-collect -requireVersion "$__RESH_VERSION" \
-                     -requireRevision "$__RESH_REVISION" \
-                     -cmdLine "$__RESH_CMDLINE" \
-                     -exitCode "$__RESH_EXIT_CODE" \
-                     -shell "$__RESH_SHELL" \
-                     -uname "$__RESH_UNAME" \
-                     -sessionId "$__RESH_SESSION_ID" \
-                     -cols "$__RESH_COLS" \
-                     -home "$__RESH_HOME" \
-                     -lang "$__RESH_LANG" \
-                     -lcAll "$__RESH_LC_ALL" \
-                     -lines "$__RESH_LINES" \
-                     -login "$__RESH_LOGIN" \
-                     -pwd "$__RESH_PWD" \
-                     -pwdAfter "$__RESH_PWD_AFTER" \
-                     -shellEnv "$__RESH_SHELL_ENV" \
-                     -term "$__RESH_TERM" \
-                     -pid "$__RESH_PID" \
-                     -sessionPid "$__RESH_SESSION_PID" \
-                     -host "$__RESH_HOST" \
-                     -hosttype "$__RESH_HOSTTYPE" \
-                     -ostype "$__RESH_OSTYPE" \
-                     -machtype "$__RESH_MACHTYPE" \
-                     -shlvl "$__RESH_SHLVL" \
-                     -gitCdup "$__RESH_GIT_CDUP" \
-                     -gitCdupExitCode "$__RESH_GIT_CDUP_EXIT_CODE" \
-                     -gitRemote "$__RESH_GIT_REMOTE" \
-                     -gitRemoteExitCode "$__RESH_GIT_REMOTE_EXIT_CODE" \
-                     -realtimeBefore "$__RESH_RT_BEFORE" \
-                     -realtimeAfter "$__RESH_RT_AFTER" \
-                     -realtimeSession "$__RESH_RT_SESSION" \
-                     -realtimeSessSinceBoot "$__RESH_RT_SESS_SINCE_BOOT" \
-                     -timezoneBefore "$__RESH_TZ_BEFORE" \
-                     -timezoneAfter "$__RESH_TZ_AFTER" \
-                     -osReleaseId "$__RESH_OS_RELEASE_ID" \
-                     -osReleaseVersionId "$__RESH_OS_RELEASE_VERSION_ID" \
-                     -osReleaseIdLike "$__RESH_OS_RELEASE_ID_LIKE" \
-                     -osReleaseName "$__RESH_OS_RELEASE_NAME" \
-                     -osReleasePrettyName "$__RESH_OS_RELEASE_PRETTY_NAME" \
-                     &>~/.resh/client_last_run_out.txt || echo "resh ERROR: $(head -n 1 ~/.resh/client_last_run_out.txt)"
-                    # -path "$__RESH_PATH" \
+        if [ "$__RESH_VERSION" != $(resh-collect -version) ]; then
+            echo "resh WARNING: You probably just updated RESH - please restart/reload this terminal session (resh version: $(resh-collect -version); resh version of this terminal session: ${__RESH_VERSION})"
+        elif [ "$__RESH_REVISION" != $(resh-collect -revision) ]; then
+            echo "resh WARNING: You probably just updated RESH - please restart/reload this terminal session (resh version: $(resh-collect -revision); resh version of this terminal session: ${__RESH_REVISION})"
+        else
+            resh-collect -requireVersion "$__RESH_VERSION" \
+                        -requireRevision "$__RESH_REVISION" \
+                        -cmdLine "$__RESH_CMDLINE" \
+                        -exitCode "$__RESH_EXIT_CODE" \
+                        -shell "$__RESH_SHELL" \
+                        -uname "$__RESH_UNAME" \
+                        -sessionId "$__RESH_SESSION_ID" \
+                        -cols "$__RESH_COLS" \
+                        -home "$__RESH_HOME" \
+                        -lang "$__RESH_LANG" \
+                        -lcAll "$__RESH_LC_ALL" \
+                        -lines "$__RESH_LINES" \
+                        -login "$__RESH_LOGIN" \
+                        -pwd "$__RESH_PWD" \
+                        -pwdAfter "$__RESH_PWD_AFTER" \
+                        -shellEnv "$__RESH_SHELL_ENV" \
+                        -term "$__RESH_TERM" \
+                        -pid "$__RESH_PID" \
+                        -sessionPid "$__RESH_SESSION_PID" \
+                        -host "$__RESH_HOST" \
+                        -hosttype "$__RESH_HOSTTYPE" \
+                        -ostype "$__RESH_OSTYPE" \
+                        -machtype "$__RESH_MACHTYPE" \
+                        -shlvl "$__RESH_SHLVL" \
+                        -gitCdup "$__RESH_GIT_CDUP" \
+                        -gitCdupExitCode "$__RESH_GIT_CDUP_EXIT_CODE" \
+                        -gitRemote "$__RESH_GIT_REMOTE" \
+                        -gitRemoteExitCode "$__RESH_GIT_REMOTE_EXIT_CODE" \
+                        -realtimeBefore "$__RESH_RT_BEFORE" \
+                        -realtimeAfter "$__RESH_RT_AFTER" \
+                        -realtimeSession "$__RESH_RT_SESSION" \
+                        -realtimeSessSinceBoot "$__RESH_RT_SESS_SINCE_BOOT" \
+                        -timezoneBefore "$__RESH_TZ_BEFORE" \
+                        -timezoneAfter "$__RESH_TZ_AFTER" \
+                        -osReleaseId "$__RESH_OS_RELEASE_ID" \
+                        -osReleaseVersionId "$__RESH_OS_RELEASE_VERSION_ID" \
+                        -osReleaseIdLike "$__RESH_OS_RELEASE_ID_LIKE" \
+                        -osReleaseName "$__RESH_OS_RELEASE_NAME" \
+                        -osReleasePrettyName "$__RESH_OS_RELEASE_PRETTY_NAME" \
+                        &>~/.resh/client_last_run_out.txt || echo "resh ERROR: $(head -n 1 ~/.resh/client_last_run_out.txt)"
+                        # -path "$__RESH_PATH" \
+        fi
     fi
     unset __RESH_COLLECT
 }
