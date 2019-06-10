@@ -69,6 +69,12 @@ You can install `jq` using your favourite package manager or you can use other J
 
 ![screenshot](img/screen.png)
 
+## Known issues
+
+Q: I use bash on macOS and resh doesn't work.
+A: You have to add something like `[ -f ~/.bashrc ] && . ~/.bashrc` to your `~/.bash_profile`.
+Long answer:
+
 ## Issues
 
 You are welcome to create issues: https://github.com/curusarn/resh/issues
