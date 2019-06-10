@@ -71,9 +71,11 @@ You can install `jq` using your favourite package manager or you can use other J
 
 ## Known issues
 
-Q: I use bash on macOS and resh doesn't work.
-A: You have to add something like `[ -f ~/.bashrc ] && . ~/.bashrc` to your `~/.bash_profile`.
-Long answer:
+### Q: I use bash on macOS and resh doesn't work
+
+**A:** You have to add `[ -f ~/.bashrc ] && . ~/.bashrc` to your `~/.bash_profile`.  
+
+**Long Answer:** Under macOS bash shell only loads `~/.bash_profile` because every shell runs as login shell. I will definitely work around this in the future but since this doesn't affect many people I decided to not solve this issue at the moment.
 
 ## Issues
 
