@@ -2,9 +2,9 @@
 
 ## What
 
-This project is the first phase of my master thesis.
+This project is the first phase of my Master project.
 
-It records shell history with rich set of metadata and saves it locally. (see example below)
+It records shell history with rich set of metadata and saves it locally. (device, dir, git, ... see example below)
 
 It doesn't change the way your shell and your shell history behaves.
 
@@ -14,7 +14,7 @@ If you are not happy with it you can uninstall it with a single command (`rm -rf
 
 ## Why
 
-The ultimate point of my thesis is to provide a context-based human-centered replacement/enhancement for bash and zsh shell history.
+The ultimate point of my thesis is to provide a context-based replacement/enhancement for bash and zsh shell history.
 
 The idea is to:
 - Save each command with metadata (device, dir, gitdir, ...)
