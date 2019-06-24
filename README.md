@@ -16,11 +16,13 @@ If you are not happy with it you can uninstall it with a single command (`rm -rf
 
 The ultimate point of my thesis is to provide a context-based human-centered replacement/enhancement for bash and zsh shell history.
 
-The idea is to provide following:
-- Context-based history
-- Simple way to search whole history by command itself and/or metadata
-- Synchronization across devices
-- And more ...
+The idea is to:
+- Save each command with metadata (device, dir, gitdir, ...)
+- Recommend history based on saved metadata (e.g. it will be easier to get to commands specific to your project)
+- Provide a simple way to search whole history by command itself and/or metadata (e.g. imagine searching by project, directory, device, ...)
+- Synchronize history across devices 
+- Provide an API (to make the project easily extensible)
+- And more ... 
 
 In order to be able to develop a good history tool I will need to get some insight into real life shell usage patterns.
 
