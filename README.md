@@ -4,7 +4,7 @@
 
 This project is the first phase of my master thesis.
 
-It records shell history with rich set of metadata and saves it locally.
+It records shell history with rich set of metadata and saves it locally. (see example below)
 
 It doesn't change the way your shell and your shell history behaves.
 
