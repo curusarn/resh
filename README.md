@@ -14,7 +14,7 @@ If you are not happy with it you can uninstall it with a single command (`rm -rf
 
 ## Why
 
-The ultimate point of my thesis is to provide a drop-in replacement for bash and zsh shell history.
+The ultimate point of my thesis is to provide a context-based human-centered replacement/enhancement for bash and zsh shell history.
 
 The idea is to provide following:
 - Context-based history
