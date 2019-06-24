@@ -24,13 +24,15 @@ The idea is to provide following:
 
 In order to be able to develop a good history tool I will need to get some insight into real life shell usage patterns.
 
-That's why I ask YOU to install this tool to locally record your shell history.
+That's why I ask YOU to install this tool to locally record your shell history. 
 
 After some time (probably a few months) I will create a script to replace anything too personal in the recorded data by placeholders. 
 
 Then I will ask you to run the script against the recorded data and tell me if you are willing to share the resluts with me.
 
 I'm very thankful for anyone who is willing to support my thesis by providing their usage data!
+
+If you install RESH, please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98 
 
 ## Prereqisities
 
@@ -46,6 +48,8 @@ Just run `bash -c "$(wget -O - https://raw.githubusercontent.com/curusarn/resh/m
 1. Run `git clone https://github.com/curusarn/resh.git && cd resh`
 2. Run `make autoinstall` for assisted build & instalation.
     - OR Run `make install` if you know how to build Golang projects.
+
+If you install RESH, please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98 
 
 ## Compatibility
 
