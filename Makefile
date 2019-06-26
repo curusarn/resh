@@ -56,6 +56,8 @@ install: build submodules/bash-preexec/bash-preexec.sh shellrc.sh config.toml uu
 	# You can uninstall this at any time by running `rm -rf ~/.resh/`
 	# You won't lose any collected history by removing `~/.resh` directory
 	#
+	# Please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98
+	#
 
 uninstall:
 	# Uninstalling ...
