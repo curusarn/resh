@@ -7,7 +7,7 @@ autoinstall:
 	./install_helper.sh
 
 
-build: submodules resh-collect resh-daemon
+build: submodules resh-collect resh-daemon resh-sanitize-history
 
 rebuild:
 	make clean
@@ -23,6 +23,7 @@ install: build submodules/bash-preexec/bash-preexec.sh shellrc.sh config.toml uu
 	cp -f shellrc.sh ~/.resh/shellrc
 	cp -f uuid.sh ~/.resh/bin/resh-uuid
 	cp -f resh-* ~/.resh/bin/
+	cp -fr sanitizer_data ~/.resh/
 	# backward compatibility: We have a new location for resh history file 
 	[ ! -f ~/.resh/history.json ] || mv ~/.resh/history.json ~/.resh_history.json 
 	# Adding resh shellrc to .bashrc ...
@@ -69,6 +70,8 @@ resh-daemon: daemon/resh-daemon.go common/resh-common.go version
 resh-collect: collect/resh-collect.go common/resh-common.go version
 	go build ${GOFLAGS} -o $@ $<
 
+resh-sanitize-history: collect/resh-sanitize-history.go common/resh-common.go version
+	go build ${GOFLAGS} -o $@ $<
 
 $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config:
 	# Creating dirs ...
