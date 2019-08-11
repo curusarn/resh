@@ -1,7 +1,13 @@
 
+!
 .
 ..
+:
 [
+[[
+]]
+{
+}
 addgnupghome
 addgroup
 addpart
@@ -37,6 +43,7 @@ bashbug
 bashbug-64
 bg
 bin
+bind
 blkdeactivate
 blkdiscard
 blkid
@@ -44,9 +51,11 @@ blkzone
 blockdev
 boot
 bootctl
+break
 bridge
 brotli
 build-locale-archive
+builtin
 bunzip2
 busctl
 bzcat
@@ -62,8 +71,10 @@ bzless
 bzmore
 cal
 ca-legacy
+caller
 capsh
 captoinfo
+case
 cat
 catchsegv
 cd
@@ -104,7 +115,12 @@ com
 combinedeltarpm
 comm
 command
+compgen
+complete
+compopt
+continue
 convert
+coproc
 coredumpctl
 cp
 cpgr
@@ -163,6 +179,7 @@ deb-systemd-helper
 deb-systemd-invoke
 debugfs
 debuginfo-install
+declare
 delgroup
 delpart
 deluser
@@ -178,6 +195,8 @@ dircolors
 dirmngr
 dirmngr-client
 dirname
+dirs
+disown
 dmesg
 dmfilemapd
 dmsetup
@@ -185,8 +204,10 @@ dmstats
 dnf
 dnf-3
 dnsdomainname
+do
 docker
 domainname
+done
 dpkg
 dpkg-deb
 dpkg-divert
@@ -214,12 +235,20 @@ echo
 egrep
 eject
 elfedit
+elif
+else
+enable
 env
+esac
 etc
+eval
 evmctl
 ex
+exec
+exit
 expand
 expiry
+export
 expr
 factor
 faillock
@@ -232,6 +261,7 @@ fdisk
 ffmpeg
 fg
 fgrep
+fi
 filefrag
 fincore
 find
@@ -244,6 +274,7 @@ fish
 flock
 fmt
 fold
+for
 free
 fsck
 fsck.cramfs
@@ -254,6 +285,7 @@ fsck.minix
 fsfreeze
 fstab-decode
 fstrim
+function
 g13
 g13-syshelp
 gapplication
@@ -310,7 +342,9 @@ halt
 hardlink
 hash
 head
+help
 hexdump
+history
 home
 hostid
 hostname
@@ -324,8 +358,10 @@ iconvconfig
 iconvconfig.x86_64
 id
 idn
+if
 ifenslave
 igawk
+in
 info
 infocmp
 infokey
@@ -366,6 +402,7 @@ ldconfig
 ldconfig.real
 ldd
 ld.gold
+let
 lgroupadd
 lgroupdel
 lgroupmod
@@ -378,6 +415,7 @@ linux64
 ln
 lnewusers
 lnstat
+local
 locale
 locale-check
 localectl
@@ -387,6 +425,7 @@ logger
 login
 loginctl
 logname
+logout
 logsave
 look
 losetup
@@ -416,6 +455,7 @@ make
 makedb
 makedeltarpm
 make-dummy-cert
+mapfile
 mawk
 mcookie
 md5sum
@@ -512,6 +552,7 @@ pkill
 pldd
 pmap
 policy-rc.d
+popd
 portablectl
 poweroff
 pr
@@ -521,6 +562,7 @@ prlimit
 proc
 ps
 ptx
+pushd
 pwck
 pwconv
 pwd
@@ -546,8 +588,10 @@ rbash
 rdisc
 rdma
 read
+readarray
 readelf
 readlink
+readonly
 readprofile
 realpath
 reboot
@@ -565,11 +609,12 @@ repo-rss
 reposync
 repotrack
 reset
+resh
 resize2fs
 resizepart
 resolvconf
 resolvectl
-resh
+return
 rev
 rfkill
 rgrep
@@ -610,12 +655,14 @@ scriptreplay
 sdiff
 sed
 sefcontext_compile
+select
 select-editor
 sensible-browser
 sensible-editor
 sensible-pager
 seq
 service
+set
 setarch
 setcap
 setfacl
@@ -634,6 +681,8 @@ sha384sum
 sha512sum
 shadowconfig
 sh.distrib
+shift
+shopt
 show-changed-rco
 show-installed
 shred
@@ -649,6 +698,7 @@ sln
 snice
 sort
 sotruss
+source
 split
 sprof
 sqlite3
@@ -668,6 +718,7 @@ sudoedit
 sudoreplay
 sulogin
 sum
+suspend
 swaplabel
 swapoff
 swapon
@@ -716,9 +767,12 @@ telinit
 tempfile
 test
 testgdbm
+then
 tic
+time
 timedatectl
 timeout
+times
 tipc
 tload
 tmp
@@ -729,6 +783,7 @@ tput
 tr
 tracepath
 tracepath6
+trap
 true
 truncate
 trust
@@ -737,6 +792,7 @@ tsort
 tty
 tune2fs
 type
+typeset
 tzconfig
 tzselect
 udevadm
@@ -756,7 +812,9 @@ unix_update
 unlink
 unlz4
 unminimize
+unset
 unshare
+until
 unxz
 update-alternatives
 update-ca-trust
@@ -794,6 +852,7 @@ wdctl
 weak-modules
 whereis
 which
+while
 who
 whoami
 wipefs

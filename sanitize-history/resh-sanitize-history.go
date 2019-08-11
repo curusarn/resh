@@ -179,8 +179,8 @@ func (s *sanitizer) sanitizeRecord(record *common.Record) error {
 }
 
 func (s *sanitizer) sanitizeCmdLine(cmdLine string) (string, error) {
-	const optionEndingChars = "=;)"
-	const optionAllowedChars = "-_"
+	const optionEndingChars = "\"$'\\#[]!><|;{}()*,?~&=" // all bash control characters and '=' which commonly ends options w/ values
+	const optionAllowedChars = "-_"                      // characters commonly found inside of options
 	sanCmdLine := ""
 	buff := ""
 
