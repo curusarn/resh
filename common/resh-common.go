@@ -60,6 +60,9 @@ type Record struct {
 	ReshUuid     string `json:"reshUuid"`
 	ReshVersion  string `json:"reshVersion"`
 	ReshRevision string `json:"reshRevision"`
+
+	// added by sanitizatizer
+	CmdLength int `json:"cmdLength"`
 }
 
 type Config struct {

@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"crypto/sha1"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -14,10 +15,11 @@ import (
 	"os/user"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/curusarn/resh/common"
-	"github.com/mattn/go-shellwords"
 	giturls "github.com/whilp/git-urls"
 )
 
@@ -48,7 +50,7 @@ func main() {
 		fmt.Println(Revision)
 		os.Exit(0)
 	}
-	sanitizer := sanitizer{}
+	sanitizer := sanitizer{hashLength: 4}
 	err := sanitizer.init(sanitizerDataPath)
 	if err != nil {
 		log.Fatal("Sanitizer init() error:", err)
@@ -70,7 +72,7 @@ func main() {
 			log.Println("Line:", line)
 			return
 		}
-		err = sanitizer.sanitize(&record)
+		err = sanitizer.sanitizeRecord(&record)
 		if err != nil {
 			log.Println("Sanitization error:", err)
 			log.Println("Line:", line)
@@ -87,16 +89,13 @@ func main() {
 }
 
 type sanitizer struct {
-	GlobalWhitelist map[string]bool
-	PathWhitelist   map[string]bool
-	// CmdWhitelist []string
+	hashLength int
+	whitelist  map[string]bool
 }
 
 func (s *sanitizer) init(dataPath string) error {
 	globalData := path.Join(dataPath, "whitelist.txt")
-	s.GlobalWhitelist = loadData(globalData)
-	pathData := path.Join(dataPath, "path_whitelist.txt")
-	s.PathWhitelist = loadData(pathData)
+	s.whitelist = loadData(globalData)
 	return nil
 }
 
@@ -116,7 +115,7 @@ func loadData(fname string) map[string]bool {
 	return data
 }
 
-func (s *sanitizer) sanitize(record *common.Record) error {
+func (s *sanitizer) sanitizeRecord(record *common.Record) error {
 	record.Pwd = s.sanitizePath(record.Pwd)
 	record.RealPwd = s.sanitizePath(record.RealPwd)
 	record.PwdAfter = s.sanitizePath(record.PwdAfter)
@@ -126,51 +125,109 @@ func (s *sanitizer) sanitize(record *common.Record) error {
 	record.Home = s.sanitizePath(record.Home)
 	record.ShellEnv = s.sanitizePath(record.ShellEnv)
 
-	record.Host = s.sanitizeTokenDontUseWhitelist(record.Host)
-	record.Uname = s.sanitizeTokenDontUseWhitelist(record.Uname)
-	record.Login = s.sanitizeTokenDontUseWhitelist(record.Login)
-	record.MachineId = s.sanitizeTokenDontUseWhitelist(record.MachineId)
+	record.Host = s.hashToken(record.Host)
+	record.Login = s.hashToken(record.Login)
+	record.MachineId = s.hashToken(record.MachineId)
 
 	var err error
+	// this changes git url a bit but I'm still happy with the result
+	// e.g. "git@github.com:curusarn/resh" becomes "ssh://git@github.com/3385162f14d7/5a7b2909005c"
+	// 		notice the "ssh://" prefix
 	record.GitOriginRemote, err = s.sanitizeGitURL(record.GitOriginRemote)
 	if err != nil {
 		log.Println("Error while snitizing GitOriginRemote url", record.GitOriginRemote, ":", err)
 		return err
 	}
 
-	fmt.Println("....")
-	parser := shellwords.NewParser()
+	// sanitization destroys original CmdLine length -> save it
+	record.CmdLength = len(record.CmdLine)
 
-	args, err := parser.Parse(record.CmdLine)
+	record.CmdLine, err = s.sanitizeCmdLine(record.CmdLine)
 	if err != nil {
-		log.Println("Parsing error @ position", parser.Position, ":", err)
-		log.Println("CmdLine:", record.CmdLine)
-		return err
+		log.Fatal("Cmd:", record.CmdLine, "; sanitization error:", err)
 	}
-	fmt.Println(args)
-
 	return nil
+}
 
-	//	var tokens []string
-	//	word := ""
-	//	for _, char := range strings.Split(, "") {
-	//		if unicode.IsSpace([]rune(char)[0]) {
-	//			if len(word) > 0 {
-	//				tokens = append(tokens, word)
-	//				word = ""
-	//			}
-	//			tokens = append(tokens, char)
-	//		} else {
-	//			word += char
-	//		}
-	//	}
-	//	if len(word) > 0 {
-	//		tokens = append(tokens, word)
-	//	}
-	//	for _, token := range tokens {
-	//		fmt.Println(token)
-	//	}
-	//	return nil
+func (s *sanitizer) sanitizeCmdLine(cmdLine string) (string, error) {
+	sanCmdLine := ""
+	buff := ""
+
+	// simple options shouldn't be sanitized
+	// 1) whitespace 2) "-" or "--" 3) letters, digits, "-", "_" 4) ending whitespace or "="
+	var optionDetected bool
+
+	prevR3 := ' '
+	prevR2 := ' '
+	prevR := ' '
+	for _, r := range cmdLine {
+		switch optionDetected {
+		case true:
+			if unicode.IsSpace(r) || r == '=' || r == ';' {
+				// whitespace, "=" or ";" ends the option
+				// => add option unsanitized
+				optionDetected = false
+				if len(buff) > 0 {
+					sanCmdLine += buff
+					buff = ""
+				}
+				sanCmdLine += string(r)
+			} else if unicode.IsLetter(r) == false && unicode.IsDigit(r) == false && r != '-' && r != '_' {
+				// r is not any of allowed chars for an option: letter, digit, "-" or "_"
+				// => sanitize
+				if len(buff) > 0 {
+					sanToken, err := s.sanitizeCmdToken(buff)
+					if err != nil {
+						return cmdLine, err
+					}
+					sanCmdLine += sanToken
+					buff = ""
+				}
+				sanCmdLine += string(r)
+			} else {
+				buff += string(r)
+			}
+		case false:
+			// split command on all non-letter and non-digit characters
+			if unicode.IsLetter(r) == false && unicode.IsDigit(r) == false {
+				// split token
+				if len(buff) > 0 {
+					sanToken, err := s.sanitizeCmdToken(buff)
+					if err != nil {
+						return cmdLine, err
+					}
+					sanCmdLine += sanToken
+					buff = ""
+				}
+				sanCmdLine += string(r)
+			} else {
+				if (unicode.IsSpace(prevR2) && prevR == '-') ||
+					(unicode.IsSpace(prevR3) && prevR2 == '-' && prevR == '-') {
+					optionDetected = true
+				}
+				buff += string(r)
+			}
+		}
+		prevR3 = prevR2
+		prevR2 = prevR
+		prevR = r
+	}
+	if len(buff) <= 0 {
+		// nothing in the buffer => work is done
+		return sanCmdLine, nil
+	}
+	if optionDetected {
+		// option detected => dont sanitize
+		sanCmdLine += buff
+		return sanCmdLine, nil
+	}
+	// sanitize
+	sanToken, err := s.sanitizeCmdToken(buff)
+	if err != nil {
+		return cmdLine, err
+	}
+	sanCmdLine += sanToken
+	return sanCmdLine, nil
 }
 
 func (s *sanitizer) sanitizeGitURL(rawURL string) (string, error) {
@@ -216,8 +273,8 @@ func (s *sanitizer) sanitizeParsedURL(parsedURL *url.URL) (string, error) {
 func (s *sanitizer) sanitizePath(path string) string {
 	var sanPath string
 	for _, token := range strings.Split(path, "/") {
-		if s.PathWhitelist[token] != true {
-			token = s.sanitizeToken(token)
+		if s.whitelist[token] != true {
+			token = s.hashToken(token)
 		}
 		sanPath += token + "/"
 	}
@@ -238,19 +295,55 @@ func (s *sanitizer) sanitizeTwoPartToken(token string, delimeter string) (string
 	return token, errors.New("Token has more than two parts")
 }
 
+func (s *sanitizer) sanitizeCmdToken(token string) (string, error) {
+	// there shouldn't be tokens with letters or digits mixed together with symbols
+	if len(token) <= 0 {
+		return token, nil
+	}
+	if s.whitelist[token] == true {
+		return token, nil
+	}
+
+	isLettersOrDigits := true
+	isDigits := true
+	isOtherCharacters := true
+	for _, r := range token {
+		if unicode.IsDigit(r) == false && unicode.IsLetter(r) == false {
+			isLettersOrDigits = false
+			isDigits = false
+		}
+		if unicode.IsDigit(r) == false {
+			isDigits = false
+		}
+		if unicode.IsDigit(r) || unicode.IsLetter(r) {
+			isOtherCharacters = false
+		}
+	}
+	if isDigits {
+		return s.hashNumericToken(token), nil
+	}
+	if isLettersOrDigits {
+		return s.hashToken(token), nil
+	}
+	if isOtherCharacters {
+		return token, nil
+	}
+	log.Println("token:", token)
+	return token, errors.New("cmd token is made of mix of letters or digits and other characters")
+}
+
 func (s *sanitizer) sanitizeToken(token string) string {
-	return s._sanitizeToken(token, true)
-}
-
-func (s *sanitizer) sanitizeTokenDontUseWhitelist(token string) string {
-	return s._sanitizeToken(token, false)
-}
-
-func (s *sanitizer) _sanitizeToken(token string, useWhitelist bool) string {
 	if len(token) <= 0 {
 		return token
 	}
-	if useWhitelist == true && s.GlobalWhitelist[token] == true {
+	if s.whitelist[token] {
+		return token
+	}
+	return s.hashToken(token)
+}
+
+func (s *sanitizer) hashToken(token string) string {
+	if len(token) <= 0 {
 		return token
 	}
 	// hash with sha1
@@ -258,5 +351,30 @@ func (s *sanitizer) _sanitizeToken(token string, useWhitelist bool) string {
 	h := sha1.New()
 	h.Write([]byte(token))
 	sum := h.Sum(nil)
-	return hex.EncodeToString(sum)[:12]
+	// TODO: extend hashes to 12
+	return s.trimHash(hex.EncodeToString(sum))
+}
+
+func (s *sanitizer) hashNumericToken(token string) string {
+	if len(token) <= 0 {
+		return token
+	}
+	// hash with fnv
+	// trim to 12 characters
+	h := sha1.New()
+	h.Write([]byte(token))
+	sum := h.Sum(nil)
+	sumInt := int(binary.LittleEndian.Uint64(sum))
+	if sumInt < 0 {
+		return strconv.Itoa(sumInt * -1)
+	}
+	return s.trimHash(strconv.Itoa(sumInt))
+}
+
+func (s *sanitizer) trimHash(hash string) string {
+	length := s.hashLength
+	if length <= 0 || len(hash) < length {
+		length = len(hash)
+	}
+	return hash[:length]
 }
