@@ -78,24 +78,26 @@ func main() {
 	scanner := bufio.NewScanner(inputFile)
 	for scanner.Scan() {
 		record := common.Record{}
+		fallbackRecord := common.FallbackRecord{}
 		line := scanner.Text()
 		err = json.Unmarshal([]byte(line), &record)
 		if err != nil {
-			log.Println("Decoding error:", err)
-			log.Println("Line:", line)
-			return
+			err = json.Unmarshal([]byte(line), &fallbackRecord)
+			if err != nil {
+				log.Println("Line:", line)
+				log.Fatal("Decoding error:", err)
+			}
+			record = common.ConvertRecord(&fallbackRecord)
 		}
 		err = sanitizer.sanitizeRecord(&record)
 		if err != nil {
-			log.Println("Sanitization error:", err)
 			log.Println("Line:", line)
-			return
+			log.Fatal("Sanitization error:", err)
 		}
 		outLine, err := json.Marshal(&record)
 		if err != nil {
-			log.Println("Encoding error:", err)
 			log.Println("Line:", line)
-			return
+			log.Fatal("Encoding error:", err)
 		}
 		if useStdout {
 			fmt.Println(string(outLine))
@@ -220,7 +222,7 @@ func (s *sanitizer) sanitizeCmdLine(cmdLine string) (string, error) {
 		case false:
 			// split command on all non-letter and non-digit characters
 			if unicode.IsLetter(r) == false && unicode.IsDigit(r) == false {
-				// TODO: decide if we want to split on tokens
+				// TODO: decide if we want to split on "-" and "_"
 				// split token
 				if len(buff) > 0 {
 					sanToken, err := s.sanitizeCmdToken(buff)
