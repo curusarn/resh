@@ -104,6 +104,7 @@ com
 combinedeltarpm
 comm
 command
+convert
 coredumpctl
 cp
 cpgr
@@ -781,6 +782,7 @@ view
 vigr
 vipw
 visudo
+vlc
 vmstat
 w
 wait
@@ -812,6 +814,7 @@ xzfgrep
 xzgrep
 xzless
 xzmore
+yaourt
 yes
 ypdomainname
 yum

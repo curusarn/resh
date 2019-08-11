@@ -38,8 +38,8 @@ func main() {
 
 	showVersion := flag.Bool("version", false, "Show version and exit")
 	showRevision := flag.Bool("revision", false, "Show git revision and exit")
-	trimHashes := flag.Int("trim-hashes", 12, "Trim hashes to N characters (default: 12), 0 turns off trimming")
-	outputPath := flag.String("output", "", "Output file")
+	trimHashes := flag.Int("trim-hashes", 12, "Trim hashes to N characters, '0' turns off trimming")
+	outputPath := flag.String("output", "", "Output file (default: use stdout)")
 
 	flag.Parse()
 
@@ -177,11 +177,13 @@ func (s *sanitizer) sanitizeRecord(record *common.Record) error {
 }
 
 func (s *sanitizer) sanitizeCmdLine(cmdLine string) (string, error) {
+	const optionEndingChars = "=;)"
+	const optionAllowedChars = "-_"
 	sanCmdLine := ""
 	buff := ""
 
 	// simple options shouldn't be sanitized
-	// 1) whitespace 2) "-" or "--" 3) letters, digits, "-", "_" 4) ending whitespace or "="
+	// 1) whitespace 2) "-" or "--" 3) letters, digits, "-", "_" 4) ending whitespace or any of "=;)"
 	var optionDetected bool
 
 	prevR3 := ' '
@@ -190,7 +192,7 @@ func (s *sanitizer) sanitizeCmdLine(cmdLine string) (string, error) {
 	for _, r := range cmdLine {
 		switch optionDetected {
 		case true:
-			if unicode.IsSpace(r) || r == '=' || r == ';' {
+			if unicode.IsSpace(r) || strings.ContainsRune(optionEndingChars, r) {
 				// whitespace, "=" or ";" ends the option
 				// => add option unsanitized
 				optionDetected = false
@@ -199,7 +201,8 @@ func (s *sanitizer) sanitizeCmdLine(cmdLine string) (string, error) {
 					buff = ""
 				}
 				sanCmdLine += string(r)
-			} else if unicode.IsLetter(r) == false && unicode.IsDigit(r) == false && r != '-' && r != '_' {
+			} else if unicode.IsLetter(r) == false && unicode.IsDigit(r) == false &&
+				strings.ContainsRune(optionAllowedChars, r) == false {
 				// r is not any of allowed chars for an option: letter, digit, "-" or "_"
 				// => sanitize
 				if len(buff) > 0 {
@@ -217,6 +220,7 @@ func (s *sanitizer) sanitizeCmdLine(cmdLine string) (string, error) {
 		case false:
 			// split command on all non-letter and non-digit characters
 			if unicode.IsLetter(r) == false && unicode.IsDigit(r) == false {
+				// TODO: decide if we want to split on tokens
 				// split token
 				if len(buff) > 0 {
 					sanToken, err := s.sanitizeCmdToken(buff)
