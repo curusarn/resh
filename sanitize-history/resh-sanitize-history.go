@@ -264,6 +264,9 @@ func (s *sanitizer) sanitizeCmdLine(cmdLine string) (string, error) {
 }
 
 func (s *sanitizer) sanitizeGitURL(rawURL string) (string, error) {
+	if len(rawURL) <= 0 {
+		return rawURL, nil
+	}
 	parsedURL, err := giturls.Parse(rawURL)
 	if err != nil {
 		return rawURL, err
@@ -272,6 +275,9 @@ func (s *sanitizer) sanitizeGitURL(rawURL string) (string, error) {
 }
 
 func (s *sanitizer) sanitizeURL(rawURL string) (string, error) {
+	if len(rawURL) <= 0 {
+		return rawURL, nil
+	}
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
 		return rawURL, err
@@ -280,7 +286,6 @@ func (s *sanitizer) sanitizeURL(rawURL string) (string, error) {
 }
 
 func (s *sanitizer) sanitizeParsedURL(parsedURL *url.URL) (string, error) {
-	// Scheme string
 	parsedURL.Opaque = s.sanitizeToken(parsedURL.Opaque)
 
 	userinfo := parsedURL.User.Username() // only get username => password won't even make it to the sanitized data
@@ -330,7 +335,8 @@ func (s *sanitizer) sanitizeTwoPartToken(token string, delimeter string) (string
 
 func (s *sanitizer) sanitizeCmdToken(token string) (string, error) {
 	// there shouldn't be tokens with letters or digits mixed together with symbols
-	if len(token) <= 0 {
+	if len(token) <= 1 {
+		// NOTE: do not sanitize single letter tokens
 		return token, nil
 	}
 	if s.whitelist[token] == true {
@@ -366,7 +372,8 @@ func (s *sanitizer) sanitizeCmdToken(token string) (string, error) {
 }
 
 func (s *sanitizer) sanitizeToken(token string) string {
-	if len(token) <= 0 {
+	if len(token) <= 1 {
+		// NOTE: do not sanitize single letter tokens
 		return token
 	}
 	if s.whitelist[token] {
