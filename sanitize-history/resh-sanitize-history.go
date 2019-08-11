@@ -339,7 +339,7 @@ func (s *sanitizer) sanitizeCmdToken(token string) (string, error) {
 		// NOTE: do not sanitize single letter tokens
 		return token, nil
 	}
-	if s.whitelist[token] == true {
+	if s.whitelist[strings.ToLower(token)] == true {
 		return token, nil
 	}
 

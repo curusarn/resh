@@ -246,6 +246,7 @@ dnf-3
 dnsdomainname
 do
 docker
+Dockerfile
 domainname
 done
 dpkg
@@ -280,6 +281,7 @@ eject
 elfedit
 elif
 else
+emacs
 emulate
 enable
 end
@@ -442,6 +444,7 @@ jobs
 join
 journalctl
 jq
+json
 kernel-install
 kill
 killall5
@@ -521,8 +524,10 @@ make
 makedb
 makedeltarpm
 make-dummy-cert
+Makefile
 man
 mapfile
+master
 mawk
 mcookie
 md5
@@ -574,6 +579,7 @@ nice
 nisdomainname
 nl
 nm
+no
 nocorrect
 noglob
 nohup
@@ -590,6 +596,7 @@ ogg
 oldfind
 openssl
 opt
+origin
 p11-kit
 package-cleanup
 packer
@@ -631,6 +638,7 @@ pivot_root
 pk12util
 pkg-config
 pkill
+pkl
 pl
 pldd
 pls
@@ -952,6 +960,7 @@ usr
 utmpdump
 uuidgen
 uuidparse
+Vagrantfile
 var
 vared
 vdir
@@ -959,6 +968,7 @@ verifytree
 vi
 view
 vigr
+vim
 vipw
 visudo
 vlc
