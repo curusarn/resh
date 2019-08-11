@@ -38,7 +38,8 @@ func main() {
 
 	showVersion := flag.Bool("version", false, "Show version and exit")
 	showRevision := flag.Bool("revision", false, "Show git revision and exit")
-	// outputToStdout := flag.Bool("stdout", false, "Print output to stdout instead of file")
+	trimHashes := flag.Int("trim-hashes", 12, "Trim hashes to N characters (default: 12), 0 turns off trimming")
+	outputPath := flag.String("output", "", "Output file")
 
 	flag.Parse()
 
@@ -50,19 +51,31 @@ func main() {
 		fmt.Println(Revision)
 		os.Exit(0)
 	}
-	sanitizer := sanitizer{hashLength: 4}
+	sanitizer := sanitizer{hashLength: *trimHashes}
 	err := sanitizer.init(sanitizerDataPath)
 	if err != nil {
 		log.Fatal("Sanitizer init() error:", err)
 	}
 
-	file, err := os.Open(historyPath)
+	inputFile, err := os.Open(historyPath)
 	if err != nil {
 		log.Fatal("Open() resh history file error:", err)
 	}
-	defer file.Close()
+	defer inputFile.Close()
 
-	scanner := bufio.NewScanner(file)
+	var writer *bufio.Writer
+	useStdout := true
+	if len(*outputPath) > 0 {
+		useStdout = false
+		outputFile, err := os.Create(*outputPath)
+		if err != nil {
+			log.Fatal("Create() output file error:", err)
+		}
+		defer outputFile.Close()
+		writer = bufio.NewWriter(outputFile)
+	}
+
+	scanner := bufio.NewScanner(inputFile)
 	for scanner.Scan() {
 		record := common.Record{}
 		line := scanner.Text()
@@ -84,7 +97,21 @@ func main() {
 			log.Println("Line:", line)
 			return
 		}
-		fmt.Println(string(outLine))
+		if useStdout {
+			fmt.Println(string(outLine))
+		} else {
+			// fmt.Println(string(outLine))
+			n, err := writer.WriteString(string(outLine) + "\n")
+			if err != nil {
+				log.Fatal(err)
+			}
+			if n == 0 {
+				log.Fatal("Nothing was written", n)
+			}
+		}
+	}
+	if useStdout == false {
+		writer.Flush()
 	}
 }
 
@@ -347,11 +374,9 @@ func (s *sanitizer) hashToken(token string) string {
 		return token
 	}
 	// hash with sha1
-	// trim to 12 characters
 	h := sha1.New()
 	h.Write([]byte(token))
 	sum := h.Sum(nil)
-	// TODO: extend hashes to 12
 	return s.trimHash(hex.EncodeToString(sum))
 }
 
@@ -359,8 +384,6 @@ func (s *sanitizer) hashNumericToken(token string) string {
 	if len(token) <= 0 {
 		return token
 	}
-	// hash with fnv
-	// trim to 12 characters
 	h := sha1.New()
 	h.Write([]byte(token))
 	sum := h.Sum(nil)

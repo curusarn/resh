@@ -568,6 +568,7 @@ resize2fs
 resizepart
 resolvconf
 resolvectl
+resh
 rev
 rfkill
 rgrep
