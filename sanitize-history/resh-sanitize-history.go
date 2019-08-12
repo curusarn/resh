@@ -339,7 +339,7 @@ func (s *sanitizer) sanitizeCmdToken(token string) (string, error) {
 		// NOTE: do not sanitize single letter tokens
 		return token, nil
 	}
-	if s.whitelist[strings.ToLower(token)] == true {
+	if s.isInWhitelist(token) == true {
 		return token, nil
 	}
 
@@ -376,7 +376,7 @@ func (s *sanitizer) sanitizeToken(token string) string {
 		// NOTE: do not sanitize single letter tokens
 		return token
 	}
-	if s.whitelist[token] {
+	if s.isInWhitelist(token) {
 		return token
 	}
 	return s.hashToken(token)
@@ -413,4 +413,8 @@ func (s *sanitizer) trimHash(hash string) string {
 		length = len(hash)
 	}
 	return hash[:length]
+}
+
+func (s *sanitizer) isInWhitelist(token string) bool {
+	return s.whitelist[strings.ToLower(token)] == true
 }
