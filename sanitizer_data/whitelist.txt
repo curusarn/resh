@@ -77,6 +77,7 @@ blockdev
 bmp
 boot
 bootctl
+br
 branch
 break
 bridge
@@ -147,6 +148,7 @@ clockdiff
 clone
 cmp
 cmsutil
+co
 code
 col
 colcrt
@@ -238,6 +240,7 @@ db_verify
 dcr
 dd
 dds
+de
 deb
 debconf
 debconf-apt-progress
@@ -497,9 +500,11 @@ ip
 ipcmk
 ipcrm
 ipcs
+ir
 ischroot
 iso
 isosize
+it
 jar
 java
 jobs
@@ -653,6 +658,7 @@ namei
 nawk
 needs-restarting
 nes
+net
 networkctl
 newgidmap
 newgrp
@@ -681,6 +687,7 @@ ogg
 oldfind
 openssl
 opt
+org
 origin
 otf
 p11-kit
@@ -850,6 +857,7 @@ rtcwake
 rtf
 rtmon
 rtstat
+ru
 run
 runcon
 run-help
@@ -1037,6 +1045,7 @@ typeset
 tzconfig
 tzselect
 udevadm
+uk
 ul
 ulimit
 umask
