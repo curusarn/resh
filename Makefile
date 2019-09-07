@@ -42,7 +42,7 @@ sanitize:
 	#
 
 
-build: submodules resh-collect resh-daemon resh-sanitize-history
+build: submodules resh-collect resh-daemon resh-sanitize-history resh-evaluate
 
 rebuild:
 	make clean
@@ -114,6 +114,9 @@ resh-collect: collect/resh-collect.go common/resh-common.go version
 
 resh-sanitize-history: sanitize-history/resh-sanitize-history.go common/resh-common.go version
 	go build ${GOFLAGS} -o $@ $<
+
+resh-evaluate: evaluate/resh-evaluate.go evaluate/strategy-*.go common/resh-common.go version
+	go build ${GOFLAGS} -o $@ $< evaluate/strategy-*.go 
 
 $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config:
 	# Creating dirs ...
