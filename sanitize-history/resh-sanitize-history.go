@@ -39,6 +39,7 @@ func main() {
 	showVersion := flag.Bool("version", false, "Show version and exit")
 	showRevision := flag.Bool("revision", false, "Show git revision and exit")
 	trimHashes := flag.Int("trim-hashes", 12, "Trim hashes to N characters, '0' turns off trimming")
+	inputPath := flag.String("input", historyPath, "Input file")
 	outputPath := flag.String("output", "", "Output file (default: use stdout)")
 
 	flag.Parse()
@@ -57,7 +58,7 @@ func main() {
 		log.Fatal("Sanitizer init() error:", err)
 	}
 
-	inputFile, err := os.Open(historyPath)
+	inputFile, err := os.Open(*inputPath)
 	if err != nil {
 		log.Fatal("Open() resh history file error:", err)
 	}
