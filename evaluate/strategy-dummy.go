@@ -7,7 +7,7 @@ type strategyDummy struct {
 }
 
 func (s *strategyDummy) GetTitleAndDescription() (string, string) {
-	return "recent", "Use recent commands"
+	return "dummy", "Return empty candidate list"
 }
 
 func (s *strategyDummy) GetCandidates() []string {

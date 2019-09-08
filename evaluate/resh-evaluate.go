@@ -67,7 +67,7 @@ func main() {
 	}
 	defer writer.Flush()
 
-	evaluator := evaluator{sanitizedInput: *sanitizedInput, writer: writer}
+	evaluator := evaluator{sanitizedInput: *sanitizedInput, writer: writer, maxCandidates: 42}
 	err := evaluator.init(*inputPath)
 	if err != nil {
 		log.Fatal("Evaluator init() error:", err)
@@ -75,9 +75,11 @@ func main() {
 
 	var strategies []strategy
 
-	dummy := strategyDummy{}
+	// dummy := strategyDummy{}
+	// strategies = append(strategies, &dummy)
 
-	strategies = append(strategies, &dummy)
+	recent := strategyRecent{}
+	strategies = append(strategies, &recent)
 
 	for _, strat := range strategies {
 		err = evaluator.evaluate(strat)
@@ -97,6 +99,7 @@ type strategy interface {
 type evaluator struct {
 	sanitizedInput bool
 	writer         *bufio.Writer
+	maxCandidates  int
 	historyRecords []common.Record
 }
 
@@ -106,28 +109,43 @@ func (e *evaluator) init(inputPath string) error {
 }
 
 func (e *evaluator) evaluate(strat strategy) error {
-	// init dist buckets ?
-	// map dist int -> matches int
-	// map dist int -> charactersRecalled int
+	stats := statistics{writer: e.writer, size: e.maxCandidates + 1}
+	stats.init()
+
 	for _, record := range e.historyRecords {
-		_ = strat.GetCandidates()
-		// evaluate distance and characters recalled
+		candidates := strat.GetCandidates()
+
+		match := false
+		for i, candidate := range candidates {
+			// make an option (--calculate-total) to turn this on/off ?
+			// if i >= e.maxCandidates {
+			// 	break
+			// }
+			if candidate == record.CmdLine {
+				stats.addMatch(i+1, record.CmdLength)
+				match = true
+				break
+			}
+		}
+		if match == false {
+			stats.addMiss()
+		}
 		err := strat.AddHistoryRecord(&record)
 		if err != nil {
 			log.Println("Error while evauating", err)
 			return err
 		}
 	}
-	// print results
-	outLine := "testing testing 123 testing ..."
-	n, err := e.writer.WriteString(string(outLine) + "\n")
+	title, description := strat.GetTitleAndDescription()
+	n, err := e.writer.WriteString(title + " - " + description + "\n")
 	if err != nil {
 		log.Fatal(err)
 	}
 	if n == 0 {
 		log.Fatal("Nothing was written", n)
 	}
-	e.writer.Flush()
+	// print results
+	stats.printCumulative()
 	return nil
 }
 
