@@ -67,7 +67,7 @@ func main() {
 	}
 	defer writer.Flush()
 
-	evaluator := evaluator{sanitizedInput: *sanitizedInput, writer: writer, maxCandidates: 42}
+	evaluator := evaluator{sanitizedInput: *sanitizedInput, writer: writer, maxCandidates: 50}
 	err := evaluator.init(*inputPath)
 	if err != nil {
 		log.Fatal("Evaluator init() error:", err)

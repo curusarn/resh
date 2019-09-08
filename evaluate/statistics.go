@@ -69,4 +69,31 @@ func (s *statistics) printCumulative() {
 	if n == 0 {
 		log.Fatal("Nothing was written", n)
 	}
+
+	charsRecall := 0.0
+	out = "### Characters recalled per submission ###\n"
+	for i := 0; i < s.size; i++ {
+		charsRecall += float64(s.charactersRecalled[i]) / float64(s.dataPointCount)
+		out += strconv.Itoa(i) + " ->"
+		out += fmt.Sprintf(" (%.2f)\n", charsRecall)
+		for j := 0; j < int(math.Round(charsRecall)); j++ {
+			out += "#"
+		}
+		out += "\n"
+	}
+	charsRecall = float64(s.charactersRecalledTotal) / float64(s.dataPointCount)
+	out += "TOTAL ->"
+	out += fmt.Sprintf(" (%.2f)\n", charsRecall)
+	for j := 0; j < int(math.Round(charsRecall)); j++ {
+		out += "#"
+	}
+	out += "\n"
+
+	n, err = s.writer.WriteString(string(out) + "\n\n")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if n == 0 {
+		log.Fatal("Nothing was written", n)
+	}
 }
