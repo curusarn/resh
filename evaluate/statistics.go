@@ -1,99 +1,117 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
+	"bytes"
+	"io/ioutil"
 	"log"
-	"math"
-	"strconv"
+	"sort"
+
+	"github.com/wcharczuk/go-chart"
 )
 
 type statistics struct {
-	writer                  *bufio.Writer
-	size                    int
-	matches                 []int
-	matchesTotal            int
-	charactersRecalled      []int
-	charactersRecalledTotal int
-	dataPointCount          int
+	//size                    int
+	dataPointCount int
+	cmdLineCount   map[string]int
 }
 
 func (s *statistics) init() {
-	s.matches = make([]int, s.size)
-	s.charactersRecalled = make([]int, s.size)
+	s.cmdLineCount = make(map[string]int)
 }
 
-func (s *statistics) addMatch(distance int, cmdLength int) {
-	if distance >= s.size {
-		// --calculate-total
-		// log.Fatal("Match distance is greater than size of statistics")
-		s.matchesTotal++
-		s.charactersRecalledTotal += cmdLength
-		return
-	}
-	s.matches[distance]++
-	s.matchesTotal++
-	s.charactersRecalled[distance] += cmdLength
-	s.charactersRecalledTotal += cmdLength
+func (s *statistics) addCmdLine(cmdLine string, cmdLength int) {
+	s.cmdLineCount[cmdLine]++
 	s.dataPointCount++
 }
 
-func (s *statistics) addMiss() {
-	s.dataPointCount++
+func (s *statistics) graphCmdFrequencyAsFuncOfRank() {
+
+	var xValues []float64
+	var yValues []float64
+
+	sortedValues := sortMapByvalue(s.cmdLineCount)
+	sortedValues = sortedValues[:100] // cut off at rank 100
+
+	normalizeCoeficient := float64(s.dataPointCount) / float64(sortedValues[0].Value)
+	for i, pair := range sortedValues {
+		rank := i + 1
+		frequency := float64(pair.Value) / float64(s.dataPointCount)
+		normalizeFrequency := frequency * normalizeCoeficient
+
+		xValues = append(xValues, float64(rank))
+		yValues = append(yValues, normalizeFrequency)
+	}
+
+	graphName := "cmdFrqAsFuncOfRank"
+	graph := chart.Chart{
+		XAxis: chart.XAxis{
+			Style: chart.StyleShow(), //enables / displays the x-axis
+			Ticks: []chart.Tick{
+				{0.0, "0"},
+				{1.0, "1"},
+				{2.0, "2"},
+				{3.0, "3"},
+				{4.0, "4"},
+				{5.0, "5"},
+				{10.0, "10"},
+				{15.0, "15"},
+				{20.0, "20"},
+				{25.0, "25"},
+				{30.0, "30"},
+				{35.0, "35"},
+				{40.0, "40"},
+				{45.0, "45"},
+				{50.0, "50"},
+			},
+		},
+		YAxis: chart.YAxis{
+			AxisType: chart.YAxisSecondary,
+			Style:    chart.StyleShow(), //enables / displays the y-axis
+		},
+		Series: []chart.Series{
+			chart.ContinuousSeries{
+				Style: chart.Style{
+					Show:        true,
+					StrokeColor: chart.GetDefaultColor(0).WithAlpha(64),
+					FillColor:   chart.GetDefaultColor(0).WithAlpha(64),
+					DotColor:    chart.GetDefaultColor(0),
+					DotWidth:    3.0,
+				},
+				XValues: xValues,
+				YValues: yValues,
+			},
+		},
+	}
+
+	buffer := bytes.NewBuffer([]byte{})
+	err := graph.Render(chart.PNG, buffer)
+	if err != nil {
+		log.Fatal("chart.Render error:", err)
+	}
+	ioutil.WriteFile("/tmp/resh-graph_"+graphName+".png", buffer.Bytes(), 0644)
 }
 
-func (s *statistics) printCumulative() {
-	matchesPercent := 0.0
-	out := "### Matches ###\n"
-	for i := 0; i < s.size; i++ {
-		matchesPercent += 100 * float64(s.matches[i]) / float64(s.dataPointCount)
-		out += strconv.Itoa(i) + " ->"
-		out += fmt.Sprintf(" (%.1f %%)\n", matchesPercent)
-		for j := 0; j < int(math.Round(matchesPercent)); j++ {
-			out += "#"
-		}
-		out += "\n"
-	}
-	matchesPercent = 100 * float64(s.matchesTotal) / float64(s.dataPointCount)
-	out += "TOTAL ->"
-	out += fmt.Sprintf(" (%.1f %%)\n", matchesPercent)
-	for j := 0; j < int(math.Round(matchesPercent)); j++ {
-		out += "#"
-	}
-	out += "\n"
+func sortMapByvalue(input map[string]int) []Pair {
+	p := make(PairList, len(input))
 
-	n, err := s.writer.WriteString(string(out) + "\n\n")
-	if err != nil {
-		log.Fatal(err)
+	i := 0
+	for k, v := range input {
+		p[i] = Pair{k, v}
+		i++
 	}
-	if n == 0 {
-		log.Fatal("Nothing was written", n)
-	}
-
-	charsRecall := 0.0
-	out = "### Characters recalled per submission ###\n"
-	for i := 0; i < s.size; i++ {
-		charsRecall += float64(s.charactersRecalled[i]) / float64(s.dataPointCount)
-		out += strconv.Itoa(i) + " ->"
-		out += fmt.Sprintf(" (%.2f)\n", charsRecall)
-		for j := 0; j < int(math.Round(charsRecall)); j++ {
-			out += "#"
-		}
-		out += "\n"
-	}
-	charsRecall = float64(s.charactersRecalledTotal) / float64(s.dataPointCount)
-	out += "TOTAL ->"
-	out += fmt.Sprintf(" (%.2f)\n", charsRecall)
-	for j := 0; j < int(math.Round(charsRecall)); j++ {
-		out += "#"
-	}
-	out += "\n"
-
-	n, err = s.writer.WriteString(string(out) + "\n\n")
-	if err != nil {
-		log.Fatal(err)
-	}
-	if n == 0 {
-		log.Fatal("Nothing was written", n)
-	}
+	sort.Sort(sort.Reverse(p))
+	return p
 }
+
+// Pair - A data structure to hold key/value pairs
+type Pair struct {
+	Key   string
+	Value int
+}
+
+// PairList - A slice of pairs that implements sort.Interface to sort by values
+type PairList []Pair
+
+func (p PairList) Len() int           { return len(p) }
+func (p PairList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+func (p PairList) Less(i, j int) bool { return p[i].Value < p[j].Value }

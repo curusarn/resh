@@ -108,12 +108,15 @@ func (e *evaluator) init(inputPath string) error {
 	return nil
 }
 
-func (e *evaluator) evaluate(strat strategy) error {
-	stats := statistics{writer: e.writer, size: e.maxCandidates + 1}
+func (e *evaluator) evaluate(strategy strategy) error {
+	res := results{writer: e.writer, size: e.maxCandidates + 1}
+	stats := statistics{}
+	res.init()
 	stats.init()
 
 	for _, record := range e.historyRecords {
-		candidates := strat.GetCandidates()
+		stats.addCmdLine(record.CmdLine, record.CmdLength)
+		candidates := strategy.GetCandidates()
 
 		match := false
 		for i, candidate := range candidates {
@@ -122,21 +125,21 @@ func (e *evaluator) evaluate(strat strategy) error {
 			// 	break
 			// }
 			if candidate == record.CmdLine {
-				stats.addMatch(i+1, record.CmdLength)
+				res.addMatch(i+1, record.CmdLength)
 				match = true
 				break
 			}
 		}
 		if match == false {
-			stats.addMiss()
+			res.addMiss()
 		}
-		err := strat.AddHistoryRecord(&record)
+		err := strategy.AddHistoryRecord(&record)
 		if err != nil {
 			log.Println("Error while evauating", err)
 			return err
 		}
 	}
-	title, description := strat.GetTitleAndDescription()
+	title, description := strategy.GetTitleAndDescription()
 	n, err := e.writer.WriteString(title + " - " + description + "\n")
 	if err != nil {
 		log.Fatal(err)
@@ -145,7 +148,8 @@ func (e *evaluator) evaluate(strat strategy) error {
 		log.Fatal("Nothing was written", n)
 	}
 	// print results
-	stats.printCumulative()
+	res.printCumulative()
+	stats.graphCmdFrequencyAsFuncOfRank()
 	return nil
 }
 
