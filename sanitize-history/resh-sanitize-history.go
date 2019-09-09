@@ -176,6 +176,8 @@ func (s *sanitizer) sanitizeRecord(record *common.Record) error {
 	if err != nil {
 		log.Fatal("Cmd:", record.CmdLine, "; sanitization error:", err)
 	}
+
+	record.Sanitized = true
 	return nil
 }
 

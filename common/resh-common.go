@@ -1,6 +1,11 @@
 package common
 
-import "strconv"
+import (
+	"log"
+	"strconv"
+
+	"github.com/mattn/go-shellwords"
+)
 
 // Record representing single executed command with its metadata
 type Record struct {
@@ -65,7 +70,11 @@ type Record struct {
 	ReshRevision string `json:"reshRevision"`
 
 	// added by sanitizatizer
-	CmdLength int `json:"cmdLength"`
+	Sanitized bool `json:"sanitized"`
+	CmdLength int  `json:"cmdLength"`
+
+	// enriching fields - added "later"
+	FirstWord string `json:"firstWord"`
 }
 
 // FallbackRecord when record is too old and can't be parsed into regular Record
@@ -131,9 +140,6 @@ type FallbackRecord struct {
 	ReshUuid     string `json:"reshUuid"`
 	ReshVersion  string `json:"reshVersion"`
 	ReshRevision string `json:"reshRevision"`
-
-	// added by sanitizatizer
-	CmdLength int `json:"cmdLength"`
 }
 
 // ConvertRecord from FallbackRecord to Record
@@ -200,6 +206,24 @@ func ConvertRecord(r *FallbackRecord) Record {
 		ReshVersion:  r.ReshVersion,
 		ReshRevision: r.ReshRevision,
 	}
+}
+
+// Enrich - adds additional fields to the record
+func (r *Record) Enrich() {
+	// Get command/first word from commandline
+	r.FirstWord = GetCommandFromCommandLine(r.CmdLine)
+}
+
+// GetCommandFromCommandLine func
+func GetCommandFromCommandLine(cmdLine string) string {
+	args, err := shellwords.Parse(cmdLine)
+	if err != nil {
+		log.Fatal("shellwords Error:", err)
+	}
+	if len(args) > 0 {
+		return args[0]
+	}
+	return ""
 }
 
 // Config struct
