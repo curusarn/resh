@@ -75,6 +75,7 @@ type Record struct {
 
 	// enriching fields - added "later"
 	FirstWord string `json:"firstWord"`
+	Invalid   bool   `json:"invalid"`
 }
 
 // FallbackRecord when record is too old and can't be parsed into regular Record
@@ -212,6 +213,19 @@ func ConvertRecord(r *FallbackRecord) Record {
 func (r *Record) Enrich() {
 	// Get command/first word from commandline
 	r.FirstWord = GetCommandFromCommandLine(r.CmdLine)
+	err := r.Validate()
+	if err != nil {
+		log.Println("Invalid command:", r.CmdLine)
+		r.Invalid = true
+	}
+	r.Invalid = false
+	// TODO: Detect and mark simple commands r.Simple
+}
+
+// Validate - returns error if the record is invalid
+func (r *Record) Validate() error {
+
+	return nil
 }
 
 // GetCommandFromCommandLine func

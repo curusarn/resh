@@ -33,7 +33,7 @@ func main() {
 	inputPath := flag.String("input", "",
 		"Input file (default: "+historyPath+"OR"+sanitizedHistoryPath+
 			" depending on --sanitized-input option)")
-	outputDir := flag.String("output", "/tmp/resh-evaluate", "Output directory")
+	// outputDir := flag.String("output", "/tmp/resh-evaluate", "Output directory")
 	sanitizedInput := flag.Bool("sanitized-input", false,
 		"Handle input as sanitized (also changes default value for input argument)")
 	plottingScript := flag.String("plotting-script", "resh-evaluate-plot.py", "Script to use for plotting")
@@ -80,15 +80,6 @@ func main() {
 	}
 	// evaluator.dumpJSON(tmpPath)
 
-	// run python script to stat and plot/
-	cmd := exec.Command("echo", *outputDir)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	log.Printf("")
-	err = cmd.Run()
-	if err != nil {
-		log.Printf("Command finished with error: %v", err)
-	}
 	evaluator.calculateStatsAndPlot(*plottingScript)
 }
 
@@ -141,7 +132,6 @@ func (e *evaluator) calculateStatsAndPlot(scriptName string) {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = &buffer
-	log.Printf("...")
 	err = cmd.Run()
 	if err != nil {
 		log.Printf("Command finished with error: %v", err)
