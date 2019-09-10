@@ -188,7 +188,85 @@ def graphviz_cmdSequences(cmd_displayTreshold=28, edge_displayTreshold=0.05):
 
     dot.render('/tmp/resh-graphviz-cmdSeq.gv', view=False)
 
-graphviz_cmdSequences()
+def plot_strategy_recency():
+    recent = None
+    for strategy in data["Strategies"]:
+        if strategy["Title"] != "recent":
+            continue
+        recent = strategy
+        break
+
+    assert(recent is not None)
+
+    size = 50 
+
+    dataPoint_count = 0
+    matches = [0] * size
+    matches_total = 0
+    charsRecalled = [0] * size
+    charsRecalled_total = 0
+    
+    for match in recent["Matches"]:
+        dataPoint_count += 1
+
+        if not match["Match"]:
+            continue
+
+        chars = match["CharsRecalled"]
+        charsRecalled_total += chars 
+        matches_total += 1
+
+        dist = match["Distance"]  
+        if dist > size:
+            continue
+
+        matches[dist-1] += 1
+        charsRecalled[dist-1] += chars
+        
+    x_values = range(1, size+2)
+    x_ticks = list(range(1, size+1, 2))
+    x_labels = x_ticks[:]
+    x_ticks.append(size+1)
+    x_labels.append("total")
+
+    acc = 0
+    matches_cumulative = []
+    for x in matches:
+        acc += x
+        matches_cumulative.append(acc)
+    matches_cumulative.append(matches_total)
+    matches_percent = list(map(lambda x: 100 * x / dataPoint_count, matches_cumulative))
+    plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
+    plt.plot(x_values, matches_percent, 'o-')
+    plt.title("Matches at distance")
+    plt.ylabel('%' + " of matches")
+    plt.xlabel("Distance")
+    plt.xticks(x_ticks, x_labels)
+    #plt.legend(("Zipf", "Command"), loc="best")
+    plt.show()
+
+    acc = 0
+    charsRecalled_cumulative = []
+    for x in charsRecalled:
+        acc += x
+        charsRecalled_cumulative.append(acc)
+    charsRecalled_cumulative.append(charsRecalled_total)
+    charsRecalled_average = list(map(lambda x: x / dataPoint_count, charsRecalled_cumulative))
+    plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
+    plt.plot(x_values, charsRecalled_average, 'o-')
+    plt.title("Average characters recalled at distance")
+    plt.ylabel("Average characters recalled")
+    plt.xlabel("Distance")
+    plt.xticks(x_ticks, x_labels)
+    #plt.legend(("Zipf", "Command"), loc="best")
+    plt.show()
+
+        
+
+        
+plot_strategy_recency()
+
+# graphviz_cmdSequences()
 # plot_cmdVocabularySize_cmdLinesEntered()
 # plot_cmdLineFrq_rank()
 # plot_cmdFrq_rank()
