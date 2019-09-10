@@ -114,7 +114,7 @@ def plot_cmdVocabularySize_cmdLinesEntered():
 # Figure 3.3. Sequential structure of UNIX command usage, from Figure 4 in Hanson et al. (1984).
 #       Ball diameters are proportional to stationary probability. Lines indicate significant dependencies,
 #       solid ones being more probable (p < .0001) and dashed ones less probable (.005 < p < .0001).
-def graphviz_cmdSequences(cmd_displayTreshold=20, edge_displayTreshold=0.03):
+def graphviz_cmdSequences(cmd_displayTreshold=28, edge_displayTreshold=0.05):
     cmd_count = defaultdict(int)
     cmdSeq_count = defaultdict(lambda: defaultdict(int))
     cmd_id = dict()
@@ -130,7 +130,7 @@ def graphviz_cmdSequences(cmd_displayTreshold=20, edge_displayTreshold=0.03):
         cmd_id[cmd] = str(x)
         prev_cmd = cmd
 
-    dot = Digraph(comment="Command sequences", graph_attr={'overlap':'scale', 'splines':'true'})
+    dot = Digraph(comment="Command sequences", graph_attr={'overlap':'scale', 'splines':'true', 'sep':'0.25'})
 
     # for cmd_entry in cmdSeq_count.items():
     #     cmd, seq = cmd_entry
