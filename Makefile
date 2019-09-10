@@ -115,8 +115,8 @@ resh-collect: collect/resh-collect.go common/resh-common.go version
 resh-sanitize-history: sanitize-history/resh-sanitize-history.go common/resh-common.go version
 	go build ${GOFLAGS} -o $@ $<
 
-resh-evaluate: evaluate/resh-evaluate.go evaluate/results.go evaluate/statistics.go evaluate/strategy-*.go common/resh-common.go version
-	go build ${GOFLAGS} -o $@ $< evaluate/results.go evaluate/statistics.go evaluate/strategy-*.go 
+resh-evaluate: evaluate/resh-evaluate.go evaluate/strategy-*.go common/resh-common.go version
+	go build ${GOFLAGS} -o $@ $< evaluate/strategy-*.go 
 
 $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config:
 	# Creating dirs ...

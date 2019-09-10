@@ -2,11 +2,13 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"os/user"
 	"path/filepath"
 
@@ -24,15 +26,17 @@ func main() {
 	dir := usr.HomeDir
 	historyPath := filepath.Join(dir, ".resh_history.json")
 	sanitizedHistoryPath := filepath.Join(dir, "resh_history_sanitized.json")
+	// tmpPath := "/tmp/resh-evaluate-tmp.json"
 
 	showVersion := flag.Bool("version", false, "Show version and exit")
 	showRevision := flag.Bool("revision", false, "Show git revision and exit")
 	inputPath := flag.String("input", "",
 		"Input file (default: "+historyPath+"OR"+sanitizedHistoryPath+
 			" depending on --sanitized-input option)")
-	outputPath := flag.String("output", "", "Output file (default: use stdout)")
+	outputDir := flag.String("output", "/tmp/resh-evaluate", "Output directory")
 	sanitizedInput := flag.Bool("sanitized-input", false,
 		"Handle input as sanitized (also changes default value for input argument)")
+	plottingScript := flag.String("plotting-script", "resh-evaluate-plot.py", "Script to use for plotting")
 
 	flag.Parse()
 
@@ -54,20 +58,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	var writer *bufio.Writer
-	if *outputPath != "" {
-		outputFile, err := os.Create(*outputPath)
-		if err != nil {
-			log.Fatal("Create() output file error:", err)
-		}
-		defer outputFile.Close()
-		writer = bufio.NewWriter(outputFile)
-	} else {
-		writer = bufio.NewWriter(os.Stdout)
-	}
-	defer writer.Flush()
-
-	evaluator := evaluator{sanitizedInput: *sanitizedInput, writer: writer, maxCandidates: 50}
+	evaluator := evaluator{sanitizedInput: *sanitizedInput, maxCandidates: 50}
 	err := evaluator.init(*inputPath)
 	if err != nil {
 		log.Fatal("Evaluator init() error:", err)
@@ -87,6 +78,18 @@ func main() {
 			log.Println("Evaluator evaluate() error:", err)
 		}
 	}
+	// evaluator.dumpJSON(tmpPath)
+
+	// run python script to stat and plot/
+	cmd := exec.Command("echo", *outputDir)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	log.Printf("")
+	err = cmd.Run()
+	if err != nil {
+		log.Printf("Command finished with error: %v", err)
+	}
+	evaluator.calculateStatsAndPlot(*plottingScript)
 }
 
 type strategy interface {
@@ -96,42 +99,93 @@ type strategy interface {
 	ResetHistory() error
 }
 
+type matchJSON struct {
+	Match         bool
+	Distance      int
+	CharsRecalled int
+}
+
+type strategyJSON struct {
+	Title       string
+	Description string
+	Matches     []matchJSON
+}
+
+type evaluateJSON struct {
+	Strategies []strategyJSON
+	Records    []common.Record
+}
+
 type evaluator struct {
 	sanitizedInput bool
-	writer         *bufio.Writer
 	maxCandidates  int
 	historyRecords []common.Record
+	data           evaluateJSON
 }
 
 func (e *evaluator) init(inputPath string) error {
 	e.historyRecords = e.loadHistoryRecords(inputPath)
+	e.processRecords()
 	return nil
 }
 
-func (e *evaluator) evaluate(strategy strategy) error {
-	res := results{writer: e.writer, size: e.maxCandidates + 1}
-	stats := statistics{}
-	res.init()
-	stats.init()
+func (e *evaluator) calculateStatsAndPlot(scriptName string) {
+	evalJSON, err := json.Marshal(e.data)
+	if err != nil {
+		log.Fatal("json marshal error", err)
+	}
+	buffer := bytes.Buffer{}
+	buffer.Write(evalJSON)
+	// run python script to stat and plot/
+	cmd := exec.Command(scriptName)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = &buffer
+	log.Printf("...")
+	err = cmd.Run()
+	if err != nil {
+		log.Printf("Command finished with error: %v", err)
+	}
+}
 
+// enrich records and add them to serializable structure
+func (e *evaluator) processRecords() {
 	for _, record := range e.historyRecords {
-		stats.addCmdLine(record.CmdLine, record.CmdLength)
+
+		// assert
+		if record.Sanitized != e.sanitizedInput {
+			if e.sanitizedInput {
+				log.Fatal("ASSERT failed: '--sanitized-input' is present but data is not sanitized")
+			}
+			log.Fatal("ASSERT failed: data is sanitized but '--sanitized-input' is not present")
+		}
+
+		record.Enrich()
+		e.data.Records = append(e.data.Records, record)
+	}
+}
+
+func (e *evaluator) evaluate(strategy strategy) error {
+	title, description := strategy.GetTitleAndDescription()
+	strategyData := strategyJSON{Title: title, Description: description}
+	for _, record := range e.historyRecords {
 		candidates := strategy.GetCandidates()
 
-		match := false
+		matchFound := false
 		for i, candidate := range candidates {
 			// make an option (--calculate-total) to turn this on/off ?
 			// if i >= e.maxCandidates {
 			// 	break
 			// }
 			if candidate == record.CmdLine {
-				res.addMatch(i+1, record.CmdLength)
-				match = true
+				match := matchJSON{Match: true, Distance: i + 1, CharsRecalled: record.CmdLength}
+				strategyData.Matches = append(strategyData.Matches, match)
+				matchFound = true
 				break
 			}
 		}
-		if match == false {
-			res.addMiss()
+		if matchFound == false {
+			strategyData.Matches = append(strategyData.Matches, matchJSON{})
 		}
 		err := strategy.AddHistoryRecord(&record)
 		if err != nil {
@@ -139,17 +193,7 @@ func (e *evaluator) evaluate(strategy strategy) error {
 			return err
 		}
 	}
-	title, description := strategy.GetTitleAndDescription()
-	n, err := e.writer.WriteString(title + " - " + description + "\n")
-	if err != nil {
-		log.Fatal(err)
-	}
-	if n == 0 {
-		log.Fatal("Nothing was written", n)
-	}
-	// print results
-	res.printCumulative()
-	stats.graphCmdFrequencyAsFuncOfRank()
+	e.data.Strategies = append(e.data.Strategies, strategyData)
 	return nil
 }
 

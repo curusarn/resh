@@ -218,7 +218,8 @@ func (r *Record) Enrich() {
 func GetCommandFromCommandLine(cmdLine string) string {
 	args, err := shellwords.Parse(cmdLine)
 	if err != nil {
-		log.Fatal("shellwords Error:", err)
+		log.Println("shellwords Error:", err, " (cmdLine: <", cmdLine, "> )")
+		return "<error>"
 	}
 	if len(args) > 0 {
 		return args[0]
