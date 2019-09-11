@@ -58,6 +58,7 @@ install: build submodules/bash-preexec/bash-preexec.sh shellrc.sh config.toml uu
 	cp -f shellrc.sh ~/.resh/shellrc
 	cp -f uuid.sh ~/.resh/bin/resh-uuid
 	cp -f resh-* ~/.resh/bin/
+	cp -f evaluate/resh-evaluate-plot.py ~/.resh/bin/
 	cp -fr sanitizer_data ~/.resh/
 	# backward compatibility: We have a new location for resh history file 
 	[ ! -f ~/.resh/history.json ] || mv ~/.resh/history.json ~/.resh_history.json 

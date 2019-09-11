@@ -310,16 +310,14 @@ def plot_strategy_recency():
     plt.show()
 
         
+graph_cmdSequences()
+graph_cmdSequences(node_count=28, edge_minValue=0.06)
 
-# plot_cmdLineFrq_rank()
+plot_cmdLineFrq_rank()
 # plot_cmdFrq_rank()
         
-# plot_cmdVocabularySize_cmdLinesEntered()
+plot_cmdVocabularySize_cmdLinesEntered()
 
-# plot_strategy_recency()
-
-graph_cmdSequences()
-# graph_cmdSequences(node_count=28, edge_minValue=0.06)
-
+plot_strategy_recency()
 
 # be careful and check if labels fit the display
