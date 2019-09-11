@@ -122,6 +122,29 @@ def plot_cmdVocabularySize_cmdLinesEntered():
     plt.xlabel("# of command lines entered")
     plt.show()
 
+# Figure 5.6. Command line vocabulary size vs. the number of commands entered for four typical individuals.
+def plot_cmdLineVocabularySize_cmdLinesEntered():
+    cmdLine_vocabulary = set()
+    y_cmdLine_count = [0]
+    for record in DATA_records:
+        cmdLine = record["cmdLine"]
+        if cmdLine in cmdLine_vocabulary:
+            # repeat last value
+            y_cmdLine_count.append(y_cmdLine_count[-1])
+        else:
+            cmdLine_vocabulary.add(cmdLine)  
+            # append last value +1
+            y_cmdLine_count.append(y_cmdLine_count[-1] + 1)
+
+    # print(cmdLine_vocabulary)
+    x_cmdLines_entered = range(0, len(y_cmdLine_count))
+
+    plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
+    plt.plot(x_cmdLines_entered, y_cmdLine_count, '-')
+    plt.title("Command line vocabulary size vs. the number of command lines entered")
+    plt.ylabel("Command line vocabulary size")
+    plt.xlabel("# of command lines entered")
+    plt.show()
 
 # Figure 3.3. Sequential structure of UNIX command usage, from Figure 4 in Hanson et al. (1984).
 #       Ball diameters are proportional to stationary probability. Lines indicate significant dependencies,
@@ -236,78 +259,124 @@ def graph_cmdSequences(node_count=33, edge_minValue=0.05):
             print("GRAPHVIZ EXCEPTION: <{}>\nGRAPHVIZ TRACE: <{}>".format(str(e), trace))
 
 
-def plot_strategy_recency():
-    recent = None
-    for strategy in data["Strategies"]:
-        if strategy["Title"] != "recent":
-            continue
-        recent = strategy
-        break
-
-    assert(recent is not None)
-
-    size = 50 
-
-    dataPoint_count = 0
-    matches = [0] * size
-    matches_total = 0
-    charsRecalled = [0] * size
-    charsRecalled_total = 0
-    
-    for match in recent["Matches"]:
-        dataPoint_count += 1
-
-        if not match["Match"]:
-            continue
-
-        chars = match["CharsRecalled"]
-        charsRecalled_total += chars 
-        matches_total += 1
-
-        dist = match["Distance"]  
-        if dist > size:
-            continue
-
-        matches[dist-1] += 1
-        charsRecalled[dist-1] += chars
-        
-    x_values = range(1, size+2)
-    x_ticks = list(range(1, size+1, 2))
-    x_labels = x_ticks[:]
-    x_ticks.append(size+1)
-    x_labels.append("total")
-
-    acc = 0
-    matches_cumulative = []
-    for x in matches:
-        acc += x
-        matches_cumulative.append(acc)
-    matches_cumulative.append(matches_total)
-    matches_percent = list(map(lambda x: 100 * x / dataPoint_count, matches_cumulative))
+def plot_strategies_matches(plot_size=50, selected_strategies=[]):
     plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
-    plt.plot(x_values, matches_percent, 'o-')
     plt.title("Matches at distance")
     plt.ylabel('%' + " of matches")
     plt.xlabel("Distance")
+    legend = []
+    for strategy in data["Strategies"]:
+        strategy_title = strategy["Title"]
+        # strategy_description = strategy["Description"]
+
+        if len(selected_strategies) and strategy_title not in selected_strategies:
+            continue
+
+        dataPoint_count = 0
+        matches = [0] * plot_size
+        matches_total = 0
+        charsRecalled = [0] * plot_size
+        charsRecalled_total = 0
+        
+        for match in strategy["Matches"]:
+            dataPoint_count += 1
+
+            if not match["Match"]:
+                continue
+
+            chars = match["CharsRecalled"]
+            charsRecalled_total += chars 
+            matches_total += 1
+
+            dist = match["Distance"]  
+            if dist > plot_size:
+                continue
+
+            matches[dist-1] += 1
+            charsRecalled[dist-1] += chars
+            
+
+        acc = 0
+        matches_cumulative = []
+        for x in matches:
+            acc += x
+            matches_cumulative.append(acc)
+        matches_cumulative.append(matches_total)
+        matches_percent = list(map(lambda x: 100 * x / dataPoint_count, matches_cumulative))
+
+        x_values = range(1, plot_size+2)
+        plt.plot(x_values, matches_percent, 'o-')
+        legend.append(strategy_title)
+
+
+    x_ticks = list(range(1, plot_size+1, 2))
+    x_labels = x_ticks[:]
+    x_ticks.append(plot_size+1)
+    x_labels.append("total")
     plt.xticks(x_ticks, x_labels)
-    #plt.legend(("Zipf", "Command"), loc="best")
+    plt.legend(legend, loc="best")
     plt.show()
 
-    acc = 0
-    charsRecalled_cumulative = []
-    for x in charsRecalled:
-        acc += x
-        charsRecalled_cumulative.append(acc)
-    charsRecalled_cumulative.append(charsRecalled_total)
-    charsRecalled_average = list(map(lambda x: x / dataPoint_count, charsRecalled_cumulative))
+
+
+def plot_strategies_charsRecalled(plot_size=50, selected_strategies=[]):
     plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
-    plt.plot(x_values, charsRecalled_average, 'o-')
     plt.title("Average characters recalled at distance")
     plt.ylabel("Average characters recalled")
     plt.xlabel("Distance")
+    legend = []
+    for strategy in data["Strategies"]:
+        strategy_title = strategy["Title"]
+        # strategy_description = strategy["Description"]
+
+        if len(selected_strategies) and strategy_title not in selected_strategies:
+            continue
+
+        dataPoint_count = 0
+        matches = [0] * plot_size
+        matches_total = 0
+        charsRecalled = [0] * plot_size
+        charsRecalled_total = 0
+        
+        for match in strategy["Matches"]:
+            dataPoint_count += 1
+
+            if not match["Match"]:
+                continue
+
+            chars = match["CharsRecalled"]
+            charsRecalled_total += chars 
+            matches_total += 1
+
+            dist = match["Distance"]  
+            if dist > plot_size:
+                continue
+
+            matches[dist-1] += 1
+            charsRecalled[dist-1] += chars
+            
+
+        acc = 0
+        charsRecalled_cumulative = []
+        for x in charsRecalled:
+            acc += x
+            charsRecalled_cumulative.append(acc)
+        charsRecalled_cumulative.append(charsRecalled_total)
+        charsRecalled_average = list(map(lambda x: x / dataPoint_count, charsRecalled_cumulative))
+
+        x_values = range(1, plot_size+2)
+        plt.plot(x_values, charsRecalled_average, 'o-')
+        legend.append(strategy_title)
+
+
+    x_ticks = list(range(1, plot_size+1, 2))
+    x_labels = x_ticks[:]
+    x_ticks.append(plot_size+1)
+    x_labels.append("total")
     plt.xticks(x_ticks, x_labels)
-    #plt.legend(("Zipf", "Command"), loc="best")
+    plt.legend(legend, loc="best")
     plt.show()
+
 
         
 graph_cmdSequences()
@@ -316,8 +385,10 @@ graph_cmdSequences(node_count=28, edge_minValue=0.06)
 plot_cmdLineFrq_rank()
 # plot_cmdFrq_rank()
         
-plot_cmdVocabularySize_cmdLinesEntered()
+plot_cmdLineVocabularySize_cmdLinesEntered()
+# plot_cmdVocabularySize_cmdLinesEntered()
 
-plot_strategy_recency()
+plot_strategies_matches()
+plot_strategies_charsRecalled()
 
 # be careful and check if labels fit the display
