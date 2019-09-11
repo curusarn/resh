@@ -130,7 +130,7 @@ def graphviz_cmdSequences(cmd_displayTreshold=28, edge_displayTreshold=0.05):
         cmd_id[cmd] = str(x)
         prev_cmd = cmd
 
-    dot = Digraph(comment="Command sequences", graph_attr={'overlap':'scale', 'splines':'true', 'sep':'0.25'})
+    graph = Digraph(engine='neato', graph_attr={'overlap':'scale', 'overlap_shrink':'true', 'splines':'true', 'sep':'0.25'})
 
     # for cmd_entry in cmdSeq_count.items():
     #     cmd, seq = cmd_entry
@@ -138,7 +138,7 @@ def graphviz_cmdSequences(cmd_displayTreshold=28, edge_displayTreshold=0.05):
     #     if cmd_count[cmd] < cmd_displayTreshold:
     #         continue
     #     
-    #     dot.node(cmd_id[cmd], cmd)
+    #     graph.node(cmd_id[cmd], cmd)
 
     for cmd_entry in cmdSeq_count.items():
         cmd, seq = cmd_entry
@@ -162,10 +162,10 @@ def graphviz_cmdSequences(cmd_displayTreshold=28, edge_displayTreshold=0.05):
                 width_ = str(0.08*scale_) 
                 fontsize_ = str(1*scale_)
                 if scale_ < 12:
-                    dot.node(id_, '', shape='circle', fixedsize='true', fontname='bold',
+                    graph.node(id_, '', shape='circle', fixedsize='true', fontname='bold',
                             width=width_, fontsize='12', forcelabels='true', xlabel=cmd_)
                 else:
-                    dot.node(id_, cmd_, shape='circle', fixedsize='true', fontname='bold',
+                    graph.node(id_, cmd_, shape='circle', fixedsize='true', fontname='bold',
                             width=width_, fontsize=fontsize_, forcelabels='true')
 
             
@@ -174,19 +174,20 @@ def graphviz_cmdSequences(cmd_displayTreshold=28, edge_displayTreshold=0.05):
             penwidth_ = str(0.5 + 4.5 * scale_)
             #penwidth_bold_ = str(8 * scale_)
             if scale_ > 0.5:
-                dot.edge(cmd_id[cmd], cmd_id[cmd2], constraint='false', splines='curved',
+                graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='false', splines='curved',
                          penwidth=penwidth_, style='bold')
             elif scale_ > 0.2:
-                dot.edge(cmd_id[cmd], cmd_id[cmd2], constraint='false', splines='curved',
+                graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='false', splines='curved',
                          penwidth=penwidth_, arrowhead='open')
             elif scale_ > 0.1:
-                dot.edge(cmd_id[cmd], cmd_id[cmd2], constraint='false', splines='curved',
+                graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='false', splines='curved',
                          penwidth=penwidth_, style='dashed', arrowhead='open')
             else:
-                dot.edge(cmd_id[cmd], cmd_id[cmd2], constraint='false', splines='curved',
+                graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='false', splines='curved',
                          penwidth=penwidth_, style='dotted', arrowhead='empty')
 
-    dot.render('/tmp/resh-graphviz-cmdSeq.gv', view=False)
+    graph.view()
+    # graph.render('/tmp/resh-graphviz-cmdSeq.gv', view=True)
 
 def plot_strategy_recency():
     recent = None
@@ -264,9 +265,9 @@ def plot_strategy_recency():
         
 
         
-plot_strategy_recency()
+# plot_strategy_recency()
 
-# graphviz_cmdSequences()
+graphviz_cmdSequences()
 # plot_cmdVocabularySize_cmdLinesEntered()
 # plot_cmdLineFrq_rank()
 # plot_cmdFrq_rank()
