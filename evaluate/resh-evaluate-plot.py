@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+
+import traceback
 import sys
 import json
 from collections import defaultdict
@@ -111,14 +113,15 @@ def plot_cmdVocabularySize_cmdLinesEntered():
     plt.xlabel("# of command lines entered")
     plt.show()
 
+
 # Figure 3.3. Sequential structure of UNIX command usage, from Figure 4 in Hanson et al. (1984).
 #       Ball diameters are proportional to stationary probability. Lines indicate significant dependencies,
 #       solid ones being more probable (p < .0001) and dashed ones less probable (.005 < p < .0001).
-def graphviz_cmdSequences(cmd_displayTreshold=28, edge_displayTreshold=0.05):
+def graph_cmdSequences(node_count=33, edge_minValue=0.05):
     cmd_count = defaultdict(int)
     cmdSeq_count = defaultdict(lambda: defaultdict(int))
     cmd_id = dict()
-    prev_cmd = "_SESSION_INIT_" # XXX: not actually session init yet
+    prev_cmd = "<start>" # XXX: not actually session init yet
     cmd_id[prev_cmd] = str(-1) 
     for x, record in enumerate(data["Records"]):
         if record["invalid"]:
@@ -130,64 +133,95 @@ def graphviz_cmdSequences(cmd_displayTreshold=28, edge_displayTreshold=0.05):
         cmd_id[cmd] = str(x)
         prev_cmd = cmd
 
-    graph = Digraph(engine='neato', graph_attr={'overlap':'scale', 'overlap_shrink':'true', 'splines':'true', 'sep':'0.25'})
+    # get `node_count` of largest nodes
+    sorted_cmd_count = sorted(cmd_count.items(), key=lambda x: x[1], reverse=True)
+    cmds_to_graph = list(map(lambda x: x[0], sorted_cmd_count))[:node_count]
 
-    # for cmd_entry in cmdSeq_count.items():
-    #     cmd, seq = cmd_entry
+    # use 3 biggest nodes as a reference point for scaling
+    biggest_node = cmd_count[cmds_to_graph[0]]
+    nd_biggest_node = cmd_count[cmds_to_graph[1]]
+    rd_biggest_node = cmd_count[cmds_to_graph[1]]
+    count2scale_coef = 3 / (biggest_node + nd_biggest_node + rd_biggest_node)
 
-    #     if cmd_count[cmd] < cmd_displayTreshold:
-    #         continue
-    #     
-    #     graph.node(cmd_id[cmd], cmd)
+    # scaling constant
+    #       affects node size and node label
+    base_scaling_factor = 21
+    # extra scaling for experiments - not really useful imho
+    #       affects everything nodes, edges, node labels, treshold for turning label into xlabel, xlabel size, ...
+    extra_scaling_factor = 1.0 
+    for x in range(0, 10):
+        # graphviz is not the most reliable piece of software
+        #       -> retry on fail but scale nodes down by 1%
+        scaling_factor = base_scaling_factor * (1 - x * 0.01)
 
-    for cmd_entry in cmdSeq_count.items():
-        cmd, seq = cmd_entry
+        # overlap: scale -> solve overlap by scaling the graph
+        # overlap_shrink -> try to shrink the graph a bit after you are done
+        # splines -> don't draw edges over nodes
+        # sep: 2.5 -> assume that nodes are 2.5 inches larger
+        graph_attr={'overlap':'scale', 'overlap_shrink':'true',
+                    'splines':'true', 'sep':'0.25'}
+        graph = Digraph(name='command_sequentiality', engine='neato', graph_attr=graph_attr)
 
-        count = cmd_count[cmd]
-        if count < cmd_displayTreshold:
-            continue
+        # iterate over all nodes
+        for cmd in cmds_to_graph:
+            seq = cmdSeq_count[cmd]
+            count = cmd_count[cmd]
 
-        for seq_entry in seq.items():
-            cmd2, seq_count = seq_entry
-            relative_seq_count = seq_count / count
+            # iterate over all "following" commands (for each node)
+            for seq_entry in seq.items():
+                cmd2, seq_count = seq_entry
+                relative_seq_count = seq_count / count
 
-            if cmd_count[cmd2] < cmd_displayTreshold:
-                continue
-            if relative_seq_count < edge_displayTreshold:
-                continue
-            
-            for id_, cmd_ in ((cmd_id[cmd], cmd), (cmd_id[cmd2], cmd2)):
-                count_ = cmd_count[cmd_]
-                scale_ = count_ / (cmd_displayTreshold)
-                width_ = str(0.08*scale_) 
-                fontsize_ = str(1*scale_)
-                if scale_ < 12:
-                    graph.node(id_, '', shape='circle', fixedsize='true', fontname='bold',
-                            width=width_, fontsize='12', forcelabels='true', xlabel=cmd_)
+                # check if "follow" command is supposed to be in the graph
+                if cmd2 not in cmds_to_graph:
+                    continue
+                # check if the edge value is high enough
+                if relative_seq_count < edge_minValue:
+                    continue
+                
+                # create starting node and end node for the edge
+                #       duplicates don't matter 
+                for id_, cmd_ in ((cmd_id[cmd], cmd), (cmd_id[cmd2], cmd2)):
+                    count_ = cmd_count[cmd_]
+                    scale_ = count_ * count2scale_coef * scaling_factor * extra_scaling_factor
+                    width_ = 0.08 * scale_
+                    fontsize_ = 8.5 * scale_ / (len(cmd_) + 3)
+
+                    width_ = str(width_) 
+                    if fontsize_ < 12 * extra_scaling_factor:
+                        graph.node(id_, ' ', shape='circle', fixedsize='true', fontname='monospace bold',
+                                width=width_, fontsize=str(12 * extra_scaling_factor), forcelabels='true', xlabel=cmd_)
+                    else:
+                        fontsize_ = str(fontsize_)
+                        graph.node(id_, cmd_, shape='circle', fixedsize='true', fontname='monospace bold',
+                                width=width_, fontsize=fontsize_, forcelabels='true', labelloc='c')
+                
+                # value of the edge (percentage) 1.0 is max
+                scale_ = seq_count / cmd_count[cmd]
+                penwidth_ = str((0.5 + 4.5 * scale_) * extra_scaling_factor)
+                #penwidth_bold_ = str(8 * scale_)
+                if scale_ > 0.5:
+                    graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='true', splines='curved',
+                            penwidth=penwidth_, style='bold')
+                elif scale_ > 0.2:
+                    graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='true', splines='curved',
+                            penwidth=penwidth_, arrowhead='open')
+                elif scale_ > 0.1:
+                    graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='true', splines='curved',
+                            penwidth=penwidth_, style='dashed', arrowhead='open')
                 else:
-                    graph.node(id_, cmd_, shape='circle', fixedsize='true', fontname='bold',
-                            width=width_, fontsize=fontsize_, forcelabels='true')
+                    graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='false', splines='curved',
+                            penwidth=penwidth_, style='dotted', arrowhead='empty')
 
-            
-            # 1.0 is max
-            scale_ = seq_count / cmd_count[cmd]
-            penwidth_ = str(0.5 + 4.5 * scale_)
-            #penwidth_bold_ = str(8 * scale_)
-            if scale_ > 0.5:
-                graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='false', splines='curved',
-                         penwidth=penwidth_, style='bold')
-            elif scale_ > 0.2:
-                graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='false', splines='curved',
-                         penwidth=penwidth_, arrowhead='open')
-            elif scale_ > 0.1:
-                graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='false', splines='curved',
-                         penwidth=penwidth_, style='dashed', arrowhead='open')
-            else:
-                graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='false', splines='curved',
-                         penwidth=penwidth_, style='dotted', arrowhead='empty')
+        # graphviz sometimes fails - see above
+        try:
+            graph.view()
+            # graph.render('/tmp/resh-graphviz-cmdSeq.gv', view=True)
+            break
+        except Exception as e:
+            trace = traceback.format_exc()
+            print("GRAPHVIZ EXCEPTION: <{}>\nGRAPHVIZ TRACE: <{}>".format(str(e), trace))
 
-    graph.view()
-    # graph.render('/tmp/resh-graphviz-cmdSeq.gv', view=True)
 
 def plot_strategy_recency():
     recent = None
@@ -267,7 +301,7 @@ def plot_strategy_recency():
         
 # plot_strategy_recency()
 
-graphviz_cmdSequences()
+graph_cmdSequences(node_count=28, edge_minValue=0.06)
 # plot_cmdVocabularySize_cmdLinesEntered()
 # plot_cmdLineFrq_rank()
 # plot_cmdFrq_rank()
