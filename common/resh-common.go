@@ -224,7 +224,6 @@ func (r *Record) Enrich() {
 
 // Validate - returns error if the record is invalid
 func (r *Record) Validate() error {
-
 	return nil
 }
 

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -25,30 +26,25 @@ func main() {
 	usr, _ := user.Current()
 	dir := usr.HomeDir
 	historyPath := filepath.Join(dir, ".resh_history.json")
+	historyPathBatchMode := filepath.Join(dir, "resh_history.json")
 	sanitizedHistoryPath := filepath.Join(dir, "resh_history_sanitized.json")
 	// tmpPath := "/tmp/resh-evaluate-tmp.json"
 
 	showVersion := flag.Bool("version", false, "Show version and exit")
 	showRevision := flag.Bool("revision", false, "Show git revision and exit")
-	inputPath := flag.String("input", "",
+	input := flag.String("input", "",
 		"Input file (default: "+historyPath+"OR"+sanitizedHistoryPath+
 			" depending on --sanitized-input option)")
 	// outputDir := flag.String("output", "/tmp/resh-evaluate", "Output directory")
 	sanitizedInput := flag.Bool("sanitized-input", false,
 		"Handle input as sanitized (also changes default value for input argument)")
 	plottingScript := flag.String("plotting-script", "resh-evaluate-plot.py", "Script to use for plotting")
+	inputDataRoot := flag.String("input-data-root", "",
+		"Input data root, enables batch mode, looks for files matching --input option")
 
 	flag.Parse()
 
-	// set default input
-	if *inputPath == "" {
-		if *sanitizedInput {
-			*inputPath = sanitizedHistoryPath
-		} else {
-			*inputPath = historyPath
-		}
-	}
-
+	// handle show{Version,Revision} options
 	if *showVersion == true {
 		fmt.Println(Version)
 		os.Exit(0)
@@ -58,10 +54,33 @@ func main() {
 		os.Exit(0)
 	}
 
-	evaluator := evaluator{sanitizedInput: *sanitizedInput, maxCandidates: 50}
-	err := evaluator.init(*inputPath)
-	if err != nil {
-		log.Fatal("Evaluator init() error:", err)
+	// handle batch mode
+	batchMode := false
+	if *inputDataRoot != "" {
+		batchMode = true
+	}
+	// set default input
+	if *input == "" {
+		if *sanitizedInput {
+			*input = sanitizedHistoryPath
+		} else if batchMode {
+			*input = historyPathBatchMode
+		} else {
+			*input = historyPath
+		}
+	}
+
+	evaluator := evaluator{sanitizedInput: *sanitizedInput, maxCandidates: 50, BatchMode: batchMode}
+	if batchMode {
+		err := evaluator.initBatchMode(*input, *inputDataRoot)
+		if err != nil {
+			log.Fatal("Evaluator initBatchMode() error:", err)
+		}
+	} else {
+		err := evaluator.init(*input)
+		if err != nil {
+			log.Fatal("Evaluator init() error:", err)
+		}
 	}
 
 	var strategies []strategy
@@ -73,12 +92,11 @@ func main() {
 	strategies = append(strategies, &recent)
 
 	for _, strat := range strategies {
-		err = evaluator.evaluate(strat)
+		err := evaluator.evaluate(strat)
 		if err != nil {
 			log.Println("Evaluator evaluate() error:", err)
 		}
 	}
-	// evaluator.dumpJSON(tmpPath)
 
 	evaluator.calculateStatsAndPlot(*plottingScript)
 }
@@ -102,26 +120,42 @@ type strategyJSON struct {
 	Matches     []matchJSON
 }
 
-type evaluateJSON struct {
-	Strategies []strategyJSON
-	Records    []common.Record
+type deviceRecords struct {
+	Name    string
+	Records []common.Record
+}
+
+type userRecords struct {
+	Name    string
+	Devices []deviceRecords
 }
 
 type evaluator struct {
 	sanitizedInput bool
+	BatchMode      bool
 	maxCandidates  int
-	historyRecords []common.Record
-	data           evaluateJSON
+	UsersRecords   []userRecords
+	Strategies     []strategyJSON
+}
+
+func (e *evaluator) initBatchMode(input string, inputDataRoot string) error {
+	e.UsersRecords = e.loadHistoryRecordsBatchMode(input, inputDataRoot)
+	e.processRecords()
+	return nil
 }
 
 func (e *evaluator) init(inputPath string) error {
-	e.historyRecords = e.loadHistoryRecords(inputPath)
+	records := e.loadHistoryRecords(inputPath)
+	device := deviceRecords{Records: records}
+	user := userRecords{}
+	user.Devices = append(user.Devices, device)
+	e.UsersRecords = append(e.UsersRecords, user)
 	e.processRecords()
 	return nil
 }
 
 func (e *evaluator) calculateStatsAndPlot(scriptName string) {
-	evalJSON, err := json.Marshal(e.data)
+	evalJSON, err := json.Marshal(e)
 	if err != nil {
 		log.Fatal("json marshal error", err)
 	}
@@ -140,25 +174,28 @@ func (e *evaluator) calculateStatsAndPlot(scriptName string) {
 
 // enrich records and add them to serializable structure
 func (e *evaluator) processRecords() {
-	for _, record := range e.historyRecords {
+	for i := range e.UsersRecords {
+		for j := range e.UsersRecords[i].Devices {
+			for k, record := range e.UsersRecords[i].Devices[j].Records {
+				// assert
+				if record.Sanitized != e.sanitizedInput {
+					if e.sanitizedInput {
+						log.Fatal("ASSERT failed: '--sanitized-input' is present but data is not sanitized")
+					}
+					log.Fatal("ASSERT failed: data is sanitized but '--sanitized-input' is not present")
+				}
 
-		// assert
-		if record.Sanitized != e.sanitizedInput {
-			if e.sanitizedInput {
-				log.Fatal("ASSERT failed: '--sanitized-input' is present but data is not sanitized")
+				e.UsersRecords[i].Devices[j].Records[k].Enrich()
+				// device.Records = append(device.Records, record)
 			}
-			log.Fatal("ASSERT failed: data is sanitized but '--sanitized-input' is not present")
 		}
-
-		record.Enrich()
-		e.data.Records = append(e.data.Records, record)
 	}
 }
 
 func (e *evaluator) evaluate(strategy strategy) error {
 	title, description := strategy.GetTitleAndDescription()
 	strategyData := strategyJSON{Title: title, Description: description}
-	for _, record := range e.historyRecords {
+	for _, record := range e.UsersRecords[0].Devices[0].Records {
 		candidates := strategy.GetCandidates()
 
 		matchFound := false
@@ -183,8 +220,65 @@ func (e *evaluator) evaluate(strategy strategy) error {
 			return err
 		}
 	}
-	e.data.Strategies = append(e.data.Strategies, strategyData)
+	e.Strategies = append(e.Strategies, strategyData)
 	return nil
+}
+
+func (e *evaluator) loadHistoryRecordsBatchMode(fname string, dataRootPath string) []userRecords {
+	var records []userRecords
+	info, err := os.Stat(dataRootPath)
+	if err != nil {
+		log.Fatal("Error: Directory", dataRootPath, "does not exist - exiting! (", err, ")")
+	}
+	if info.IsDir() == false {
+		log.Fatal("Error:", dataRootPath, "is not a directory - exiting!")
+	}
+	users, err := ioutil.ReadDir(dataRootPath)
+	if err != nil {
+		log.Fatal("Could not read directory:", dataRootPath)
+	}
+	fmt.Println("Listing users in <", dataRootPath, ">...")
+	for _, user := range users {
+		userRecords := userRecords{Name: user.Name()}
+		userFullPath := filepath.Join(dataRootPath, user.Name())
+		if user.IsDir() == false {
+			log.Println("Warn: Unexpected file (not a directory) <", userFullPath, "> - skipping.")
+			continue
+		}
+		fmt.Println()
+		fmt.Printf("*- %s\n", user.Name())
+		devices, err := ioutil.ReadDir(userFullPath)
+		if err != nil {
+			log.Fatal("Could not read directory:", userFullPath)
+		}
+		for _, device := range devices {
+			deviceRecords := deviceRecords{Name: device.Name()}
+			deviceFullPath := filepath.Join(userFullPath, device.Name())
+			if device.IsDir() == false {
+				log.Println("Warn: Unexpected file (not a directory) <", deviceFullPath, "> - skipping.")
+				continue
+			}
+			fmt.Printf("   \\- %s\n", device.Name())
+			files, err := ioutil.ReadDir(deviceFullPath)
+			if err != nil {
+				log.Fatal("Could not read directory:", deviceFullPath)
+			}
+			for _, file := range files {
+				fileFullPath := filepath.Join(deviceFullPath, file.Name())
+				if file.Name() == fname {
+					fmt.Printf("      \\- %s - loading ...", file.Name())
+					// load the data
+					deviceRecords.Records = e.loadHistoryRecords(fileFullPath)
+					fmt.Println(" OK ✓")
+				} else {
+					fmt.Printf("      \\- %s - skipped\n", file.Name())
+				}
+			}
+			userRecords.Devices = append(userRecords.Devices, deviceRecords)
+		}
+		records = append(records, userRecords)
+	}
+	return records
 }
 
 func (e *evaluator) loadHistoryRecords(fname string) []common.Record {

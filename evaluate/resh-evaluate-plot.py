@@ -16,6 +16,24 @@ PLOT_HEIGHT = 7 # inches
 PLOT_SIZE_zipf = 20
 
 data = json.load(sys.stdin)
+
+DATA_records = []
+DATA_records_by_session = defaultdict(list) 
+for user in data["UsersRecords"]:
+    for device in user["Devices"]:
+        for record in device["Records"]:
+            if record["invalid"]:
+                continue
+            
+            DATA_records.append(record)
+            DATA_records_by_session[record["sessionPid"]].append(record)
+
+DATA_records = list(sorted(DATA_records, key=lambda x: x["realtimeBeforeLocal"]))
+
+for pid, session in DATA_records_by_session.items():
+    session = list(sorted(session, key=lambda x: x["realtimeBeforeLocal"]))
+
+
 # for strategy in data["Strategies"]:
 #     print(json.dumps(strategy))
 
@@ -33,10 +51,7 @@ def trim(text, length, add_elipse=True):
 # Figure 3.1. The normalized command frequency, compared with Zipf.
 def plot_cmdLineFrq_rank(plotSize=PLOT_SIZE_zipf, show_labels=False):
     cmdLine_count = defaultdict(int)
-    for record in data["Records"]:
-        if record["invalid"]:
-            continue
-
+    for record in DATA_records:
         cmdLine_count[record["cmdLine"]] += 1
 
     tmp = sorted(cmdLine_count.items(), key=lambda x: x[1], reverse=True)[:plotSize]
@@ -60,10 +75,7 @@ def plot_cmdLineFrq_rank(plotSize=PLOT_SIZE_zipf, show_labels=False):
 # similar to ~ Figure 3.1. The normalized command frequency, compared with Zipf.
 def plot_cmdFrq_rank(plotSize=PLOT_SIZE_zipf, show_labels=False):
     cmd_count = defaultdict(int)
-    for record in data["Records"]:
-        if record["invalid"]:
-            continue
-
+    for record in DATA_records:
         cmd = record["firstWord"]
         if cmd == "":
             continue
@@ -90,10 +102,7 @@ def plot_cmdFrq_rank(plotSize=PLOT_SIZE_zipf, show_labels=False):
 def plot_cmdVocabularySize_cmdLinesEntered():
     cmd_vocabulary = set()
     y_cmd_count = [0]
-    for record in data["Records"]:
-        if record["invalid"]:
-            continue
-
+    for record in DATA_records:
         cmd = record["firstWord"]
         if cmd in cmd_vocabulary:
             # repeat last value
@@ -103,7 +112,7 @@ def plot_cmdVocabularySize_cmdLinesEntered():
             # append last value +1
             y_cmd_count.append(y_cmd_count[-1] + 1)
 
-    print(cmd_vocabulary)
+    # print(cmd_vocabulary)
     x_cmds_entered = range(0, len(y_cmd_count))
 
     plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
@@ -118,23 +127,27 @@ def plot_cmdVocabularySize_cmdLinesEntered():
 #       Ball diameters are proportional to stationary probability. Lines indicate significant dependencies,
 #       solid ones being more probable (p < .0001) and dashed ones less probable (.005 < p < .0001).
 def graph_cmdSequences(node_count=33, edge_minValue=0.05):
+    START_CMD = "_start_"
     cmd_count = defaultdict(int)
     cmdSeq_count = defaultdict(lambda: defaultdict(int))
     cmd_id = dict()
-    prev_cmd = "<start>" # XXX: not actually session init yet
-    cmd_id[prev_cmd] = str(-1) 
-    for x, record in enumerate(data["Records"]):
-        if record["invalid"]:
-            continue
-
-        cmd = record["firstWord"]
-        cmdSeq_count[prev_cmd][cmd] += 1
-        cmd_count[cmd] += 1
-        cmd_id[cmd] = str(x)
-        prev_cmd = cmd
+    x = 0
+    cmd_id[START_CMD] = str(x) 
+    for pid, session in DATA_records_by_session.items():
+        cmd_count[START_CMD] += 1
+        prev_cmd = START_CMD
+        for record in session:
+            cmd = record["firstWord"]
+            cmdSeq_count[prev_cmd][cmd] += 1
+            cmd_count[cmd] += 1
+            if cmd not in cmd_id:
+                x += 1
+                cmd_id[cmd] = str(x)
+            prev_cmd = cmd
 
     # get `node_count` of largest nodes
     sorted_cmd_count = sorted(cmd_count.items(), key=lambda x: x[1], reverse=True)
+    print(sorted_cmd_count)
     cmds_to_graph = list(map(lambda x: x[0], sorted_cmd_count))[:node_count]
 
     # use 3 biggest nodes as a reference point for scaling
@@ -298,13 +311,15 @@ def plot_strategy_recency():
 
         
 
-        
-# plot_strategy_recency()
-
-graph_cmdSequences(node_count=28, edge_minValue=0.06)
-# plot_cmdVocabularySize_cmdLinesEntered()
 # plot_cmdLineFrq_rank()
 # plot_cmdFrq_rank()
+        
+# plot_cmdVocabularySize_cmdLinesEntered()
+
+# plot_strategy_recency()
+
+graph_cmdSequences()
+# graph_cmdSequences(node_count=28, edge_minValue=0.06)
 
 
 # be careful and check if labels fit the display
