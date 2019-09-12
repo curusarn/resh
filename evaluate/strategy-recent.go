@@ -27,5 +27,6 @@ func (s *strategyRecent) AddHistoryRecord(record *common.Record) error {
 }
 
 func (s *strategyRecent) ResetHistory() error {
+	s.history = nil
 	return nil
 }

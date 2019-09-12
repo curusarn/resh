@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"sort"
 
 	"github.com/curusarn/resh/common"
 )
@@ -89,7 +90,12 @@ func main() {
 	// strategies = append(strategies, &dummy)
 
 	recent := strategyRecent{}
-	strategies = append(strategies, &recent)
+	frequent := strategyFrequent{}
+	frequent.init()
+	directory := strategyDirectorySensitive{}
+	directory.init()
+
+	strategies = append(strategies, &recent, &frequent, &directory)
 
 	for _, strat := range strategies {
 		err := evaluator.evaluate(strat)
@@ -175,8 +181,18 @@ func (e *evaluator) calculateStatsAndPlot(scriptName string) {
 // enrich records and add them to serializable structure
 func (e *evaluator) processRecords() {
 	for i := range e.UsersRecords {
-		for j := range e.UsersRecords[i].Devices {
+		for j, device := range e.UsersRecords[i].Devices {
+			sessionIDs := map[string]uint64{}
+			var nextID uint64
+			nextID = 0
 			for k, record := range e.UsersRecords[i].Devices[j].Records {
+				id, found := sessionIDs[record.SessionId]
+				if found == false {
+					id = nextID
+					sessionIDs[record.SessionId] = id
+					nextID++
+				}
+				record.SeqSessionID = id
 				// assert
 				if record.Sanitized != e.sanitizedInput {
 					if e.sanitizedInput {
@@ -188,6 +204,12 @@ func (e *evaluator) processRecords() {
 				e.UsersRecords[i].Devices[j].Records[k].Enrich()
 				// device.Records = append(device.Records, record)
 			}
+			sort.SliceStable(e.UsersRecords[i].Devices[j].Records, func(x, y int) bool {
+				if device.Records[x].SeqSessionID == device.Records[y].SeqSessionID {
+					return device.Records[x].RealtimeAfterLocal < device.Records[y].RealtimeAfterLocal
+				}
+				return device.Records[x].SeqSessionID < device.Records[y].SeqSessionID
+			})
 		}
 	}
 }

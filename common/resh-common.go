@@ -74,8 +74,9 @@ type Record struct {
 	CmdLength int  `json:"cmdLength"`
 
 	// enriching fields - added "later"
-	FirstWord string `json:"firstWord"`
-	Invalid   bool   `json:"invalid"`
+	FirstWord    string `json:"firstWord"`
+	Invalid      bool   `json:"invalid"`
+	SeqSessionID uint64 `json:"seqSessionID"`
 }
 
 // FallbackRecord when record is too old and can't be parsed into regular Record

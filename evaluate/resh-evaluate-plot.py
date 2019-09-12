@@ -26,7 +26,7 @@ for user in data["UsersRecords"]:
                 continue
             
             DATA_records.append(record)
-            DATA_records_by_session[record["sessionPid"]].append(record)
+            DATA_records_by_session[record["sessionId"]].append(record)
 
 DATA_records = list(sorted(DATA_records, key=lambda x: x["realtimeBeforeLocal"]))
 
@@ -265,6 +265,9 @@ def plot_strategies_matches(plot_size=50, selected_strategies=[]):
     plt.ylabel('%' + " of matches")
     plt.xlabel("Distance")
     legend = []
+    x_values = range(1, plot_size+1)
+    saved_matches_total = None
+    saved_dataPoint_count = None
     for strategy in data["Strategies"]:
         strategy_title = strategy["Title"]
         # strategy_description = strategy["Description"]
@@ -295,24 +298,34 @@ def plot_strategies_matches(plot_size=50, selected_strategies=[]):
             matches[dist-1] += 1
             charsRecalled[dist-1] += chars
             
+        # recent is very simple strategy so we will believe 
+        #       that there is no bug in it and we can use it to determine total
+        if strategy_title == "recent":
+            saved_matches_total = matches_total
+            saved_dataPoint_count = dataPoint_count
+
+        if len(selected_strategies) and strategy_title not in selected_strategies:
+            continue
 
         acc = 0
         matches_cumulative = []
         for x in matches:
             acc += x
             matches_cumulative.append(acc)
-        matches_cumulative.append(matches_total)
+        # matches_cumulative.append(matches_total)
         matches_percent = list(map(lambda x: 100 * x / dataPoint_count, matches_cumulative))
 
-        x_values = range(1, plot_size+2)
         plt.plot(x_values, matches_percent, 'o-')
         legend.append(strategy_title)
 
+    assert(saved_matches_total is not None)
+    assert(saved_dataPoint_count is not None)
+    max_values = [100 * saved_matches_total / saved_dataPoint_count] * len(x_values)
+    plt.plot(x_values, max_values, 'r-')
+    legend.append("maximum possible")
 
     x_ticks = list(range(1, plot_size+1, 2))
     x_labels = x_ticks[:]
-    x_ticks.append(plot_size+1)
-    x_labels.append("total")
     plt.xticks(x_ticks, x_labels)
     plt.legend(legend, loc="best")
     plt.show()
@@ -324,13 +337,13 @@ def plot_strategies_charsRecalled(plot_size=50, selected_strategies=[]):
     plt.title("Average characters recalled at distance")
     plt.ylabel("Average characters recalled")
     plt.xlabel("Distance")
+    x_values = range(1, plot_size+1)
     legend = []
+    saved_charsRecalled_total = None
+    saved_dataPoint_count = None
     for strategy in data["Strategies"]:
         strategy_title = strategy["Title"]
         # strategy_description = strategy["Description"]
-
-        if len(selected_strategies) and strategy_title not in selected_strategies:
-            continue
 
         dataPoint_count = 0
         matches = [0] * plot_size
@@ -355,38 +368,47 @@ def plot_strategies_charsRecalled(plot_size=50, selected_strategies=[]):
             matches[dist-1] += 1
             charsRecalled[dist-1] += chars
             
+        # recent is very simple strategy so we will believe 
+        #       that there is no bug in it and we can use it to determine total
+        if strategy_title == "recent":
+            saved_charsRecalled_total = charsRecalled_total
+            saved_dataPoint_count = dataPoint_count
+
+        if len(selected_strategies) and strategy_title not in selected_strategies:
+            continue
 
         acc = 0
         charsRecalled_cumulative = []
         for x in charsRecalled:
             acc += x
             charsRecalled_cumulative.append(acc)
-        charsRecalled_cumulative.append(charsRecalled_total)
         charsRecalled_average = list(map(lambda x: x / dataPoint_count, charsRecalled_cumulative))
 
-        x_values = range(1, plot_size+2)
         plt.plot(x_values, charsRecalled_average, 'o-')
         legend.append(strategy_title)
 
+    assert(saved_charsRecalled_total is not None)
+    assert(saved_dataPoint_count is not None)
+    max_values = [saved_charsRecalled_total / saved_dataPoint_count] * len(x_values)
+    plt.plot(x_values, max_values, 'r-')
+    legend.append("maximum possible")
 
     x_ticks = list(range(1, plot_size+1, 2))
     x_labels = x_ticks[:]
-    x_ticks.append(plot_size+1)
-    x_labels.append("total")
     plt.xticks(x_ticks, x_labels)
     plt.legend(legend, loc="best")
     plt.show()
 
 
         
-graph_cmdSequences()
-graph_cmdSequences(node_count=28, edge_minValue=0.06)
-
-plot_cmdLineFrq_rank()
-# plot_cmdFrq_rank()
-        
-plot_cmdLineVocabularySize_cmdLinesEntered()
-# plot_cmdVocabularySize_cmdLinesEntered()
+# graph_cmdSequences()
+# graph_cmdSequences(node_count=28, edge_minValue=0.06)
+# 
+# plot_cmdLineFrq_rank()
+# # plot_cmdFrq_rank()
+#         
+# plot_cmdLineVocabularySize_cmdLinesEntered()
+# # plot_cmdVocabularySize_cmdLinesEntered()
 
 plot_strategies_matches()
 plot_strategies_charsRecalled()
