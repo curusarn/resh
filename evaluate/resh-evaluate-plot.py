@@ -401,16 +401,16 @@ def plot_strategies_charsRecalled(plot_size=50, selected_strategies=[]):
 
 
         
-# graph_cmdSequences()
-# graph_cmdSequences(node_count=28, edge_minValue=0.06)
-# 
-# plot_cmdLineFrq_rank()
-# # plot_cmdFrq_rank()
-#         
-# plot_cmdLineVocabularySize_cmdLinesEntered()
-# # plot_cmdVocabularySize_cmdLinesEntered()
+graph_cmdSequences()
+graph_cmdSequences(node_count=28, edge_minValue=0.06)
 
-plot_strategies_matches()
-plot_strategies_charsRecalled()
+plot_cmdLineFrq_rank()
+plot_cmdFrq_rank()
+        
+plot_cmdLineVocabularySize_cmdLinesEntered()
+plot_cmdVocabularySize_cmdLinesEntered()
+
+plot_strategies_matches(20)
+plot_strategies_charsRecalled(20)
 
 # be careful and check if labels fit the display
