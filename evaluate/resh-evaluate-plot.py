@@ -33,6 +33,8 @@ DATA_records = list(sorted(DATA_records, key=lambda x: x["realtimeBeforeLocal"])
 for pid, session in DATA_records_by_session.items():
     session = list(sorted(session, key=lambda x: x["realtimeBeforeLocal"]))
 
+# TODO: this should be a cmdline option
+async_draw = True
 
 # for strategy in data["Strategies"]:
 #     print(json.dumps(strategy))
@@ -69,7 +71,10 @@ def plot_cmdLineFrq_rank(plotSize=PLOT_SIZE_zipf, show_labels=False):
     if show_labels:
         plt.xticks(ranks, labels, rotation=-60)
     # TODO: make xticks integral
-    plt.show()
+    if async_draw:
+        plt.draw()
+    else:
+        plt.show()
 
 
 # similar to ~ Figure 3.1. The normalized command frequency, compared with Zipf.
@@ -96,7 +101,10 @@ def plot_cmdFrq_rank(plotSize=PLOT_SIZE_zipf, show_labels=False):
     if show_labels:
         plt.xticks(ranks, labels, rotation=-60)
     # TODO: make xticks integral
-    plt.show()
+    if async_draw:
+        plt.draw()
+    else:
+        plt.show()
 
 # Figure 3.2. Command vocabulary size vs. the number of command lines entered for four individuals.
 def plot_cmdVocabularySize_cmdLinesEntered():
@@ -120,7 +128,10 @@ def plot_cmdVocabularySize_cmdLinesEntered():
     plt.title("Command vocabulary size vs. the number of command lines entered")
     plt.ylabel("Command vocabulary size")
     plt.xlabel("# of command lines entered")
-    plt.show()
+    if async_draw:
+        plt.draw()
+    else:
+        plt.show()
 
 # Figure 5.6. Command line vocabulary size vs. the number of commands entered for four typical individuals.
 def plot_cmdLineVocabularySize_cmdLinesEntered():
@@ -144,7 +155,10 @@ def plot_cmdLineVocabularySize_cmdLinesEntered():
     plt.title("Command line vocabulary size vs. the number of command lines entered")
     plt.ylabel("Command line vocabulary size")
     plt.xlabel("# of command lines entered")
-    plt.show()
+    if async_draw:
+        plt.draw()
+    else:
+        plt.show()
 
 # Figure 3.3. Sequential structure of UNIX command usage, from Figure 4 in Hanson et al. (1984).
 #       Ball diameters are proportional to stationary probability. Lines indicate significant dependencies,
@@ -328,7 +342,10 @@ def plot_strategies_matches(plot_size=50, selected_strategies=[]):
     x_labels = x_ticks[:]
     plt.xticks(x_ticks, x_labels)
     plt.legend(legend, loc="best")
-    plt.show()
+    if async_draw:
+        plt.draw()
+    else:
+        plt.show()
 
 
 
@@ -397,11 +414,14 @@ def plot_strategies_charsRecalled(plot_size=50, selected_strategies=[]):
     x_labels = x_ticks[:]
     plt.xticks(x_ticks, x_labels)
     plt.legend(legend, loc="best")
-    plt.show()
+    if async_draw:
+        plt.draw()
+    else:
+        plt.show()
 
 
         
-graph_cmdSequences()
+# graph_cmdSequences(node_count=33, edge_minValue=0.05)
 graph_cmdSequences(node_count=28, edge_minValue=0.06)
 
 plot_cmdLineFrq_rank()
@@ -413,4 +433,6 @@ plot_cmdVocabularySize_cmdLinesEntered()
 plot_strategies_matches(20)
 plot_strategies_charsRecalled(20)
 
+if async_draw:
+    plt.show()
 # be careful and check if labels fit the display
