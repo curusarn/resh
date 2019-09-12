@@ -65,9 +65,9 @@ func main() {
 	defer inputFile.Close()
 
 	var writer *bufio.Writer
-	useStdout := true
-	if len(*outputPath) > 0 {
-		useStdout = false
+	if *outputPath == "" {
+		writer = bufio.NewWriter(os.Stdout)
+	} else {
 		outputFile, err := os.Create(*outputPath)
 		if err != nil {
 			log.Fatal("Create() output file error:", err)
@@ -75,6 +75,7 @@ func main() {
 		defer outputFile.Close()
 		writer = bufio.NewWriter(outputFile)
 	}
+	defer writer.Flush()
 
 	scanner := bufio.NewScanner(inputFile)
 	for scanner.Scan() {
@@ -100,21 +101,14 @@ func main() {
 			log.Println("Line:", line)
 			log.Fatal("Encoding error:", err)
 		}
-		if useStdout {
-			fmt.Println(string(outLine))
-		} else {
-			// fmt.Println(string(outLine))
-			n, err := writer.WriteString(string(outLine) + "\n")
-			if err != nil {
-				log.Fatal(err)
-			}
-			if n == 0 {
-				log.Fatal("Nothing was written", n)
-			}
+		// fmt.Println(string(outLine))
+		n, err := writer.WriteString(string(outLine) + "\n")
+		if err != nil {
+			log.Fatal(err)
 		}
-	}
-	if useStdout == false {
-		writer.Flush()
+		if n == 0 {
+			log.Fatal("Nothing was written", n)
+		}
 	}
 }
 
@@ -146,6 +140,7 @@ func loadData(fname string) map[string]bool {
 }
 
 func (s *sanitizer) sanitizeRecord(record *common.Record) error {
+	// hash directories of the paths
 	record.Pwd = s.sanitizePath(record.Pwd)
 	record.RealPwd = s.sanitizePath(record.RealPwd)
 	record.PwdAfter = s.sanitizePath(record.PwdAfter)
@@ -155,6 +150,7 @@ func (s *sanitizer) sanitizeRecord(record *common.Record) error {
 	record.Home = s.sanitizePath(record.Home)
 	record.ShellEnv = s.sanitizePath(record.ShellEnv)
 
+	// hash the most sensitive info, do not tokenize
 	record.Host = s.hashToken(record.Host)
 	record.Login = s.hashToken(record.Login)
 	record.MachineId = s.hashToken(record.MachineId)
@@ -177,6 +173,7 @@ func (s *sanitizer) sanitizeRecord(record *common.Record) error {
 		log.Fatal("Cmd:", record.CmdLine, "; sanitization error:", err)
 	}
 
+	// add a flag to signify that the record has been sanitized
 	record.Sanitized = true
 	return nil
 }
@@ -347,23 +344,24 @@ func (s *sanitizer) sanitizeCmdToken(token string) (string, error) {
 	}
 
 	isLettersOrDigits := true
-	isDigits := true
+	// isDigits := true
 	isOtherCharacters := true
 	for _, r := range token {
 		if unicode.IsDigit(r) == false && unicode.IsLetter(r) == false {
 			isLettersOrDigits = false
-			isDigits = false
+			// isDigits = false
 		}
-		if unicode.IsDigit(r) == false {
-			isDigits = false
-		}
+		// if unicode.IsDigit(r) == false {
+		// 	isDigits = false
+		// }
 		if unicode.IsDigit(r) || unicode.IsLetter(r) {
 			isOtherCharacters = false
 		}
 	}
-	if isDigits {
-		return s.hashNumericToken(token), nil
-	}
+	// I decided that I don't want a special sanitization for numbers
+	// if isDigits {
+	// 	return s.hashNumericToken(token), nil
+	// }
 	if isLettersOrDigits {
 		return s.hashToken(token), nil
 	}
