@@ -28,10 +28,10 @@ for user in data["UsersRecords"]:
             DATA_records.append(record)
             DATA_records_by_session[record["sessionId"]].append(record)
 
-DATA_records = list(sorted(DATA_records, key=lambda x: x["realtimeBeforeLocal"]))
+DATA_records = list(sorted(DATA_records, key=lambda x: x["realtimeAfterLocal"]))
 
 for pid, session in DATA_records_by_session.items():
-    session = list(sorted(session, key=lambda x: x["realtimeBeforeLocal"]))
+    session = list(sorted(session, key=lambda x: x["realtimeAfterLocal"]))
 
 # TODO: this should be a cmdline option
 async_draw = True
