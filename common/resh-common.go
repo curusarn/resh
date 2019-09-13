@@ -71,12 +71,12 @@ type Record struct {
 
 	// added by sanitizatizer
 	Sanitized bool `json:"sanitized"`
-	CmdLength int  `json:"cmdLength"`
+	CmdLength int  `json:"cmdLength,omitempty"`
 
 	// enriching fields - added "later"
-	FirstWord    string `json:"firstWord"`
-	Invalid      bool   `json:"invalid"`
-	SeqSessionID uint64 `json:"seqSessionID"`
+	FirstWord    string `json:"firstWord,omitempty"`
+	Invalid      bool   `json:"invalid,omitempty"`
+	SeqSessionID uint64 `json:"seqSessionID,omitempty"`
 }
 
 // FallbackRecord when record is too old and can't be parsed into regular Record
