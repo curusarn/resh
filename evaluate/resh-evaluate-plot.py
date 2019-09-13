@@ -22,11 +22,11 @@ DATA_records_by_session = defaultdict(list)
 for user in data["UsersRecords"]:
     for device in user["Devices"]:
         for record in device["Records"]:
-            if record["invalid"]:
+            if "invalid" in record and record["invalid"]:
                 continue
             
             DATA_records.append(record)
-            DATA_records_by_session[record["sessionId"]].append(record)
+            DATA_records_by_session[record["seqSessionId"]].append(record)
 
 DATA_records = list(sorted(DATA_records, key=lambda x: x["realtimeAfterLocal"]))
 
@@ -38,7 +38,6 @@ async_draw = True
 
 # for strategy in data["Strategies"]:
 #     print(json.dumps(strategy))
-
 
 def zipf(length):
     return list(map(lambda x: 1/2**x, range(0, length)))
@@ -265,8 +264,8 @@ def graph_cmdSequences(node_count=33, edge_minValue=0.05):
 
         # graphviz sometimes fails - see above
         try:
-            graph.view()
-            # graph.render('/tmp/resh-graphviz-cmdSeq.gv', view=True)
+            # graph.view()
+            graph.render('/tmp/resh-graphviz-cmdSeq-{}.gv'.format(x), view=True)
             break
         except Exception as e:
             trace = traceback.format_exc()

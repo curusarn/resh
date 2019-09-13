@@ -14,7 +14,7 @@ func (s *strategyDummy) GetCandidates() []string {
 	return nil
 }
 
-func (s *strategyDummy) AddHistoryRecord(record *common.Record) error {
+func (s *strategyDummy) AddHistoryRecord(record *common.EnrichedRecord) error {
 	s.history = append(s.history, record.CmdLine)
 	return nil
 }

@@ -172,65 +172,67 @@ func main() {
 	}
 
 	rec := common.Record{
-		// core
-		CmdLine:   *cmdLine,
-		ExitCode:  *exitCode,
-		Shell:     *shell,
-		Uname:     *uname,
-		SessionID: *sessionID,
-
 		// posix
 		Cols:  *cols,
 		Lines: *lines,
+		// core
+		BaseRecord: common.BaseRecord{
+			CmdLine:   *cmdLine,
+			ExitCode:  *exitCode,
+			Shell:     *shell,
+			Uname:     *uname,
+			SessionID: *sessionID,
 
-		Home:  *home,
-		Lang:  *lang,
-		LcAll: *lcAll,
-		Login: *login,
-		// Path:     *path,
-		Pwd:      *pwd,
-		PwdAfter: *pwdAfter,
-		ShellEnv: *shellEnv,
-		Term:     *term,
+			// posix
+			Home:  *home,
+			Lang:  *lang,
+			LcAll: *lcAll,
+			Login: *login,
+			// Path:     *path,
+			Pwd:      *pwd,
+			PwdAfter: *pwdAfter,
+			ShellEnv: *shellEnv,
+			Term:     *term,
 
-		// non-posix
-		RealPwd:      realPwd,
-		RealPwdAfter: realPwdAfter,
-		Pid:          *pid,
-		SessionPid:   *sessionPid,
-		Host:         *host,
-		Hosttype:     *hosttype,
-		Ostype:       *ostype,
-		Machtype:     *machtype,
-		Shlvl:        *shlvl,
+			// non-posix
+			RealPwd:      realPwd,
+			RealPwdAfter: realPwdAfter,
+			Pid:          *pid,
+			SessionPid:   *sessionPid,
+			Host:         *host,
+			Hosttype:     *hosttype,
+			Ostype:       *ostype,
+			Machtype:     *machtype,
+			Shlvl:        *shlvl,
 
-		// before after
-		TimezoneBefore: *timezoneBefore,
-		TimezoneAfter:  *timezoneAfter,
+			// before after
+			TimezoneBefore: *timezoneBefore,
+			TimezoneAfter:  *timezoneAfter,
 
-		RealtimeBefore:      realtimeBefore,
-		RealtimeAfter:       realtimeAfter,
-		RealtimeBeforeLocal: realtimeBeforeLocal,
-		RealtimeAfterLocal:  realtimeAfterLocal,
+			RealtimeBefore:      realtimeBefore,
+			RealtimeAfter:       realtimeAfter,
+			RealtimeBeforeLocal: realtimeBeforeLocal,
+			RealtimeAfterLocal:  realtimeAfterLocal,
 
-		RealtimeDuration:          realtimeDuration,
-		RealtimeSinceSessionStart: realtimeSinceSessionStart,
-		RealtimeSinceBoot:         realtimeSinceBoot,
+			RealtimeDuration:          realtimeDuration,
+			RealtimeSinceSessionStart: realtimeSinceSessionStart,
+			RealtimeSinceBoot:         realtimeSinceBoot,
 
-		GitDir:          gitDir,
-		GitRealDir:      gitRealDir,
-		GitOriginRemote: *gitRemote,
-		MachineID:       readFileContent(machineIDPath),
+			GitDir:          gitDir,
+			GitRealDir:      gitRealDir,
+			GitOriginRemote: *gitRemote,
+			MachineID:       readFileContent(machineIDPath),
 
-		OsReleaseID:         *osReleaseID,
-		OsReleaseVersionID:  *osReleaseVersionID,
-		OsReleaseIDLike:     *osReleaseIDLike,
-		OsReleaseName:       *osReleaseName,
-		OsReleasePrettyName: *osReleasePrettyName,
+			OsReleaseID:         *osReleaseID,
+			OsReleaseVersionID:  *osReleaseVersionID,
+			OsReleaseIDLike:     *osReleaseIDLike,
+			OsReleaseName:       *osReleaseName,
+			OsReleasePrettyName: *osReleasePrettyName,
 
-		ReshUUID:     readFileContent(reshUUIDPath),
-		ReshVersion:  Version,
-		ReshRevision: Revision,
+			ReshUUID:     readFileContent(reshUUIDPath),
+			ReshVersion:  Version,
+			ReshRevision: Revision,
+		},
 	}
 	sendRecord(rec, strconv.Itoa(config.Port))
 }

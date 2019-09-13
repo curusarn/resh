@@ -110,7 +110,7 @@ func main() {
 type strategy interface {
 	GetTitleAndDescription() (string, string)
 	GetCandidates() []string
-	AddHistoryRecord(record *common.Record) error
+	AddHistoryRecord(record *common.EnrichedRecord) error
 	ResetHistory() error
 }
 
@@ -128,7 +128,7 @@ type strategyJSON struct {
 
 type deviceRecords struct {
 	Name    string
-	Records []common.Record
+	Records []common.EnrichedRecord
 }
 
 type userRecords struct {
@@ -184,7 +184,7 @@ func (e *evaluator) processRecords() {
 		for j, device := range e.UsersRecords[i].Devices {
 			sessionIDs := map[string]uint64{}
 			var nextID uint64
-			nextID = 0
+			nextID = 1 // start with 1 because 0 won't get saved to json
 			for k, record := range e.UsersRecords[i].Devices[j].Records {
 				id, found := sessionIDs[record.SessionID]
 				if found == false {
@@ -192,7 +192,7 @@ func (e *evaluator) processRecords() {
 					sessionIDs[record.SessionID] = id
 					nextID++
 				}
-				record.SeqSessionID = id
+				e.UsersRecords[i].Devices[j].Records[k].SeqSessionID = id
 				// assert
 				if record.Sanitized != e.sanitizedInput {
 					if e.sanitizedInput {
@@ -200,9 +200,6 @@ func (e *evaluator) processRecords() {
 					}
 					log.Fatal("ASSERT failed: data is sanitized but '--sanitized-input' is not present")
 				}
-
-				e.UsersRecords[i].Devices[j].Records[k].Enrich()
-				// device.Records = append(device.Records, record)
 			}
 			sort.SliceStable(e.UsersRecords[i].Devices[j].Records, func(x, y int) bool {
 				if device.Records[x].SeqSessionID == device.Records[y].SeqSessionID {
@@ -217,29 +214,33 @@ func (e *evaluator) processRecords() {
 func (e *evaluator) evaluate(strategy strategy) error {
 	title, description := strategy.GetTitleAndDescription()
 	strategyData := strategyJSON{Title: title, Description: description}
-	for _, record := range e.UsersRecords[0].Devices[0].Records {
-		candidates := strategy.GetCandidates()
+	for i := range e.UsersRecords {
+		for j := range e.UsersRecords[i].Devices {
+			for _, record := range e.UsersRecords[i].Devices[j].Records {
+				candidates := strategy.GetCandidates()
 
-		matchFound := false
-		for i, candidate := range candidates {
-			// make an option (--calculate-total) to turn this on/off ?
-			// if i >= e.maxCandidates {
-			// 	break
-			// }
-			if candidate == record.CmdLine {
-				match := matchJSON{Match: true, Distance: i + 1, CharsRecalled: record.CmdLength}
-				strategyData.Matches = append(strategyData.Matches, match)
-				matchFound = true
-				break
+				matchFound := false
+				for i, candidate := range candidates {
+					// make an option (--calculate-total) to turn this on/off ?
+					// if i >= e.maxCandidates {
+					// 	break
+					// }
+					if candidate == record.CmdLine {
+						match := matchJSON{Match: true, Distance: i + 1, CharsRecalled: record.CmdLength}
+						strategyData.Matches = append(strategyData.Matches, match)
+						matchFound = true
+						break
+					}
+				}
+				if matchFound == false {
+					strategyData.Matches = append(strategyData.Matches, matchJSON{})
+				}
+				err := strategy.AddHistoryRecord(&record)
+				if err != nil {
+					log.Println("Error while evauating", err)
+					return err
+				}
 			}
-		}
-		if matchFound == false {
-			strategyData.Matches = append(strategyData.Matches, matchJSON{})
-		}
-		err := strategy.AddHistoryRecord(&record)
-		if err != nil {
-			log.Println("Error while evauating", err)
-			return err
 		}
 	}
 	e.Strategies = append(e.Strategies, strategyData)
@@ -303,14 +304,14 @@ func (e *evaluator) loadHistoryRecordsBatchMode(fname string, dataRootPath strin
 	return records
 }
 
-func (e *evaluator) loadHistoryRecords(fname string) []common.Record {
+func (e *evaluator) loadHistoryRecords(fname string) []common.EnrichedRecord {
 	file, err := os.Open(fname)
 	if err != nil {
 		log.Fatal("Open() resh history file error:", err)
 	}
 	defer file.Close()
 
-	var records []common.Record
+	var records []common.EnrichedRecord
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		record := common.Record{}
@@ -334,7 +335,7 @@ func (e *evaluator) loadHistoryRecords(fname string) []common.Record {
 		if record.CmdLength == 0 {
 			log.Fatal("Assert failed - 'cmdLength' is unset in the data. This should not happen.")
 		}
-		records = append(records, record)
+		records = append(records, record.Enrich())
 	}
 	return records
 }

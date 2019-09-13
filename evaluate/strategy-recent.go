@@ -14,7 +14,7 @@ func (s *strategyRecent) GetCandidates() []string {
 	return s.history
 }
 
-func (s *strategyRecent) AddHistoryRecord(record *common.Record) error {
+func (s *strategyRecent) AddHistoryRecord(record *common.EnrichedRecord) error {
 	// remove previous occurance of record
 	for i, cmd := range s.history {
 		if cmd == record.CmdLine {

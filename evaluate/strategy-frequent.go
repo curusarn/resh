@@ -36,7 +36,7 @@ func (s *strategyFrequent) GetCandidates() []string {
 	return hist
 }
 
-func (s *strategyFrequent) AddHistoryRecord(record *common.Record) error {
+func (s *strategyFrequent) AddHistoryRecord(record *common.EnrichedRecord) error {
 	s.history[record.CmdLine]++
 	return nil
 }

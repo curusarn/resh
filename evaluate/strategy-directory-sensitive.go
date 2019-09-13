@@ -21,7 +21,7 @@ func (s *strategyDirectorySensitive) GetCandidates() []string {
 	return s.history[s.lastPwd]
 }
 
-func (s *strategyDirectorySensitive) AddHistoryRecord(record *common.Record) error {
+func (s *strategyDirectorySensitive) AddHistoryRecord(record *common.EnrichedRecord) error {
 	// work on history for PWD
 	pwd := record.Pwd
 	// remove previous occurance of record
