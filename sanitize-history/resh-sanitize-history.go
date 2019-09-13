@@ -179,8 +179,8 @@ func (s *sanitizer) sanitizeRecord(record *common.Record) error {
 }
 
 func (s *sanitizer) sanitizeCmdLine(cmdLine string) (string, error) {
-	const optionEndingChars = "\"$'\\#[]!><|;{}()*,?~&=`" // all bash control characters and '=' which commonly ends options w/ values
-	const optionAllowedChars = "-_"                       // characters commonly found inside of options
+	const optionEndingChars = "\"$'\\#[]!><|;{}()*,?~&=`:@^/+%." // all bash control characters, '=', ...
+	const optionAllowedChars = "-_"                              // characters commonly found inside of options
 	sanCmdLine := ""
 	buff := ""
 
@@ -195,7 +195,7 @@ func (s *sanitizer) sanitizeCmdLine(cmdLine string) (string, error) {
 		switch optionDetected {
 		case true:
 			if unicode.IsSpace(r) || strings.ContainsRune(optionEndingChars, r) {
-				// whitespace, "=" or ";" ends the option
+				// whitespace or option ends the option
 				// => add option unsanitized
 				optionDetected = false
 				if len(buff) > 0 {
@@ -210,7 +210,8 @@ func (s *sanitizer) sanitizeCmdLine(cmdLine string) (string, error) {
 				if len(buff) > 0 {
 					sanToken, err := s.sanitizeCmdToken(buff)
 					if err != nil {
-						return cmdLine, err
+						log.Println("WARN: got error while sanitizing cmdLine:", cmdLine)
+						// return cmdLine, err
 					}
 					sanCmdLine += sanToken
 					buff = ""
@@ -222,12 +223,12 @@ func (s *sanitizer) sanitizeCmdLine(cmdLine string) (string, error) {
 		case false:
 			// split command on all non-letter and non-digit characters
 			if unicode.IsLetter(r) == false && unicode.IsDigit(r) == false {
-				// TODO: decide if we want to split on "-" and "_"
 				// split token
 				if len(buff) > 0 {
 					sanToken, err := s.sanitizeCmdToken(buff)
 					if err != nil {
-						return cmdLine, err
+						log.Println("WARN: got error while sanitizing cmdLine:", cmdLine)
+						// return cmdLine, err
 					}
 					sanCmdLine += sanToken
 					buff = ""
@@ -257,7 +258,8 @@ func (s *sanitizer) sanitizeCmdLine(cmdLine string) (string, error) {
 	// sanitize
 	sanToken, err := s.sanitizeCmdToken(buff)
 	if err != nil {
-		return cmdLine, err
+		log.Println("WARN: got error while sanitizing cmdLine:", cmdLine)
+		// return cmdLine, err
 	}
 	sanCmdLine += sanToken
 	return sanCmdLine, nil
@@ -358,7 +360,7 @@ func (s *sanitizer) sanitizeCmdToken(token string) (string, error) {
 			isOtherCharacters = false
 		}
 	}
-	// I decided that I don't want a special sanitization for numbers
+	// NOTE: I decided that I don't want a special sanitization for numbers
 	// if isDigits {
 	// 	return s.hashNumericToken(token), nil
 	// }
@@ -368,8 +370,9 @@ func (s *sanitizer) sanitizeCmdToken(token string) (string, error) {
 	if isOtherCharacters {
 		return token, nil
 	}
-	log.Println("token:", token)
-	return token, errors.New("cmd token is made of mix of letters or digits and other characters")
+	log.Println("WARN: cmd token is made of mix of letters or digits and other characters; token:", token)
+	// return token, errors.New("cmd token is made of mix of letters or digits and other characters")
+	return s.hashToken(token), errors.New("cmd token is made of mix of letters or digits and other characters")
 }
 
 func (s *sanitizer) sanitizeToken(token string) string {
