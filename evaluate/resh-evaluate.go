@@ -241,6 +241,7 @@ func (e *evaluator) evaluate(strategy strategy) error {
 					return err
 				}
 			}
+			strategy.ResetHistory()
 		}
 	}
 	e.Strategies = append(e.Strategies, strategyData)

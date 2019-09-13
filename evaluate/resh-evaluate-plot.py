@@ -162,7 +162,7 @@ def plot_cmdLineVocabularySize_cmdLinesEntered():
 # Figure 3.3. Sequential structure of UNIX command usage, from Figure 4 in Hanson et al. (1984).
 #       Ball diameters are proportional to stationary probability. Lines indicate significant dependencies,
 #       solid ones being more probable (p < .0001) and dashed ones less probable (.005 < p < .0001).
-def graph_cmdSequences(node_count=33, edge_minValue=0.05):
+def graph_cmdSequences(node_count=33, edge_minValue=0.05, view_graph=True):
     START_CMD = "_start_"
     cmd_count = defaultdict(int)
     cmdSeq_count = defaultdict(lambda: defaultdict(int))
@@ -265,7 +265,7 @@ def graph_cmdSequences(node_count=33, edge_minValue=0.05):
         # graphviz sometimes fails - see above
         try:
             # graph.view()
-            graph.render('/tmp/resh-graphviz-cmdSeq-{}.gv'.format(x), view=True)
+            graph.render('/tmp/resh-graph-command_sequence-nodeCount_{}-edgeMinVal_{}.gv'.format(node_count, edge_minValue), view=view_graph)
             break
         except Exception as e:
             trace = traceback.format_exc()
@@ -419,10 +419,6 @@ def plot_strategies_charsRecalled(plot_size=50, selected_strategies=[]):
         plt.show()
 
 
-        
-# graph_cmdSequences(node_count=33, edge_minValue=0.05)
-graph_cmdSequences(node_count=28, edge_minValue=0.06)
-
 plot_cmdLineFrq_rank()
 plot_cmdFrq_rank()
         
@@ -431,6 +427,15 @@ plot_cmdVocabularySize_cmdLinesEntered()
 
 plot_strategies_matches(20)
 plot_strategies_charsRecalled(20)
+
+graph_cmdSequences(node_count=33, edge_minValue=0.048)
+
+# graph_cmdSequences(node_count=28, edge_minValue=0.06)
+
+# for n in range(29, 35):
+#     for e in range(44, 56, 2):
+#         e *= 0.001
+#         graph_cmdSequences(node_count=n, edge_minValue=e, view_graph=False)
 
 if async_draw:
     plt.show()
