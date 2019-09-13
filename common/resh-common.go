@@ -14,7 +14,7 @@ type Record struct {
 	ExitCode  int    `json:"exitCode"`
 	Shell     string `json:"shell"`
 	Uname     string `json:"uname"`
-	SessionId string `json:"sessionId"`
+	SessionID string `json:"sessionId"`
 
 	// posix
 	Cols  string `json:"cols"`
@@ -57,15 +57,15 @@ type Record struct {
 	GitDir          string `json:"gitDir"`
 	GitRealDir      string `json:"gitRealDir"`
 	GitOriginRemote string `json:"gitOriginRemote"`
-	MachineId       string `json:"machineId"`
+	MachineID       string `json:"machineId"`
 
-	OsReleaseId         string `json:"osReleaseId"`
-	OsReleaseVersionId  string `json:"osReleaseVersionId"`
-	OsReleaseIdLike     string `json:"osReleaseIdLike"`
+	OsReleaseID         string `json:"osReleaseId"`
+	OsReleaseVersionID  string `json:"osReleaseVersionId"`
+	OsReleaseIDLike     string `json:"osReleaseIdLike"`
 	OsReleaseName       string `json:"osReleaseName"`
 	OsReleasePrettyName string `json:"osReleasePrettyName"`
 
-	ReshUuid     string `json:"reshUuid"`
+	ReshUUID     string `json:"reshUuid"`
 	ReshVersion  string `json:"reshVersion"`
 	ReshRevision string `json:"reshRevision"`
 
@@ -88,7 +88,7 @@ type FallbackRecord struct {
 	ExitCode  int    `json:"exitCode"`
 	Shell     string `json:"shell"`
 	Uname     string `json:"uname"`
-	SessionId string `json:"sessionId"`
+	SessionID string `json:"sessionId"`
 
 	// posix
 	Cols  int    `json:"cols"`  // notice the in type
@@ -131,15 +131,15 @@ type FallbackRecord struct {
 	GitDir          string `json:"gitDir"`
 	GitRealDir      string `json:"gitRealDir"`
 	GitOriginRemote string `json:"gitOriginRemote"`
-	MachineId       string `json:"machineId"`
+	MachineID       string `json:"machineId"`
 
-	OsReleaseId         string `json:"osReleaseId"`
-	OsReleaseVersionId  string `json:"osReleaseVersionId"`
-	OsReleaseIdLike     string `json:"osReleaseIdLike"`
+	OsReleaseID         string `json:"osReleaseId"`
+	OsReleaseVersionID  string `json:"osReleaseVersionId"`
+	OsReleaseIDLike     string `json:"osReleaseIdLike"`
 	OsReleaseName       string `json:"osReleaseName"`
 	OsReleasePrettyName string `json:"osReleasePrettyName"`
 
-	ReshUuid     string `json:"reshUuid"`
+	ReshUUID     string `json:"reshUuid"`
 	ReshVersion  string `json:"reshVersion"`
 	ReshRevision string `json:"reshRevision"`
 }
@@ -152,7 +152,7 @@ func ConvertRecord(r *FallbackRecord) Record {
 		ExitCode:  r.ExitCode,
 		Shell:     r.Shell,
 		Uname:     r.Uname,
-		SessionId: r.SessionId,
+		SessionID: r.SessionID,
 
 		// posix
 		// these two lines are the only reason we are doing this
@@ -196,15 +196,15 @@ func ConvertRecord(r *FallbackRecord) Record {
 		GitDir:          r.GitDir,
 		GitRealDir:      r.GitRealDir,
 		GitOriginRemote: r.GitOriginRemote,
-		MachineId:       r.MachineId,
+		MachineID:       r.MachineID,
 
-		OsReleaseId:         r.OsReleaseId,
-		OsReleaseVersionId:  r.OsReleaseVersionId,
-		OsReleaseIdLike:     r.OsReleaseIdLike,
+		OsReleaseID:         r.OsReleaseID,
+		OsReleaseVersionID:  r.OsReleaseVersionID,
+		OsReleaseIDLike:     r.OsReleaseIDLike,
 		OsReleaseName:       r.OsReleaseName,
 		OsReleasePrettyName: r.OsReleasePrettyName,
 
-		ReshUuid:     r.ReshUuid,
+		ReshUUID:     r.ReshUUID,
 		ReshVersion:  r.ReshVersion,
 		ReshRevision: r.ReshRevision,
 	}

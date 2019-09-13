@@ -186,10 +186,10 @@ func (e *evaluator) processRecords() {
 			var nextID uint64
 			nextID = 0
 			for k, record := range e.UsersRecords[i].Devices[j].Records {
-				id, found := sessionIDs[record.SessionId]
+				id, found := sessionIDs[record.SessionID]
 				if found == false {
 					id = nextID
-					sessionIDs[record.SessionId] = id
+					sessionIDs[record.SessionID] = id
 					nextID++
 				}
 				record.SeqSessionID = id

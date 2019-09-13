@@ -153,7 +153,7 @@ func (s *sanitizer) sanitizeRecord(record *common.Record) error {
 	// hash the most sensitive info, do not tokenize
 	record.Host = s.hashToken(record.Host)
 	record.Login = s.hashToken(record.Login)
-	record.MachineId = s.hashToken(record.MachineId)
+	record.MachineID = s.hashToken(record.MachineID)
 
 	var err error
 	// this changes git url a bit but I'm still happy with the result

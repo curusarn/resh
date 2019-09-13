@@ -30,9 +30,9 @@ func main() {
 	usr, _ := user.Current()
 	dir := usr.HomeDir
 	configPath := filepath.Join(dir, "/.config/resh.toml")
-	reshUuidPath := filepath.Join(dir, "/.resh/resh-uuid")
+	reshUUIDPath := filepath.Join(dir, "/.resh/resh-uuid")
 
-	machineIdPath := "/etc/machine-id"
+	machineIDPath := "/etc/machine-id"
 
 	var config common.Config
 	if _, err := toml.DecodeFile(configPath, &config); err != nil {
@@ -48,7 +48,7 @@ func main() {
 	exitCode := flag.Int("exitCode", -1, "exit code")
 	shell := flag.String("shell", "", "actual shell")
 	uname := flag.String("uname", "", "uname")
-	sessionId := flag.String("sessionId", "", "resh generated session id")
+	sessionID := flag.String("sessionId", "", "resh generated session id")
 
 	// posix variables
 	cols := flag.String("cols", "-1", "$COLUMNS")
@@ -82,10 +82,10 @@ func main() {
 	timezoneBefore := flag.String("timezoneBefore", "", "")
 	timezoneAfter := flag.String("timezoneAfter", "", "")
 
-	osReleaseId := flag.String("osReleaseId", "", "/etc/os-release ID")
-	osReleaseVersionId := flag.String("osReleaseVersionId", "",
+	osReleaseID := flag.String("osReleaseId", "", "/etc/os-release ID")
+	osReleaseVersionID := flag.String("osReleaseVersionId", "",
 		"/etc/os-release ID")
-	osReleaseIdLike := flag.String("osReleaseIdLike", "", "/etc/os-release ID")
+	osReleaseIDLike := flag.String("osReleaseIdLike", "", "/etc/os-release ID")
 	osReleaseName := flag.String("osReleaseName", "", "/etc/os-release ID")
 	osReleasePrettyName := flag.String("osReleasePrettyName", "",
 		"/etc/os-release ID")
@@ -161,8 +161,8 @@ func main() {
 		*gitRemote = ""
 	}
 
-	if *osReleaseId == "" {
-		*osReleaseId = "linux"
+	if *osReleaseID == "" {
+		*osReleaseID = "linux"
 	}
 	if *osReleaseName == "" {
 		*osReleaseName = "Linux"
@@ -177,7 +177,7 @@ func main() {
 		ExitCode:  *exitCode,
 		Shell:     *shell,
 		Uname:     *uname,
-		SessionId: *sessionId,
+		SessionID: *sessionID,
 
 		// posix
 		Cols:  *cols,
@@ -220,15 +220,15 @@ func main() {
 		GitDir:          gitDir,
 		GitRealDir:      gitRealDir,
 		GitOriginRemote: *gitRemote,
-		MachineId:       readFileContent(machineIdPath),
+		MachineID:       readFileContent(machineIDPath),
 
-		OsReleaseId:         *osReleaseId,
-		OsReleaseVersionId:  *osReleaseVersionId,
-		OsReleaseIdLike:     *osReleaseIdLike,
+		OsReleaseID:         *osReleaseID,
+		OsReleaseVersionID:  *osReleaseVersionID,
+		OsReleaseIDLike:     *osReleaseIDLike,
 		OsReleaseName:       *osReleaseName,
 		OsReleasePrettyName: *osReleasePrettyName,
 
-		ReshUuid:     readFileContent(reshUuidPath),
+		ReshUUID:     readFileContent(reshUUIDPath),
 		ReshVersion:  Version,
 		ReshRevision: Revision,
 	}
@@ -236,13 +236,13 @@ func main() {
 }
 
 func sendRecord(r common.Record, port string) {
-	recJson, err := json.Marshal(r)
+	recJSON, err := json.Marshal(r)
 	if err != nil {
 		log.Fatal("send err 1", err)
 	}
 
 	req, err := http.NewRequest("POST", "http://localhost:"+port+"/record",
-		bytes.NewBuffer(recJson))
+		bytes.NewBuffer(recJSON))
 	if err != nil {
 		log.Fatal("send err 2", err)
 	}
@@ -279,14 +279,14 @@ func getGitDirs(cdup string, exitCode int, pwd string) (string, string) {
 
 func getTimezoneOffsetInSeconds(zone string) float64 {
 	// date +%z -> "+0200"
-	hours_str := zone[:3]
-	mins_str := zone[3:]
-	hours, err := strconv.Atoi(hours_str)
+	hoursStr := zone[:3]
+	minsStr := zone[3:]
+	hours, err := strconv.Atoi(hoursStr)
 	if err != nil {
 		log.Println("err while parsing hours in timezone offset:", err)
 		return -1
 	}
-	mins, err := strconv.Atoi(mins_str)
+	mins, err := strconv.Atoi(minsStr)
 	if err != nil {
 		log.Println("err while parsing mins in timezone offset:", err)
 		return -1
