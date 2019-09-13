@@ -153,10 +153,19 @@ __resh_precmd() {
     __RESH_PWD_AFTER="$PWD"
     if [ -n "${__RESH_COLLECT}" ]; then
         if [ "$__RESH_VERSION" != $(resh-collect -version) ]; then
-            echo "resh WARNING: You probably just updated RESH - please restart or reload this terminal session (resh version: $(resh-collect -version); resh version of this terminal session: ${__RESH_VERSION})"
+            source ~/.resh/shellrc 
+            if [ "$__RESH_VERSION" != $(resh-collect -version) ]; then
+                echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh version: $(resh-collect -version); resh version of this terminal session: ${__RESH_VERSION})"
+            else
+                echo "RESH INFO: New RESH shellrc script was loaded - if you encounter any issues please restart this terminal session."
+            fi
         elif [ "$__RESH_REVISION" != $(resh-collect -revision) ]; then
-            echo "resh WARNING: You probably just updated RESH - please restart or reload this terminal session (resh version: $(resh-collect -revision); resh version of this terminal session: ${__RESH_REVISION})"
-        else
+            source ~/.resh/shellrc 
+            if [ "$__RESH_REVISION" != $(resh-collect -revision) ]; then
+                echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh revision: $(resh-collect -revision); resh revision of this terminal session: ${__RESH_REVISION})"
+            fi
+        fi
+        if [ "$__RESH_VERSION" == $(resh-collect -version) ] && [ "$__RESH_REVISION" == $(resh-collect -revision) ]; then
             resh-collect -requireVersion "$__RESH_VERSION" \
                         -requireRevision "$__RESH_REVISION" \
                         -cmdLine "$__RESH_CMDLINE" \

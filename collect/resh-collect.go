@@ -20,7 +20,10 @@ import (
 	"strings"
 )
 
+// Version from git set during build
 var Version string
+
+// Revision from git set during build
 var Revision string
 
 func main() {

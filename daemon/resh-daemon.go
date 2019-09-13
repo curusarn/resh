@@ -3,8 +3,6 @@ package main
 import (
 	"encoding/json"
 	//"flag"
-	"github.com/BurntSushi/toml"
-	common "github.com/curusarn/resh/common"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,9 +12,15 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/BurntSushi/toml"
+	common "github.com/curusarn/resh/common"
 )
 
+// Version from git set during build
 var Version string
+
+// Revision from git set during build
 var Revision string
 
 func main() {
