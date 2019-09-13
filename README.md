@@ -4,7 +4,7 @@
 
 This project is the first phase of my Master project.
 
-It records shell history with rich set of metadata and saves it locally. (device, dir, git, ... see example below)
+It records shell history with rich set of metadata and saves it locally. (device, directory, git, time, terminal session pid, ... see example below)
 
 It doesn't change the way your shell and your shell history behaves.
 
@@ -17,8 +17,9 @@ If you are not happy with it you can uninstall it with a single command (`rm -rf
 The ultimate point of my thesis is to provide a context-based replacement/enhancement for bash and zsh shell history.
 
 The idea is to:
-- Save each command with metadata (device, dir, gitdir, ...)
-- Recommend history based on saved metadata (e.g. it will be easier to get to commands specific to your project)
+- Save each command with metadata (device, directory, git, time, terminal session pid, ... see example below)
+- Recommend history based on saved metadata
+  - e.g. it will be easier to get to commands specific to the project you are currently working on (based on directory, git repository url, ...)
 - Provide a simple way to search whole history by command itself and/or metadata (e.g. imagine searching by project, directory, device, ...)
 - Synchronize history across devices 
 - Provide an API (to make the project easily extensible)
