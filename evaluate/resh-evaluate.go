@@ -15,6 +15,8 @@ import (
 	"sort"
 
 	"github.com/curusarn/resh/common"
+	"github.com/jpillora/longestcommon"
+	"github.com/schollz/progressbar"
 )
 
 // Version from git set during build
@@ -24,6 +26,8 @@ var Version string
 var Revision string
 
 func main() {
+	const maxCandidates = 50
+
 	usr, _ := user.Current()
 	dir := usr.HomeDir
 	historyPath := filepath.Join(dir, ".resh_history.json")
@@ -42,6 +46,8 @@ func main() {
 	plottingScript := flag.String("plotting-script", "resh-evaluate-plot.py", "Script to use for plotting")
 	inputDataRoot := flag.String("input-data-root", "",
 		"Input data root, enables batch mode, looks for files matching --input option")
+	slow := flag.Bool("slow", false,
+		"Enables stuff that takes a long time (e.g. markov chain strategies).")
 
 	flag.Parse()
 
@@ -71,7 +77,7 @@ func main() {
 		}
 	}
 
-	evaluator := evaluator{sanitizedInput: *sanitizedInput, maxCandidates: 50, BatchMode: batchMode}
+	evaluator := evaluator{sanitizedInput: *sanitizedInput, maxCandidates: maxCandidates, BatchMode: batchMode}
 	if batchMode {
 		err := evaluator.initBatchMode(*input, *inputDataRoot)
 		if err != nil {
@@ -94,8 +100,26 @@ func main() {
 	frequent.init()
 	directory := strategyDirectorySensitive{}
 	directory.init()
+	random := strategyRandom{candidatesSize: maxCandidates}
+	random.init()
 
-	strategies = append(strategies, &recent, &frequent, &directory)
+	markovCmd := strategyMarkovChainCmd{order: 1}
+	markovCmd.init()
+
+	markovCmd2 := strategyMarkovChainCmd{order: 2}
+	markovCmd2.init()
+
+	markov := strategyMarkovChain{order: 1}
+	markov.init()
+
+	markov2 := strategyMarkovChain{order: 2}
+	markov2.init()
+
+	strategies = append(strategies, &recent, &frequent, &directory, &random)
+
+	if *slow {
+		strategies = append(strategies, &markovCmd2, &markovCmd, &markov2, &markov)
+	}
 
 	for _, strat := range strategies {
 		err := evaluator.evaluate(strat)
@@ -120,10 +144,21 @@ type matchJSON struct {
 	CharsRecalled int
 }
 
+type multiMatchItemJSON struct {
+	Distance      int
+	CharsRecalled int
+}
+
+type multiMatchJSON struct {
+	Match   bool
+	Entries []multiMatchItemJSON
+}
+
 type strategyJSON struct {
-	Title       string
-	Description string
-	Matches     []matchJSON
+	Title         string
+	Description   string
+	Matches       []matchJSON
+	PrefixMatches []multiMatchJSON
 }
 
 type deviceRecords struct {
@@ -213,35 +248,50 @@ func (e *evaluator) processRecords() {
 
 func (e *evaluator) evaluate(strategy strategy) error {
 	title, description := strategy.GetTitleAndDescription()
+	log.Println("Evaluating strategy:", title, "-", description)
 	strategyData := strategyJSON{Title: title, Description: description}
 	for i := range e.UsersRecords {
 		for j := range e.UsersRecords[i].Devices {
+			bar := progressbar.New(len(e.UsersRecords[i].Devices[j].Records))
 			for _, record := range e.UsersRecords[i].Devices[j].Records {
 				candidates := strategy.GetCandidates()
 
 				matchFound := false
+				longestPrefixMatchLength := 0
+				multiMatch := multiMatchJSON{}
 				for i, candidate := range candidates {
 					// make an option (--calculate-total) to turn this on/off ?
 					// if i >= e.maxCandidates {
 					// 	break
 					// }
+					commonPrefixLength := len(longestcommon.Prefix([]string{candidate, record.CmdLine}))
+					if commonPrefixLength > longestPrefixMatchLength {
+						longestPrefixMatchLength = commonPrefixLength
+						prefixMatch := multiMatchItemJSON{Distance: i + 1, CharsRecalled: commonPrefixLength}
+						multiMatch.Match = true
+						multiMatch.Entries = append(multiMatch.Entries, prefixMatch)
+					}
 					if candidate == record.CmdLine {
 						match := matchJSON{Match: true, Distance: i + 1, CharsRecalled: record.CmdLength}
-						strategyData.Matches = append(strategyData.Matches, match)
 						matchFound = true
+						strategyData.Matches = append(strategyData.Matches, match)
+						strategyData.PrefixMatches = append(strategyData.PrefixMatches, multiMatch)
 						break
 					}
 				}
 				if matchFound == false {
 					strategyData.Matches = append(strategyData.Matches, matchJSON{})
+					strategyData.PrefixMatches = append(strategyData.PrefixMatches, multiMatch)
 				}
 				err := strategy.AddHistoryRecord(&record)
 				if err != nil {
 					log.Println("Error while evauating", err)
 					return err
 				}
+				bar.Add(1)
 			}
 			strategy.ResetHistory()
+			fmt.Println()
 		}
 	}
 	e.Strategies = append(e.Strategies, strategyData)

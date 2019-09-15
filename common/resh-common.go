@@ -3,6 +3,7 @@ package common
 import (
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/mattn/go-shellwords"
 )
@@ -85,6 +86,7 @@ type EnrichedRecord struct {
 	Record
 
 	// enriching fields - added "later"
+	Command      string `json:"command"`
 	FirstWord    string `json:"firstWord"`
 	Invalid      bool   `json:"invalid"`
 	SeqSessionID uint64 `json:"seqSessionId"`
@@ -114,7 +116,7 @@ func ConvertRecord(r *FallbackRecord) Record {
 func (r Record) Enrich() EnrichedRecord {
 	record := EnrichedRecord{Record: r}
 	// Get command/first word from commandline
-	record.FirstWord = GetCommandFromCommandLine(r.CmdLine)
+	record.Command, record.FirstWord = GetCommandAndFirstWord(r.CmdLine)
 	err := r.Validate()
 	if err != nil {
 		log.Println("Invalid command:", r.CmdLine)
@@ -129,17 +131,28 @@ func (r *Record) Validate() error {
 	return nil
 }
 
-// GetCommandFromCommandLine func
-func GetCommandFromCommandLine(cmdLine string) string {
+// GetCommandAndFirstWord func
+func GetCommandAndFirstWord(cmdLine string) (string, string) {
 	args, err := shellwords.Parse(cmdLine)
 	if err != nil {
 		log.Println("shellwords Error:", err, " (cmdLine: <", cmdLine, "> )")
-		return "<error>"
+		return "<shellwords_error>", "<shellwords_error>"
 	}
-	if len(args) > 0 {
-		return args[0]
+	if len(args) == 0 {
+		return "", ""
 	}
-	return ""
+	i := 0
+	for true {
+		// commands in shell sometimes look like this `variable=something command argument otherArgument --option`
+		//		to get the command we skip over tokens that contain '='
+		if strings.ContainsRune(args[i], '=') && len(args) > i+1 {
+			i++
+			continue
+		}
+		return args[i], args[0]
+	}
+	log.Fatal("GetCommandAndFirstWord error: this should not happen!")
+	return "ERROR", "ERROR"
 }
 
 // Config struct

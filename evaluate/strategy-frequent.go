@@ -42,6 +42,6 @@ func (s *strategyFrequent) AddHistoryRecord(record *common.EnrichedRecord) error
 }
 
 func (s *strategyFrequent) ResetHistory() error {
-	s.history = map[string]int{}
+	s.init()
 	return nil
 }

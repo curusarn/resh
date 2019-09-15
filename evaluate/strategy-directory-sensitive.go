@@ -1,8 +1,6 @@
 package main
 
-import (
-	"github.com/curusarn/resh/common"
-)
+import "github.com/curusarn/resh/common"
 
 type strategyDirectorySensitive struct {
 	history map[string][]string

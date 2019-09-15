@@ -80,7 +80,7 @@ def plot_cmdLineFrq_rank(plotSize=PLOT_SIZE_zipf, show_labels=False):
 def plot_cmdFrq_rank(plotSize=PLOT_SIZE_zipf, show_labels=False):
     cmd_count = defaultdict(int)
     for record in DATA_records:
-        cmd = record["firstWord"]
+        cmd = record["command"]
         if cmd == "":
             continue
         cmd_count[cmd] += 1
@@ -110,7 +110,7 @@ def plot_cmdVocabularySize_cmdLinesEntered():
     cmd_vocabulary = set()
     y_cmd_count = [0]
     for record in DATA_records:
-        cmd = record["firstWord"]
+        cmd = record["command"]
         if cmd in cmd_vocabulary:
             # repeat last value
             y_cmd_count.append(y_cmd_count[-1])
@@ -173,7 +173,7 @@ def graph_cmdSequences(node_count=33, edge_minValue=0.05, view_graph=True):
         cmd_count[START_CMD] += 1
         prev_cmd = START_CMD
         for record in session:
-            cmd = record["firstWord"]
+            cmd = record["command"]
             cmdSeq_count[prev_cmd][cmd] += 1
             cmd_count[cmd] += 1
             if cmd not in cmd_id:
@@ -347,7 +347,6 @@ def plot_strategies_matches(plot_size=50, selected_strategies=[]):
         plt.show()
 
 
-
 def plot_strategies_charsRecalled(plot_size=50, selected_strategies=[]):
     plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
     plt.title("Average characters recalled at distance")
@@ -419,6 +418,81 @@ def plot_strategies_charsRecalled(plot_size=50, selected_strategies=[]):
         plt.show()
 
 
+def plot_strategies_charsRecalled_prefix(plot_size=50, selected_strategies=[]):
+    plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
+    plt.title("Average characters recalled at distance (including prefix matches)")
+    plt.ylabel("Average characters recalled (including prefix matches)")
+    plt.xlabel("Distance")
+    x_values = range(1, plot_size+1)
+    legend = []
+    saved_charsRecalled_total = None
+    saved_dataPoint_count = None
+    for strategy in data["Strategies"]:
+        strategy_title = strategy["Title"]
+        # strategy_description = strategy["Description"]
+
+        dataPoint_count = 0
+        matches_total = 0
+        charsRecalled = [0] * plot_size
+        charsRecalled_total = 0
+        
+        for multiMatch in strategy["PrefixMatches"]:
+            dataPoint_count += 1
+
+            if not multiMatch["Match"]:
+                continue
+            matches_total += 1
+
+            last_charsRecalled = 0
+            for match in multiMatch["Entries"]:
+
+                chars = match["CharsRecalled"]
+                charsIncrease = chars - last_charsRecalled
+                assert(charsIncrease > 0)
+                charsRecalled_total += charsIncrease 
+
+                dist = match["Distance"]  
+                if dist > plot_size:
+                    continue
+
+                charsRecalled[dist-1] += charsIncrease
+                last_charsRecalled = chars
+            
+        # recent is very simple strategy so we will believe 
+        #       that there is no bug in it and we can use it to determine total
+        if strategy_title == "recent":
+            saved_charsRecalled_total = charsRecalled_total
+            saved_dataPoint_count = dataPoint_count
+
+        if len(selected_strategies) and strategy_title not in selected_strategies:
+            continue
+
+        acc = 0
+        charsRecalled_cumulative = []
+        for x in charsRecalled:
+            acc += x
+            charsRecalled_cumulative.append(acc)
+        charsRecalled_average = list(map(lambda x: x / dataPoint_count, charsRecalled_cumulative))
+
+        plt.plot(x_values, charsRecalled_average, 'o-')
+        legend.append(strategy_title)
+
+    assert(saved_charsRecalled_total is not None)
+    assert(saved_dataPoint_count is not None)
+    max_values = [saved_charsRecalled_total / saved_dataPoint_count] * len(x_values)
+    plt.plot(x_values, max_values, 'r-')
+    legend.append("maximum possible")
+
+    x_ticks = list(range(1, plot_size+1, 2))
+    x_labels = x_ticks[:]
+    plt.xticks(x_ticks, x_labels)
+    plt.legend(legend, loc="best")
+    if async_draw:
+        plt.draw()
+    else:
+        plt.show()
+
+
 plot_cmdLineFrq_rank()
 plot_cmdFrq_rank()
         
@@ -427,6 +501,7 @@ plot_cmdVocabularySize_cmdLinesEntered()
 
 plot_strategies_matches(20)
 plot_strategies_charsRecalled(20)
+plot_strategies_charsRecalled_prefix(20)
 
 graph_cmdSequences(node_count=33, edge_minValue=0.048)
 
@@ -437,6 +512,7 @@ graph_cmdSequences(node_count=33, edge_minValue=0.048)
 #         e *= 0.001
 #         graph_cmdSequences(node_count=n, edge_minValue=e, view_graph=False)
 
+# be careful and check if labels fit the display
+
 if async_draw:
     plt.show()
-# be careful and check if labels fit the display
