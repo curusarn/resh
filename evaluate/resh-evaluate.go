@@ -114,12 +114,22 @@ func main() {
 	directory.init()
 	strategies = append(strategies, &directory)
 
+	dynamicDist := strategyDynamicRecordDistance{
+		maxDepth:   3000,
+		distParams: common.DistParams{Pwd: 10, RealPwd: 10, SessionID: 1, Time: 1},
+		label:      "10*pwd,10*realpwd,session,time",
+	}
+	dynamicDist.init()
+	strategies = append(strategies, &dynamicDist)
+
+	distanceStaticBest := strategyRecordDistance{
+		maxDepth:   3000,
+		distParams: common.DistParams{Pwd: 10, RealPwd: 10, SessionID: 1, Time: 1},
+		label:      "10*pwd,10*realpwd,session,time",
+	}
+	strategies = append(strategies, &distanceStaticBest)
+
 	if *slow {
-		distanceStaticBest := strategyRecordDistance{
-			distParams: common.DistParams{SessionID: 1, Pwd: 10, RealPwd: 10, Time: 1},
-			label:      "10*pwd,10*realpwd,1*session,time",
-		}
-		strategies = append(strategies, &distanceStaticBest)
 
 		markovCmd := strategyMarkovChainCmd{order: 1}
 		markovCmd.init()
