@@ -1,7 +1,10 @@
 package common
 
 import (
+	"encoding/json"
+	"errors"
 	"log"
+	"math"
 	"strconv"
 	"strings"
 
@@ -86,10 +89,12 @@ type EnrichedRecord struct {
 	Record
 
 	// enriching fields - added "later"
-	Command      string `json:"command"`
-	FirstWord    string `json:"firstWord"`
-	Invalid      bool   `json:"invalid"`
-	SeqSessionID uint64 `json:"seqSessionId"`
+	Command         string   `json:"command"`
+	FirstWord       string   `json:"firstWord"`
+	Invalid         bool     `json:"invalid"`
+	SeqSessionID    uint64   `json:"seqSessionId"`
+	DebugThisRecord bool     `json:"debugThisRecord"`
+	Errors          []string `json:"errors"`
 	// SeqSessionID uint64 `json:"seqSessionId,omitempty"`
 }
 
@@ -112,14 +117,33 @@ func ConvertRecord(r *FallbackRecord) Record {
 	}
 }
 
+// ToString - returns record the json
+func (r EnrichedRecord) ToString() (string, error) {
+	jsonRec, err := json.Marshal(r)
+	if err != nil {
+		return "marshalling error", err
+	}
+	return string(jsonRec), nil
+}
+
 // Enrich - adds additional fields to the record
 func (r Record) Enrich() EnrichedRecord {
 	record := EnrichedRecord{Record: r}
 	// Get command/first word from commandline
-	record.Command, record.FirstWord = GetCommandAndFirstWord(r.CmdLine)
-	err := r.Validate()
+	var err error
+	record.Command, record.FirstWord, err = GetCommandAndFirstWord(r.CmdLine)
 	if err != nil {
-		log.Println("Invalid command:", r.CmdLine)
+		record.Errors = append(record.Errors, "GetCommandAndFirstWord error:"+err.Error())
+		rec, _ := record.ToString()
+		log.Println("Invalid command:", rec)
+		record.Invalid = true
+		return record
+	}
+	err = r.Validate()
+	if err != nil {
+		record.Errors = append(record.Errors, "Validate error:"+err.Error())
+		rec, _ := record.ToString()
+		log.Println("Invalid command:", rec)
 		record.Invalid = true
 	}
 	return record
@@ -128,18 +152,85 @@ func (r Record) Enrich() EnrichedRecord {
 
 // Validate - returns error if the record is invalid
 func (r *Record) Validate() error {
+	if r.RealtimeBefore == 0 || r.RealtimeAfter == 0 {
+		return errors.New("There is no Time")
+	}
+	if r.RealPwd == "" || r.RealPwdAfter == "" {
+		return errors.New("There is no Real Pwd")
+	}
+	if r.Pwd == "" || r.PwdAfter == "" {
+		return errors.New("There is no Pwd")
+	}
+
+	// TimezoneBefore
+	// TimezoneAfter
+
+	// RealtimeDuration
+	// RealtimeSinceSessionStart - TODO: add later
+	// RealtimeSinceBoot  - TODO: add later
+
+	// device extras
+	// Host
+	// Hosttype
+	// Ostype
+	// Machtype
+	// OsReleaseID
+	// OsReleaseVersionID
+	// OsReleaseIDLike
+	// OsReleaseName
+	// OsReleasePrettyName
+
+	// session extras
+	// Term
+	// Shlvl
+
+	// static info
+	// Lang
+	// LcAll
+
+	// meta
+	// ReshUUID
+	// ReshVersion
+	// ReshRevision
+
+	// added by sanitizatizer
+	// Sanitized
+	// CmdLength
 	return nil
 }
 
+// SetCmdLine sets cmdLine and related members
+func (r *EnrichedRecord) SetCmdLine(cmdLine string) {
+	r.CmdLine = cmdLine
+	r.CmdLength = len(cmdLine)
+	r.ExitCode = 0
+	var err error
+	r.Command, r.FirstWord, err = GetCommandAndFirstWord(cmdLine)
+	if err != nil {
+		r.Errors = append(r.Errors, "GetCommandAndFirstWord error:"+err.Error())
+		// log.Println("Invalid command:", r.CmdLine)
+		r.Invalid = true
+	}
+}
+
+// SetBeforeToAfter - set "before" members to "after" members
+func (r *EnrichedRecord) SetBeforeToAfter() {
+	r.Pwd = r.PwdAfter
+	r.RealPwd = r.RealPwdAfter
+	// r.TimezoneBefore = r.TimezoneAfter
+	// r.RealtimeBefore = r.RealtimeAfter
+	// r.RealtimeBeforeLocal = r.RealtimeAfterLocal
+}
+
 // GetCommandAndFirstWord func
-func GetCommandAndFirstWord(cmdLine string) (string, string) {
+func GetCommandAndFirstWord(cmdLine string) (string, string, error) {
 	args, err := shellwords.Parse(cmdLine)
 	if err != nil {
 		log.Println("shellwords Error:", err, " (cmdLine: <", cmdLine, "> )")
-		return "<shellwords_error>", "<shellwords_error>"
+		return "", "", err
 	}
 	if len(args) == 0 {
-		return "", ""
+		return "", "", nil
 	}
 	i := 0
 	for true {
@@ -149,10 +240,140 @@ func GetCommandAndFirstWord(cmdLine string) (string, string) {
 			i++
 			continue
 		}
-		return args[i], args[0]
+		return args[i], args[0], nil
 	}
 	log.Fatal("GetCommandAndFirstWord error: this should not happen!")
-	return "ERROR", "ERROR"
+	return "ERROR", "ERROR", errors.New("this should not happen - contact developer ;)")
+}
+
+// DistParams is used to supply params to EnrichedRecord.DistanceTo()
+type DistParams struct {
+	ExitCode  float64
+	MachineID float64
+	SessionID float64
+	Login     float64
+	Shell     float64
+	Pwd       float64
+	RealPwd   float64
+	Git       float64
+	Time      float64
+}
+
+// DistanceTo another record
+func (r *EnrichedRecord) DistanceTo(r2 EnrichedRecord, p DistParams) float64 {
+	var dist float64
+	dist = 0
+
+	// lev distance or something? TODO later
+	// CmdLine
+
+	// exit code
+	if r.ExitCode != r2.ExitCode {
+		if r.ExitCode == 0 || r2.ExitCode == 0 {
+			// one success + one error -> 1
+			dist += 1 * p.ExitCode
+		} else {
+			// two different errors
+			dist += 0.5 * p.ExitCode
+		}
+	}
+
+	// machine/device
+	if r.MachineID != r2.MachineID {
+		dist += 1 * p.MachineID
+	}
+	// Uname
+
+	// session
+	if r.SessionID != r2.SessionID {
+		dist += 1 * p.SessionID
+	}
+	// Pid - add because of nested shells?
+	// SessionPid
+
+	// user
+	if r.Login != r2.Login {
+		dist += 1 * p.Login
+	}
+	// Home
+
+	// shell
+	if r.Shell != r2.Shell {
+		dist += 1 * p.Shell
+	}
+	// ShellEnv
+
+	// pwd
+	if r.Pwd != r2.Pwd {
+		// TODO: compare using hierarchy
+		// TODO: make more important
+		dist += 1 * p.Pwd
+	}
+	if r.RealPwd != r2.RealPwd {
+		// TODO: -||-
+		dist += 1 * p.RealPwd
+	}
+	// PwdAfter
+	// RealPwdAfter
+
+	// git
+	if r.GitDir != r2.GitDir {
+		dist += 1 * p.Git
+	}
+	if r.GitRealDir != r2.GitRealDir {
+		dist += 1 * p.Git
+	}
+	if r.GitOriginRemote != r2.GitOriginRemote {
+		dist += 1 * p.Git
+	}
+
+	// time
+	// this can actually get negative for differences of less than one second which is fine
+	// distance grows by 1 with every order
+	distTime := math.Log10(math.Abs(r.RealtimeBefore-r2.RealtimeBefore)) * p.Time
+	if math.IsNaN(distTime) == false && math.IsInf(distTime, 0) == false {
+		dist += distTime
+	}
+	// RealtimeBeforeLocal
+	// RealtimeAfter
+	// RealtimeAfterLocal
+
+	// TimezoneBefore
+	// TimezoneAfter
+
+	// RealtimeDuration
+	// RealtimeSinceSessionStart - TODO: add later
+	// RealtimeSinceBoot  - TODO: add later
+
+	// device extras
+	// Host
+	// Hosttype
+	// Ostype
+	// Machtype
+	// OsReleaseID
+	// OsReleaseVersionID
+	// OsReleaseIDLike
+	// OsReleaseName
+	// OsReleasePrettyName
+
+	// session extras
+	// Term
+	// Shlvl
+
+	// static info
+	// Lang
+	// LcAll
+
+	// meta
+	// ReshUUID
+	// ReshVersion
+	// ReshRevision
+
+	// added by sanitizatizer
+	// Sanitized
+	// CmdLength
+
+	return dist
 }
 
 // Config struct

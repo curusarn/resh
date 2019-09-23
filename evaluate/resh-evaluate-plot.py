@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import numpy as np
 from graphviz import Digraph
+from datetime import datetime
 
 PLOT_WIDTH = 10 # inches
 PLOT_HEIGHT = 7 # inches
@@ -274,7 +275,7 @@ def graph_cmdSequences(node_count=33, edge_minValue=0.05, view_graph=True):
 
 def plot_strategies_matches(plot_size=50, selected_strategies=[]):
     plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
-    plt.title("Matches at distance")
+    plt.title("Matches at distance <{}>".format(datetime.now().strftime('%H:%M:%S')))
     plt.ylabel('%' + " of matches")
     plt.xlabel("Distance")
     legend = []
@@ -349,7 +350,7 @@ def plot_strategies_matches(plot_size=50, selected_strategies=[]):
 
 def plot_strategies_charsRecalled(plot_size=50, selected_strategies=[]):
     plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
-    plt.title("Average characters recalled at distance")
+    plt.title("Average characters recalled at distance <{}>".format(datetime.now().strftime('%H:%M:%S')))
     plt.ylabel("Average characters recalled")
     plt.xlabel("Distance")
     x_values = range(1, plot_size+1)
@@ -420,7 +421,7 @@ def plot_strategies_charsRecalled(plot_size=50, selected_strategies=[]):
 
 def plot_strategies_charsRecalled_prefix(plot_size=50, selected_strategies=[]):
     plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
-    plt.title("Average characters recalled at distance (including prefix matches)")
+    plt.title("Average characters recalled at distance (including prefix matches) <{}>".format(datetime.now().strftime('%H:%M:%S'))) 
     plt.ylabel("Average characters recalled (including prefix matches)")
     plt.xlabel("Distance")
     x_values = range(1, plot_size+1)
@@ -493,17 +494,17 @@ def plot_strategies_charsRecalled_prefix(plot_size=50, selected_strategies=[]):
         plt.show()
 
 
-plot_cmdLineFrq_rank()
-plot_cmdFrq_rank()
+# plot_cmdLineFrq_rank()
+# plot_cmdFrq_rank()
         
-plot_cmdLineVocabularySize_cmdLinesEntered()
-plot_cmdVocabularySize_cmdLinesEntered()
+# plot_cmdLineVocabularySize_cmdLinesEntered()
+# plot_cmdVocabularySize_cmdLinesEntered()
 
 plot_strategies_matches(20)
 plot_strategies_charsRecalled(20)
 plot_strategies_charsRecalled_prefix(20)
 
-graph_cmdSequences(node_count=33, edge_minValue=0.048)
+# graph_cmdSequences(node_count=33, edge_minValue=0.048)
 
 # graph_cmdSequences(node_count=28, edge_minValue=0.06)
 

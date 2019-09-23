@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"os/exec"
 	"os/user"
@@ -48,6 +49,9 @@ func main() {
 		"Input data root, enables batch mode, looks for files matching --input option")
 	slow := flag.Bool("slow", false,
 		"Enables stuff that takes a long time (e.g. markov chain strategies).")
+	skipFailedCmds := flag.Bool("skip-failed-cmds", false,
+		"Skips records with non-zero exit status.")
+	debugRecords := flag.Float64("debug", 0, "Debug records - percentage of records that should be debugged.")
 
 	flag.Parse()
 
@@ -77,7 +81,8 @@ func main() {
 		}
 	}
 
-	evaluator := evaluator{sanitizedInput: *sanitizedInput, maxCandidates: maxCandidates, BatchMode: batchMode}
+	evaluator := evaluator{sanitizedInput: *sanitizedInput, maxCandidates: maxCandidates,
+		BatchMode: batchMode, skipFailedCmds: *skipFailedCmds, debugRecords: *debugRecords}
 	if batchMode {
 		err := evaluator.initBatchMode(*input, *inputDataRoot)
 		if err != nil {
@@ -95,29 +100,39 @@ func main() {
 	// dummy := strategyDummy{}
 	// strategies = append(strategies, &dummy)
 
-	recent := strategyRecent{}
+	strategies = append(strategies, &strategyRecent{})
+
 	frequent := strategyFrequent{}
 	frequent.init()
-	directory := strategyDirectorySensitive{}
-	directory.init()
+	strategies = append(strategies, &frequent)
+
 	random := strategyRandom{candidatesSize: maxCandidates}
 	random.init()
+	strategies = append(strategies, &random)
 
-	markovCmd := strategyMarkovChainCmd{order: 1}
-	markovCmd.init()
-
-	markovCmd2 := strategyMarkovChainCmd{order: 2}
-	markovCmd2.init()
-
-	markov := strategyMarkovChain{order: 1}
-	markov.init()
-
-	markov2 := strategyMarkovChain{order: 2}
-	markov2.init()
-
-	strategies = append(strategies, &recent, &frequent, &directory, &random)
+	directory := strategyDirectorySensitive{}
+	directory.init()
+	strategies = append(strategies, &directory)
 
 	if *slow {
+		distanceStaticBest := strategyRecordDistance{
+			distParams: common.DistParams{SessionID: 1, Pwd: 10, RealPwd: 10, Time: 1},
+			label:      "10*pwd,10*realpwd,1*session,time",
+		}
+		strategies = append(strategies, &distanceStaticBest)
+
+		markovCmd := strategyMarkovChainCmd{order: 1}
+		markovCmd.init()
+
+		markovCmd2 := strategyMarkovChainCmd{order: 2}
+		markovCmd2.init()
+
+		markov := strategyMarkovChain{order: 1}
+		markov.init()
+
+		markov2 := strategyMarkovChain{order: 2}
+		markov2.init()
+
 		strategies = append(strategies, &markovCmd2, &markovCmd, &markov2, &markov)
 	}
 
@@ -175,6 +190,8 @@ type evaluator struct {
 	sanitizedInput bool
 	BatchMode      bool
 	maxCandidates  int
+	skipFailedCmds bool
+	debugRecords   float64
 	UsersRecords   []userRecords
 	Strategies     []strategyJSON
 }
@@ -235,6 +252,10 @@ func (e *evaluator) processRecords() {
 					}
 					log.Fatal("ASSERT failed: data is sanitized but '--sanitized-input' is not present")
 				}
+				e.UsersRecords[i].Devices[j].Records[k].SeqSessionID = id
+				if e.debugRecords > 0 && rand.Float64() < e.debugRecords {
+					e.UsersRecords[i].Devices[j].Records[k].DebugThisRecord = true
+				}
 			}
 			sort.SliceStable(e.UsersRecords[i].Devices[j].Records, func(x, y int) bool {
 				if device.Records[x].SeqSessionID == device.Records[y].SeqSessionID {
@@ -253,8 +274,37 @@ func (e *evaluator) evaluate(strategy strategy) error {
 	for i := range e.UsersRecords {
 		for j := range e.UsersRecords[i].Devices {
 			bar := progressbar.New(len(e.UsersRecords[i].Devices[j].Records))
+			var prevRecord common.EnrichedRecord
 			for _, record := range e.UsersRecords[i].Devices[j].Records {
+				if e.skipFailedCmds && record.ExitCode != 0 {
+					continue
+				}
 				candidates := strategy.GetCandidates()
+				if record.DebugThisRecord {
+					log.Println()
+					log.Println("===================================================")
+					log.Println("STRATEGY:", title, "-", description)
+					log.Println("===================================================")
+					log.Println("Previous record:")
+					if prevRecord.RealtimeBefore == 0 {
+						log.Println("== NIL")
+					} else {
+						rec, _ := prevRecord.ToString()
+						log.Println(rec)
+					}
+					log.Println("---------------------------------------------------")
+					log.Println("Recommendations for:")
+					rec, _ := record.ToString()
+					log.Println(rec)
+					log.Println("---------------------------------------------------")
+					for i, candidate := range candidates {
+						if i > 10 {
+							break
+						}
+						log.Println(string(candidate))
+					}
+					log.Println("===================================================")
+				}
 
 				matchFound := false
 				longestPrefixMatchLength := 0
@@ -289,6 +339,7 @@ func (e *evaluator) evaluate(strategy strategy) error {
 					return err
 				}
 				bar.Add(1)
+				prevRecord = record
 			}
 			strategy.ResetHistory()
 			fmt.Println()
