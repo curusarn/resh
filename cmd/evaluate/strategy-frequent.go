@@ -3,7 +3,7 @@ package main
 import (
 	"sort"
 
-	"github.com/curusarn/resh/common"
+	"github.com/curusarn/resh/pkg/records"
 )
 
 type strategyFrequent struct {
@@ -36,7 +36,7 @@ func (s *strategyFrequent) GetCandidates() []string {
 	return hist
 }
 
-func (s *strategyFrequent) AddHistoryRecord(record *common.EnrichedRecord) error {
+func (s *strategyFrequent) AddHistoryRecord(record *records.EnrichedRecord) error {
 	s.history[record.CmdLine]++
 	return nil
 }

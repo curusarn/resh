@@ -4,12 +4,12 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/curusarn/resh/common"
+	"github.com/curusarn/resh/pkg/records"
 )
 
 type strategyRecordDistance struct {
-	history    []common.EnrichedRecord
-	distParams common.DistParams
+	history    []records.EnrichedRecord
+	distParams records.DistParams
 	maxDepth   int
 	label      string
 }
@@ -31,7 +31,7 @@ func (s *strategyRecordDistance) GetCandidates() []string {
 	if len(s.history) == 0 {
 		return nil
 	}
-	var prevRecord common.EnrichedRecord
+	var prevRecord records.EnrichedRecord
 	prevRecord = s.history[0]
 	prevRecord.SetCmdLine("")
 	prevRecord.SetBeforeToAfter()
@@ -56,9 +56,9 @@ func (s *strategyRecordDistance) GetCandidates() []string {
 	return hist
 }
 
-func (s *strategyRecordDistance) AddHistoryRecord(record *common.EnrichedRecord) error {
+func (s *strategyRecordDistance) AddHistoryRecord(record *records.EnrichedRecord) error {
 	// append record to front
-	s.history = append([]common.EnrichedRecord{*record}, s.history...)
+	s.history = append([]records.EnrichedRecord{*record}, s.history...)
 	return nil
 }
 

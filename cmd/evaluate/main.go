@@ -15,8 +15,9 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/curusarn/resh/common"
+	"github.com/curusarn/resh/pkg/records"
 	"github.com/jpillora/longestcommon"
+
 	"github.com/schollz/progressbar"
 )
 
@@ -116,7 +117,7 @@ func main() {
 
 	dynamicDist := strategyDynamicRecordDistance{
 		maxDepth:   3000,
-		distParams: common.DistParams{Pwd: 10, RealPwd: 10, SessionID: 1, Time: 1},
+		distParams: records.DistParams{Pwd: 10, RealPwd: 10, SessionID: 1, Time: 1},
 		label:      "10*pwd,10*realpwd,session,time",
 	}
 	dynamicDist.init()
@@ -124,7 +125,7 @@ func main() {
 
 	distanceStaticBest := strategyRecordDistance{
 		maxDepth:   3000,
-		distParams: common.DistParams{Pwd: 10, RealPwd: 10, SessionID: 1, Time: 1},
+		distParams: records.DistParams{Pwd: 10, RealPwd: 10, SessionID: 1, Time: 1},
 		label:      "10*pwd,10*realpwd,session,time",
 	}
 	strategies = append(strategies, &distanceStaticBest)
@@ -159,7 +160,7 @@ func main() {
 type strategy interface {
 	GetTitleAndDescription() (string, string)
 	GetCandidates() []string
-	AddHistoryRecord(record *common.EnrichedRecord) error
+	AddHistoryRecord(record *records.EnrichedRecord) error
 	ResetHistory() error
 }
 
@@ -188,7 +189,7 @@ type strategyJSON struct {
 
 type deviceRecords struct {
 	Name    string
-	Records []common.EnrichedRecord
+	Records []records.EnrichedRecord
 }
 
 type userRecords struct {
@@ -284,7 +285,7 @@ func (e *evaluator) evaluate(strategy strategy) error {
 	for i := range e.UsersRecords {
 		for j := range e.UsersRecords[i].Devices {
 			bar := progressbar.New(len(e.UsersRecords[i].Devices[j].Records))
-			var prevRecord common.EnrichedRecord
+			var prevRecord records.EnrichedRecord
 			for _, record := range e.UsersRecords[i].Devices[j].Records {
 				if e.skipFailedCmds && record.ExitCode != 0 {
 					continue
@@ -416,18 +417,18 @@ func (e *evaluator) loadHistoryRecordsBatchMode(fname string, dataRootPath strin
 	return records
 }
 
-func (e *evaluator) loadHistoryRecords(fname string) []common.EnrichedRecord {
+func (e *evaluator) loadHistoryRecords(fname string) []records.EnrichedRecord {
 	file, err := os.Open(fname)
 	if err != nil {
 		log.Fatal("Open() resh history file error:", err)
 	}
 	defer file.Close()
 
-	var records []common.EnrichedRecord
+	var recs []records.EnrichedRecord
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		record := common.Record{}
-		fallbackRecord := common.FallbackRecord{}
+		record := records.Record{}
+		fallbackRecord := records.FallbackRecord{}
 		line := scanner.Text()
 		err = json.Unmarshal([]byte(line), &record)
 		if err != nil {
@@ -436,7 +437,7 @@ func (e *evaluator) loadHistoryRecords(fname string) []common.EnrichedRecord {
 				log.Println("Line:", line)
 				log.Fatal("Decoding error:", err)
 			}
-			record = common.ConvertRecord(&fallbackRecord)
+			record = records.ConvertRecord(&fallbackRecord)
 		}
 		if e.sanitizedInput == false {
 			if record.CmdLength != 0 {
@@ -447,7 +448,7 @@ func (e *evaluator) loadHistoryRecords(fname string) []common.EnrichedRecord {
 		if record.CmdLength == 0 {
 			log.Fatal("Assert failed - 'cmdLength' is unset in the data. This should not happen.")
 		}
-		records = append(records, record.Enrich())
+		recs = append(recs, record.Enrich())
 	}
-	return records
+	return recs
 }

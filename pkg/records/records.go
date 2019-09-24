@@ -1,4 +1,4 @@
-package common
+package records
 
 import (
 	"encoding/json"
@@ -246,7 +246,7 @@ func GetCommandAndFirstWord(cmdLine string) (string, string, error) {
 	return "ERROR", "ERROR", errors.New("this should not happen - contact developer ;)")
 }
 
-// DistParams is used to supply params to EnrichedRecord.DistanceTo()
+// DistParams is used to supply params to Enrichedrecords.DistanceTo()
 type DistParams struct {
 	ExitCode  float64
 	MachineID float64

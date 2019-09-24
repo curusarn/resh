@@ -1,6 +1,6 @@
 package main
 
-import "github.com/curusarn/resh/common"
+import "github.com/curusarn/resh/pkg/records"
 
 type strategyDummy struct {
 	history []string
@@ -14,7 +14,7 @@ func (s *strategyDummy) GetCandidates() []string {
 	return nil
 }
 
-func (s *strategyDummy) AddHistoryRecord(record *common.EnrichedRecord) error {
+func (s *strategyDummy) AddHistoryRecord(record *records.EnrichedRecord) error {
 	s.history = append(s.history, record.CmdLine)
 	return nil
 }

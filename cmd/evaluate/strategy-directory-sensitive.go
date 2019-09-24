@@ -1,6 +1,6 @@
 package main
 
-import "github.com/curusarn/resh/common"
+import "github.com/curusarn/resh/pkg/records"
 
 type strategyDirectorySensitive struct {
 	history map[string][]string
@@ -19,7 +19,7 @@ func (s *strategyDirectorySensitive) GetCandidates() []string {
 	return s.history[s.lastPwd]
 }
 
-func (s *strategyDirectorySensitive) AddHistoryRecord(record *common.EnrichedRecord) error {
+func (s *strategyDirectorySensitive) AddHistoryRecord(record *records.EnrichedRecord) error {
 	// work on history for PWD
 	pwd := record.Pwd
 	// remove previous occurance of record

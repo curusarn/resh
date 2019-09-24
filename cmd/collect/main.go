@@ -11,7 +11,7 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
-	common "github.com/curusarn/resh/common"
+	"github.com/curusarn/resh/pkg/records"
 
 	//  "os/exec"
 	"os/user"
@@ -34,7 +34,7 @@ func main() {
 
 	machineIDPath := "/etc/machine-id"
 
-	var config common.Config
+	var config records.Config
 	if _, err := toml.DecodeFile(configPath, &config); err != nil {
 		log.Fatal("Error reading config:", err)
 	}
@@ -171,12 +171,12 @@ func main() {
 		*osReleasePrettyName = "Linux"
 	}
 
-	rec := common.Record{
+	rec := records.Record{
 		// posix
 		Cols:  *cols,
 		Lines: *lines,
 		// core
-		BaseRecord: common.BaseRecord{
+		BaseRecord: records.BaseRecord{
 			CmdLine:   *cmdLine,
 			ExitCode:  *exitCode,
 			Shell:     *shell,
@@ -237,7 +237,7 @@ func main() {
 	sendRecord(rec, strconv.Itoa(config.Port))
 }
 
-func sendRecord(r common.Record, port string) {
+func sendRecord(r records.Record, port string) {
 	recJSON, err := json.Marshal(r)
 	if err != nil {
 		log.Fatal("send err 1", err)

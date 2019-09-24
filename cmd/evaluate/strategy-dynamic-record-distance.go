@@ -5,12 +5,12 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/curusarn/resh/common"
+	"github.com/curusarn/resh/pkg/records"
 )
 
 type strategyDynamicRecordDistance struct {
-	history          []common.EnrichedRecord
-	distParams       common.DistParams
+	history          []records.EnrichedRecord
+	distParams       records.DistParams
 	pwdHistogram     map[string]int
 	realPwdHistogram map[string]int
 	maxDepth         int
@@ -40,7 +40,7 @@ func (s *strategyDynamicRecordDistance) GetCandidates() []string {
 	if len(s.history) == 0 {
 		return nil
 	}
-	var prevRecord common.EnrichedRecord
+	var prevRecord records.EnrichedRecord
 	prevRecord = s.history[0]
 	prevRecord.SetCmdLine("")
 	prevRecord.SetBeforeToAfter()
@@ -49,7 +49,7 @@ func (s *strategyDynamicRecordDistance) GetCandidates() []string {
 		if s.maxDepth != 0 && i > s.maxDepth {
 			break
 		}
-		distParams := common.DistParams{
+		distParams := records.DistParams{
 			Pwd:       s.distParams.Pwd * s.idf(s.pwdHistogram[prevRecord.PwdAfter]),
 			RealPwd:   s.distParams.RealPwd * s.idf(s.realPwdHistogram[prevRecord.RealPwdAfter]),
 			Time:      s.distParams.Time,
@@ -71,9 +71,9 @@ func (s *strategyDynamicRecordDistance) GetCandidates() []string {
 	return hist
 }
 
-func (s *strategyDynamicRecordDistance) AddHistoryRecord(record *common.EnrichedRecord) error {
+func (s *strategyDynamicRecordDistance) AddHistoryRecord(record *records.EnrichedRecord) error {
 	// append record to front
-	s.history = append([]common.EnrichedRecord{*record}, s.history...)
+	s.history = append([]records.EnrichedRecord{*record}, s.history...)
 	s.pwdHistogram[record.Pwd]++
 	s.realPwdHistogram[record.RealPwd]++
 	return nil

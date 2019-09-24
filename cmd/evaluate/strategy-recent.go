@@ -1,6 +1,6 @@
 package main
 
-import "github.com/curusarn/resh/common"
+import "github.com/curusarn/resh/pkg/records"
 
 type strategyRecent struct {
 	history []string
@@ -14,7 +14,7 @@ func (s *strategyRecent) GetCandidates() []string {
 	return s.history
 }
 
-func (s *strategyRecent) AddHistoryRecord(record *common.EnrichedRecord) error {
+func (s *strategyRecent) AddHistoryRecord(record *records.EnrichedRecord) error {
 	// remove previous occurance of record
 	for i, cmd := range s.history {
 		if cmd == record.CmdLine {

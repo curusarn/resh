@@ -4,7 +4,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/curusarn/resh/common"
+	"github.com/curusarn/resh/pkg/records"
 	"github.com/mb-14/gomarkov"
 )
 
@@ -58,7 +58,7 @@ func (s *strategyMarkovChain) GetCandidates() []string {
 	return hist
 }
 
-func (s *strategyMarkovChain) AddHistoryRecord(record *common.EnrichedRecord) error {
+func (s *strategyMarkovChain) AddHistoryRecord(record *records.EnrichedRecord) error {
 	s.history = append(s.history, record.CmdLine)
 	// s.historySet[record.CmdLine] = true
 	return nil

@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/curusarn/resh/common"
+	"github.com/curusarn/resh/pkg/records"
 )
 
 type strategyRandom struct {
@@ -39,7 +39,7 @@ func (s *strategyRandom) GetCandidates() []string {
 	return candidates
 }
 
-func (s *strategyRandom) AddHistoryRecord(record *common.EnrichedRecord) error {
+func (s *strategyRandom) AddHistoryRecord(record *records.EnrichedRecord) error {
 	s.history = append([]string{record.CmdLine}, s.history...)
 	s.historySet[record.CmdLine] = true
 	return nil

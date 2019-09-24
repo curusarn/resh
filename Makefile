@@ -1,10 +1,10 @@
 SHELL=/bin/bash
-VERSION=$(shell cat version)
+VERSION=$(shell cat VERSION)
 REVISION=$(shell [ -z "$(git status --untracked-files=no --porcelain)" ] && git rev-parse --short=12 HEAD || echo "no_revision")
 GOFLAGS=-ldflags "-X main.Version=${VERSION} -X main.Revision=${REVISION}"
 
 autoinstall: 
-	./install_helper.sh
+	scripts/install_helper.sh
 
 sanitize:
 	#
@@ -23,8 +23,8 @@ sanitize:
 	#
 	#
 	# Running history sanitization ...
-	resh-sanitize-history -trim-hashes 0 --output ~/resh_history_sanitized.json
-	resh-sanitize-history -trim-hashes 12 --output ~/resh_history_sanitized_trim12.json
+	resh-sanitize -trim-hashes 0 --output ~/resh_history_sanitized.json
+	resh-sanitize -trim-hashes 12 --output ~/resh_history_sanitized_trim12.json
 	# 
 	# 
 	# SUCCESS - ALL DONE!
@@ -41,8 +41,7 @@ sanitize:
 	#
 	#
 
-
-build: submodules resh-collect resh-daemon resh-sanitize-history resh-evaluate
+build: submodules bin/resh-collect bin/resh-daemon bin/resh-evaluate bin/resh-sanitize
 
 rebuild:
 	make clean
@@ -51,15 +50,15 @@ rebuild:
 clean:
 	rm resh-*
 
-install: build submodules/bash-preexec/bash-preexec.sh shellrc.sh config.toml uuid.sh | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config
+install: build submodules/bash-preexec/bash-preexec.sh scripts/shellrc.sh conf/config.toml scripts/uuid.sh | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config
 	# Copying files to resh directory ...
 	cp -f submodules/bash-preexec/bash-preexec.sh ~/.bash-preexec.sh
-	cp -f config.toml ~/.config/resh.toml
-	cp -f shellrc.sh ~/.resh/shellrc
-	cp -f uuid.sh ~/.resh/bin/resh-uuid
-	cp -f resh-* ~/.resh/bin/
-	cp -f evaluate/resh-evaluate-plot.py ~/.resh/bin/
-	cp -fr sanitizer_data ~/.resh/
+	cp -f conf/config.toml ~/.config/resh.toml
+	cp -f scripts/shellrc.sh ~/.resh/shellrc
+	cp -f scripts/uuid.sh ~/.resh/bin/resh-uuid
+	cp -f bin/* ~/.resh/bin/
+	cp -f scripts/resh-evaluate-plot.py ~/.resh/bin/
+	cp -fr data/sanitizer ~/.resh/
 	# backward compatibility: We have a new location for resh history file 
 	[ ! -f ~/.resh/history.json ] || mv ~/.resh/history.json ~/.resh_history.json 
 	# Adding resh shellrc to .bashrc ...
@@ -107,17 +106,8 @@ uninstall:
 	# Uninstalling ...
 	-rm -rf ~/.resh/
 
-resh-daemon: daemon/resh-daemon.go common/resh-common.go version
-	go build ${GOFLAGS} -o $@ $<
-
-resh-collect: collect/resh-collect.go common/resh-common.go version
-	go build ${GOFLAGS} -o $@ $<
-
-resh-sanitize-history: sanitize-history/resh-sanitize-history.go common/resh-common.go version
-	go build ${GOFLAGS} -o $@ $<
-
-resh-evaluate: evaluate/resh-evaluate.go evaluate/strategy-*.go common/resh-common.go version
-	go build ${GOFLAGS} -o $@ $< evaluate/strategy-*.go 
+bin/resh-%: cmd/%/main.go pkg/*/*.go VERSION
+	go build ${GOFLAGS} -o $@ cmd/$*/*.go
 
 $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config:
 	# Creating dirs ...
@@ -128,7 +118,6 @@ $(HOME)/.resh/resh-uuid:
 	cat /proc/sys/kernel/random/uuid > $@ 2>/dev/null || ./uuid.sh 
 
 .PHONY: submodules build install rebuild uninstall clean autoinstall
-
 
 submodules: | submodules/bash-preexec/bash-preexec.sh
 	@# sets submodule.recurse to true if unset
