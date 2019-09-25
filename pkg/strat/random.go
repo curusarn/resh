@@ -1,4 +1,4 @@
-package main
+package strat
 
 import (
 	"math/rand"
@@ -7,27 +7,27 @@ import (
 	"github.com/curusarn/resh/pkg/records"
 )
 
-type strategyRandom struct {
-	candidatesSize int
+type Random struct {
+	CandidatesSize int
 	history        []string
 	historySet     map[string]bool
 }
 
-func (s *strategyRandom) init() {
+func (s *Random) Init() {
 	s.history = nil
 	s.historySet = map[string]bool{}
 }
 
-func (s *strategyRandom) GetTitleAndDescription() (string, string) {
+func (s *Random) GetTitleAndDescription() (string, string) {
 	return "random", "Use random commands"
 }
 
-func (s *strategyRandom) GetCandidates() []string {
+func (s *Random) GetCandidates() []string {
 	seed := time.Now().UnixNano()
 	rand.Seed(seed)
 	var candidates []string
 	candidateSet := map[string]bool{}
-	for len(candidates) < s.candidatesSize && len(candidates)*2 < len(s.historySet) {
+	for len(candidates) < s.CandidatesSize && len(candidates)*2 < len(s.historySet) {
 		x := rand.Intn(len(s.history))
 		candidate := s.history[x]
 		if candidateSet[candidate] == false {
@@ -39,13 +39,13 @@ func (s *strategyRandom) GetCandidates() []string {
 	return candidates
 }
 
-func (s *strategyRandom) AddHistoryRecord(record *records.EnrichedRecord) error {
+func (s *Random) AddHistoryRecord(record *records.EnrichedRecord) error {
 	s.history = append([]string{record.CmdLine}, s.history...)
 	s.historySet[record.CmdLine] = true
 	return nil
 }
 
-func (s *strategyRandom) ResetHistory() error {
-	s.init()
+func (s *Random) ResetHistory() error {
+	s.Init()
 	return nil
 }

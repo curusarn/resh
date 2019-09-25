@@ -1,4 +1,4 @@
-package main
+package strat
 
 import (
 	"sort"
@@ -8,8 +8,8 @@ import (
 	"github.com/mb-14/gomarkov"
 )
 
-type strategyMarkovChain struct {
-	order   int
+type MarkovChain struct {
+	Order   int
 	history []string
 }
 
@@ -18,19 +18,19 @@ type strMarkEntry struct {
 	transProb float64
 }
 
-func (s *strategyMarkovChain) init() {
+func (s *MarkovChain) Init() {
 	s.history = nil
 }
 
-func (s *strategyMarkovChain) GetTitleAndDescription() (string, string) {
-	return "markov chain (order " + strconv.Itoa(s.order) + ")", "Use markov chain to recommend commands"
+func (s *MarkovChain) GetTitleAndDescription() (string, string) {
+	return "markov chain (order " + strconv.Itoa(s.Order) + ")", "Use markov chain to recommend commands"
 }
 
-func (s *strategyMarkovChain) GetCandidates() []string {
-	if len(s.history) < s.order {
+func (s *MarkovChain) GetCandidates() []string {
+	if len(s.history) < s.Order {
 		return s.history
 	}
-	chain := gomarkov.NewChain(s.order)
+	chain := gomarkov.NewChain(s.Order)
 
 	chain.Add(s.history)
 
@@ -41,7 +41,7 @@ func (s *strategyMarkovChain) GetCandidates() []string {
 			continue
 		}
 		cmdLinesSet[cmdLine] = true
-		prob, _ := chain.TransitionProbability(cmdLine, s.history[len(s.history)-s.order:])
+		prob, _ := chain.TransitionProbability(cmdLine, s.history[len(s.history)-s.Order:])
 		entries = append(entries, strMarkEntry{cmdLine: cmdLine, transProb: prob})
 	}
 	sort.Slice(entries, func(i int, j int) bool { return entries[i].transProb > entries[j].transProb })
@@ -58,13 +58,13 @@ func (s *strategyMarkovChain) GetCandidates() []string {
 	return hist
 }
 
-func (s *strategyMarkovChain) AddHistoryRecord(record *records.EnrichedRecord) error {
+func (s *MarkovChain) AddHistoryRecord(record *records.EnrichedRecord) error {
 	s.history = append(s.history, record.CmdLine)
 	// s.historySet[record.CmdLine] = true
 	return nil
 }
 
-func (s *strategyMarkovChain) ResetHistory() error {
-	s.init()
+func (s *MarkovChain) ResetHistory() error {
+	s.Init()
 	return nil
 }

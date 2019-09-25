@@ -1,4 +1,4 @@
-package main
+package strat
 
 import (
 	"sort"
@@ -8,8 +8,8 @@ import (
 	"github.com/mb-14/gomarkov"
 )
 
-type strategyMarkovChainCmd struct {
-	order       int
+type MarkovChainCmd struct {
+	Order       int
 	history     []strMarkCmdHistoryEntry
 	historyCmds []string
 }
@@ -24,24 +24,24 @@ type strMarkCmdEntry struct {
 	transProb float64
 }
 
-func (s *strategyMarkovChainCmd) init() {
+func (s *MarkovChainCmd) Init() {
 	s.history = nil
 	s.historyCmds = nil
 }
 
-func (s *strategyMarkovChainCmd) GetTitleAndDescription() (string, string) {
-	return "command-based markov chain (order " + strconv.Itoa(s.order) + ")", "Use command-based markov chain to recommend commands"
+func (s *MarkovChainCmd) GetTitleAndDescription() (string, string) {
+	return "command-based markov chain (order " + strconv.Itoa(s.Order) + ")", "Use command-based markov chain to recommend commands"
 }
 
-func (s *strategyMarkovChainCmd) GetCandidates() []string {
-	if len(s.history) < s.order {
+func (s *MarkovChainCmd) GetCandidates() []string {
+	if len(s.history) < s.Order {
 		var hist []string
 		for _, item := range s.history {
 			hist = append(hist, item.cmdLine)
 		}
 		return hist
 	}
-	chain := gomarkov.NewChain(s.order)
+	chain := gomarkov.NewChain(s.Order)
 
 	chain.Add(s.historyCmds)
 
@@ -52,7 +52,7 @@ func (s *strategyMarkovChainCmd) GetCandidates() []string {
 			continue
 		}
 		cmdsSet[cmd] = true
-		prob, _ := chain.TransitionProbability(cmd, s.historyCmds[len(s.historyCmds)-s.order:])
+		prob, _ := chain.TransitionProbability(cmd, s.historyCmds[len(s.historyCmds)-s.Order:])
 		entries = append(entries, strMarkCmdEntry{cmd: cmd, transProb: prob})
 	}
 	sort.Slice(entries, func(i int, j int) bool { return entries[i].transProb > entries[j].transProb })
@@ -78,14 +78,14 @@ func (s *strategyMarkovChainCmd) GetCandidates() []string {
 	return hist
 }
 
-func (s *strategyMarkovChainCmd) AddHistoryRecord(record *records.EnrichedRecord) error {
+func (s *MarkovChainCmd) AddHistoryRecord(record *records.EnrichedRecord) error {
 	s.history = append(s.history, strMarkCmdHistoryEntry{cmdLine: record.CmdLine, cmd: record.Command})
 	s.historyCmds = append(s.historyCmds, record.Command)
 	// s.historySet[record.CmdLine] = true
 	return nil
 }
 
-func (s *strategyMarkovChainCmd) ResetHistory() error {
-	s.init()
+func (s *MarkovChainCmd) ResetHistory() error {
+	s.Init()
 	return nil
 }

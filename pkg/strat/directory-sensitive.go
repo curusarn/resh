@@ -1,25 +1,25 @@
-package main
+package strat
 
 import "github.com/curusarn/resh/pkg/records"
 
-type strategyDirectorySensitive struct {
+type DirectorySensitive struct {
 	history map[string][]string
 	lastPwd string
 }
 
-func (s *strategyDirectorySensitive) init() {
+func (s *DirectorySensitive) Init() {
 	s.history = map[string][]string{}
 }
 
-func (s *strategyDirectorySensitive) GetTitleAndDescription() (string, string) {
+func (s *DirectorySensitive) GetTitleAndDescription() (string, string) {
 	return "directory sensitive (recent)", "Use recent commands executed is the same directory"
 }
 
-func (s *strategyDirectorySensitive) GetCandidates() []string {
+func (s *DirectorySensitive) GetCandidates() []string {
 	return s.history[s.lastPwd]
 }
 
-func (s *strategyDirectorySensitive) AddHistoryRecord(record *records.EnrichedRecord) error {
+func (s *DirectorySensitive) AddHistoryRecord(record *records.EnrichedRecord) error {
 	// work on history for PWD
 	pwd := record.Pwd
 	// remove previous occurance of record
@@ -34,7 +34,8 @@ func (s *strategyDirectorySensitive) AddHistoryRecord(record *records.EnrichedRe
 	return nil
 }
 
-func (s *strategyDirectorySensitive) ResetHistory() error {
+func (s *DirectorySensitive) ResetHistory() error {
+	s.Init()
 	s.history = map[string][]string{}
 	return nil
 }

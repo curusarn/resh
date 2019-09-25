@@ -1,20 +1,20 @@
-package main
+package strat
 
 import "github.com/curusarn/resh/pkg/records"
 
-type strategyRecent struct {
+type Recent struct {
 	history []string
 }
 
-func (s *strategyRecent) GetTitleAndDescription() (string, string) {
+func (s *Recent) GetTitleAndDescription() (string, string) {
 	return "recent", "Use recent commands"
 }
 
-func (s *strategyRecent) GetCandidates() []string {
+func (s *Recent) GetCandidates() []string {
 	return s.history
 }
 
-func (s *strategyRecent) AddHistoryRecord(record *records.EnrichedRecord) error {
+func (s *Recent) AddHistoryRecord(record *records.EnrichedRecord) error {
 	// remove previous occurance of record
 	for i, cmd := range s.history {
 		if cmd == record.CmdLine {
@@ -26,7 +26,7 @@ func (s *strategyRecent) AddHistoryRecord(record *records.EnrichedRecord) error 
 	return nil
 }
 
-func (s *strategyRecent) ResetHistory() error {
+func (s *Recent) ResetHistory() error {
 	s.history = nil
 	return nil
 }

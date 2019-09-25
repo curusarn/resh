@@ -1,23 +1,23 @@
-package main
+package strat
 
 import "github.com/curusarn/resh/pkg/records"
 
-type strategyRecentBash struct {
+type RecentBash struct {
 	histfile         []string
 	histfileSnapshot map[string][]string
 	history          map[string][]string
 }
 
-func (s *strategyRecentBash) init() {
+func (s *RecentBash) Init() {
 	s.histfileSnapshot = map[string][]string{}
 	s.history = map[string][]string{}
 }
 
-func (s *strategyRecentBash) GetTitleAndDescription() (string, string) {
+func (s *RecentBash) GetTitleAndDescription() (string, string) {
 	return "recent (bash-like)", "Behave like bash"
 }
 
-func (s *strategyRecentBash) GetCandidates(strippedRecord records.EnrichedRecord) []string {
+func (s *RecentBash) GetCandidates(strippedRecord records.EnrichedRecord) []string {
 	// populate the local history from histfile
 	if s.histfileSnapshot[strippedRecord.SessionID] == nil {
 		s.histfileSnapshot[strippedRecord.SessionID] = s.histfile
@@ -25,7 +25,7 @@ func (s *strategyRecentBash) GetCandidates(strippedRecord records.EnrichedRecord
 	return append(s.history[strippedRecord.SessionID], s.histfileSnapshot[strippedRecord.SessionID]...)
 }
 
-func (s *strategyRecentBash) AddHistoryRecord(record *records.EnrichedRecord) error {
+func (s *RecentBash) AddHistoryRecord(record *records.EnrichedRecord) error {
 	// remove previous occurance of record
 	for i, cmd := range s.history[record.SessionID] {
 		if cmd == record.CmdLine {
@@ -44,7 +44,7 @@ func (s *strategyRecentBash) AddHistoryRecord(record *records.EnrichedRecord) er
 	return nil
 }
 
-func (s *strategyRecentBash) ResetHistory() error {
-	s.init()
+func (s *RecentBash) ResetHistory() error {
+	s.Init()
 	return nil
 }

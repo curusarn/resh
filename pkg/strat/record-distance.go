@@ -1,4 +1,4 @@
-package main
+package strat
 
 import (
 	"sort"
@@ -7,11 +7,11 @@ import (
 	"github.com/curusarn/resh/pkg/records"
 )
 
-type strategyRecordDistance struct {
+type RecordDistance struct {
 	history    []records.EnrichedRecord
-	distParams records.DistParams
-	maxDepth   int
-	label      string
+	DistParams records.DistParams
+	MaxDepth   int
+	Label      string
 }
 
 type strDistEntry struct {
@@ -19,24 +19,24 @@ type strDistEntry struct {
 	distance float64
 }
 
-func (s *strategyRecordDistance) init() {
+func (s *RecordDistance) Init() {
 	s.history = nil
 }
 
-func (s *strategyRecordDistance) GetTitleAndDescription() (string, string) {
-	return "record distance (depth:" + strconv.Itoa(s.maxDepth) + ";" + s.label + ")", "Use record distance to recommend commands"
+func (s *RecordDistance) GetTitleAndDescription() (string, string) {
+	return "record distance (depth:" + strconv.Itoa(s.MaxDepth) + ";" + s.Label + ")", "Use record distance to recommend commands"
 }
 
-func (s *strategyRecordDistance) GetCandidates(strippedRecord records.EnrichedRecord) []string {
+func (s *RecordDistance) GetCandidates(strippedRecord records.EnrichedRecord) []string {
 	if len(s.history) == 0 {
 		return nil
 	}
 	var mapItems []strDistEntry
 	for i, record := range s.history {
-		if s.maxDepth != 0 && i > s.maxDepth {
+		if s.MaxDepth != 0 && i > s.MaxDepth {
 			break
 		}
-		distance := record.DistanceTo(strippedRecord, s.distParams)
+		distance := record.DistanceTo(strippedRecord, s.DistParams)
 		mapItems = append(mapItems, strDistEntry{record.CmdLine, distance})
 	}
 	sort.SliceStable(mapItems, func(i int, j int) bool { return mapItems[i].distance < mapItems[j].distance })
@@ -52,13 +52,13 @@ func (s *strategyRecordDistance) GetCandidates(strippedRecord records.EnrichedRe
 	return hist
 }
 
-func (s *strategyRecordDistance) AddHistoryRecord(record *records.EnrichedRecord) error {
+func (s *RecordDistance) AddHistoryRecord(record *records.EnrichedRecord) error {
 	// append record to front
 	s.history = append([]records.EnrichedRecord{*record}, s.history...)
 	return nil
 }
 
-func (s *strategyRecordDistance) ResetHistory() error {
-	s.init()
+func (s *RecordDistance) ResetHistory() error {
+	s.Init()
 	return nil
 }
