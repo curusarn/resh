@@ -27,20 +27,16 @@ func (s *strategyRecordDistance) GetTitleAndDescription() (string, string) {
 	return "record distance (depth:" + strconv.Itoa(s.maxDepth) + ";" + s.label + ")", "Use record distance to recommend commands"
 }
 
-func (s *strategyRecordDistance) GetCandidates() []string {
+func (s *strategyRecordDistance) GetCandidates(strippedRecord records.EnrichedRecord) []string {
 	if len(s.history) == 0 {
 		return nil
 	}
-	var prevRecord records.EnrichedRecord
-	prevRecord = s.history[0]
-	prevRecord.SetCmdLine("")
-	prevRecord.SetBeforeToAfter()
 	var mapItems []strDistEntry
 	for i, record := range s.history {
 		if s.maxDepth != 0 && i > s.maxDepth {
 			break
 		}
-		distance := record.DistanceTo(prevRecord, s.distParams)
+		distance := record.DistanceTo(strippedRecord, s.distParams)
 		mapItems = append(mapItems, strDistEntry{record.CmdLine, distance})
 	}
 	sort.SliceStable(mapItems, func(i int, j int) bool { return mapItems[i].distance < mapItems[j].distance })

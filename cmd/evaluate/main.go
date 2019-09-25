@@ -13,7 +13,6 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
-	"sort"
 
 	"github.com/curusarn/resh/pkg/records"
 	"github.com/jpillora/longestcommon"
@@ -49,7 +48,7 @@ func main() {
 	inputDataRoot := flag.String("input-data-root", "",
 		"Input data root, enables batch mode, looks for files matching --input option")
 	slow := flag.Bool("slow", false,
-		"Enables stuff that takes a long time (e.g. markov chain strategies).")
+		"Enables strategies that takes a long time (e.g. markov chain strategies).")
 	skipFailedCmds := flag.Bool("skip-failed-cmds", false,
 		"Skips records with non-zero exit status.")
 	debugRecords := flag.Float64("debug", 0, "Debug records - percentage of records that should be debugged.")
@@ -96,32 +95,33 @@ func main() {
 		}
 	}
 
-	var strategies []strategy
+	var simpleStrategies []ISimpleStrategy
+	var strategies []IStrategy
 
 	// dummy := strategyDummy{}
-	// strategies = append(strategies, &dummy)
+	// simpleStrategies = append(simpleStrategies, &dummy)
 
-	strategies = append(strategies, &strategyRecent{})
+	simpleStrategies = append(simpleStrategies, &strategyRecent{})
 
-	frequent := strategyFrequent{}
-	frequent.init()
-	strategies = append(strategies, &frequent)
+	// frequent := strategyFrequent{}
+	// frequent.init()
+	// simpleStrategies = append(simpleStrategies, &frequent)
 
-	random := strategyRandom{candidatesSize: maxCandidates}
-	random.init()
-	strategies = append(strategies, &random)
+	// random := strategyRandom{candidatesSize: maxCandidates}
+	// random.init()
+	// simpleStrategies = append(simpleStrategies, &random)
 
 	directory := strategyDirectorySensitive{}
 	directory.init()
-	strategies = append(strategies, &directory)
+	simpleStrategies = append(simpleStrategies, &directory)
 
-	dynamicDist := strategyDynamicRecordDistance{
+	dynamicDistG := strategyDynamicRecordDistance{
 		maxDepth:   3000,
-		distParams: records.DistParams{Pwd: 10, RealPwd: 10, SessionID: 1, Time: 1},
-		label:      "10*pwd,10*realpwd,session,time",
+		distParams: records.DistParams{Pwd: 10, RealPwd: 10, SessionID: 1, Time: 1, Git: 10},
+		label:      "10*pwd,10*realpwd,session,time,10*git",
 	}
-	dynamicDist.init()
-	strategies = append(strategies, &dynamicDist)
+	dynamicDistG.init()
+	strategies = append(strategies, &dynamicDistG)
 
 	distanceStaticBest := strategyRecordDistance{
 		maxDepth:   3000,
@@ -129,6 +129,10 @@ func main() {
 		label:      "10*pwd,10*realpwd,session,time",
 	}
 	strategies = append(strategies, &distanceStaticBest)
+
+	recentBash := strategyRecentBash{}
+	recentBash.init()
+	strategies = append(strategies, &recentBash)
 
 	if *slow {
 
@@ -144,7 +148,11 @@ func main() {
 		markov2 := strategyMarkovChain{order: 2}
 		markov2.init()
 
-		strategies = append(strategies, &markovCmd2, &markovCmd, &markov2, &markov)
+		simpleStrategies = append(simpleStrategies, &markovCmd2, &markovCmd, &markov2, &markov)
+	}
+
+	for _, strat := range simpleStrategies {
+		strategies = append(strategies, NewSimpleStrategyWrapper(strat))
 	}
 
 	for _, strat := range strategies {
@@ -157,11 +165,43 @@ func main() {
 	evaluator.calculateStatsAndPlot(*plottingScript)
 }
 
-type strategy interface {
+type ISimpleStrategy interface {
 	GetTitleAndDescription() (string, string)
 	GetCandidates() []string
 	AddHistoryRecord(record *records.EnrichedRecord) error
 	ResetHistory() error
+}
+
+type IStrategy interface {
+	GetTitleAndDescription() (string, string)
+	GetCandidates(r records.EnrichedRecord) []string
+	AddHistoryRecord(record *records.EnrichedRecord) error
+	ResetHistory() error
+}
+
+type simpleStrategyWrapper struct {
+	strategy ISimpleStrategy
+}
+
+// NewSimpleStrategyWrapper returns IStrategy created by wrapping given ISimpleStrategy
+func NewSimpleStrategyWrapper(strategy ISimpleStrategy) *simpleStrategyWrapper {
+	return &simpleStrategyWrapper{strategy: strategy}
+}
+
+func (s *simpleStrategyWrapper) GetTitleAndDescription() (string, string) {
+	return s.strategy.GetTitleAndDescription()
+}
+
+func (s *simpleStrategyWrapper) GetCandidates(r records.EnrichedRecord) []string {
+	return s.strategy.GetCandidates()
+}
+
+func (s *simpleStrategyWrapper) AddHistoryRecord(r *records.EnrichedRecord) error {
+	return s.strategy.AddHistoryRecord(r)
+}
+
+func (s *simpleStrategyWrapper) ResetHistory() error {
+	return s.strategy.ResetHistory()
 }
 
 type matchJSON struct {
@@ -209,7 +249,7 @@ type evaluator struct {
 
 func (e *evaluator) initBatchMode(input string, inputDataRoot string) error {
 	e.UsersRecords = e.loadHistoryRecordsBatchMode(input, inputDataRoot)
-	e.processRecords()
+	e.preprocessRecords()
 	return nil
 }
 
@@ -219,7 +259,7 @@ func (e *evaluator) init(inputPath string) error {
 	user := userRecords{}
 	user.Devices = append(user.Devices, device)
 	e.UsersRecords = append(e.UsersRecords, user)
-	e.processRecords()
+	e.preprocessRecords()
 	return nil
 }
 
@@ -241,44 +281,61 @@ func (e *evaluator) calculateStatsAndPlot(scriptName string) {
 	}
 }
 
-// enrich records and add them to serializable structure
-func (e *evaluator) processRecords() {
-	for i := range e.UsersRecords {
-		for j, device := range e.UsersRecords[i].Devices {
-			sessionIDs := map[string]uint64{}
-			var nextID uint64
-			nextID = 1 // start with 1 because 0 won't get saved to json
-			for k, record := range e.UsersRecords[i].Devices[j].Records {
-				id, found := sessionIDs[record.SessionID]
-				if found == false {
-					id = nextID
-					sessionIDs[record.SessionID] = id
-					nextID++
-				}
-				e.UsersRecords[i].Devices[j].Records[k].SeqSessionID = id
-				// assert
-				if record.Sanitized != e.sanitizedInput {
-					if e.sanitizedInput {
-						log.Fatal("ASSERT failed: '--sanitized-input' is present but data is not sanitized")
-					}
-					log.Fatal("ASSERT failed: data is sanitized but '--sanitized-input' is not present")
-				}
-				e.UsersRecords[i].Devices[j].Records[k].SeqSessionID = id
-				if e.debugRecords > 0 && rand.Float64() < e.debugRecords {
-					e.UsersRecords[i].Devices[j].Records[k].DebugThisRecord = true
-				}
+func (e *evaluator) preprocessDeviceRecords(device deviceRecords) deviceRecords {
+	sessionIDs := map[string]uint64{}
+	var nextID uint64
+	nextID = 1 // start with 1 because 0 won't get saved to json
+	for k, record := range device.Records {
+		id, found := sessionIDs[record.SessionID]
+		if found == false {
+			id = nextID
+			sessionIDs[record.SessionID] = id
+			nextID++
+		}
+		device.Records[k].SeqSessionID = id
+		// assert
+		if record.Sanitized != e.sanitizedInput {
+			if e.sanitizedInput {
+				log.Fatal("ASSERT failed: '--sanitized-input' is present but data is not sanitized")
 			}
-			sort.SliceStable(e.UsersRecords[i].Devices[j].Records, func(x, y int) bool {
-				if device.Records[x].SeqSessionID == device.Records[y].SeqSessionID {
-					return device.Records[x].RealtimeAfterLocal < device.Records[y].RealtimeAfterLocal
-				}
-				return device.Records[x].SeqSessionID < device.Records[y].SeqSessionID
-			})
+			log.Fatal("ASSERT failed: data is sanitized but '--sanitized-input' is not present")
+		}
+		device.Records[k].SeqSessionID = id
+		if e.debugRecords > 0 && rand.Float64() < e.debugRecords {
+			device.Records[k].DebugThisRecord = true
+		}
+	}
+	// sort.SliceStable(device.Records, func(x, y int) bool {
+	// 	if device.Records[x].SeqSessionID == device.Records[y].SeqSessionID {
+	// 		return device.Records[x].RealtimeAfterLocal < device.Records[y].RealtimeAfterLocal
+	// 	}
+	// 	return device.Records[x].SeqSessionID < device.Records[y].SeqSessionID
+	// })
+
+	// iterate from back and mark last record of each session
+	sessionIDSet := map[string]bool{}
+	for i := len(device.Records) - 1; i >= 0; i-- {
+		var record *records.EnrichedRecord
+		record = &device.Records[i]
+		if sessionIDSet[record.SessionID] {
+			continue
+		}
+		sessionIDSet[record.SessionID] = true
+		record.LastRecordOfSession = true
+	}
+	return device
+}
+
+// enrich records and add sequential session ID
+func (e *evaluator) preprocessRecords() {
+	for i := range e.UsersRecords {
+		for j := range e.UsersRecords[i].Devices {
+			e.UsersRecords[i].Devices[j] = e.preprocessDeviceRecords(e.UsersRecords[i].Devices[j])
 		}
 	}
 }
 
-func (e *evaluator) evaluate(strategy strategy) error {
+func (e *evaluator) evaluate(strategy IStrategy) error {
 	title, description := strategy.GetTitleAndDescription()
 	log.Println("Evaluating strategy:", title, "-", description)
 	strategyData := strategyJSON{Title: title, Description: description}
@@ -290,7 +347,7 @@ func (e *evaluator) evaluate(strategy strategy) error {
 				if e.skipFailedCmds && record.ExitCode != 0 {
 					continue
 				}
-				candidates := strategy.GetCandidates()
+				candidates := strategy.GetCandidates(records.Stripped(record))
 				if record.DebugThisRecord {
 					log.Println()
 					log.Println("===================================================")

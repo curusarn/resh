@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/curusarn/resh/pkg/cfg"
 	"github.com/curusarn/resh/pkg/records"
 )
 
@@ -43,7 +44,7 @@ func main() {
 	log.SetOutput(f)
 	log.SetPrefix(strconv.Itoa(os.Getpid()) + " | ")
 
-	var config records.Config
+	var config cfg.Config
 	if _, err := toml.DecodeFile(configPath, &config); err != nil {
 		log.Println("Error reading config", err)
 		return

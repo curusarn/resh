@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
+	"github.com/curusarn/resh/pkg/cfg"
 	"github.com/curusarn/resh/pkg/records"
 
 	//  "os/exec"
@@ -34,7 +35,7 @@ func main() {
 
 	machineIDPath := "/etc/machine-id"
 
-	var config records.Config
+	var config cfg.Config
 	if _, err := toml.DecodeFile(configPath, &config); err != nil {
 		log.Fatal("Error reading config:", err)
 	}

@@ -89,12 +89,13 @@ type EnrichedRecord struct {
 	Record
 
 	// enriching fields - added "later"
-	Command         string   `json:"command"`
-	FirstWord       string   `json:"firstWord"`
-	Invalid         bool     `json:"invalid"`
-	SeqSessionID    uint64   `json:"seqSessionId"`
-	DebugThisRecord bool     `json:"debugThisRecord"`
-	Errors          []string `json:"errors"`
+	Command             string   `json:"command"`
+	FirstWord           string   `json:"firstWord"`
+	Invalid             bool     `json:"invalid"`
+	SeqSessionID        uint64   `json:"seqSessionId"`
+	LastRecordOfSession bool     `json:"lastRecordOfSession"`
+	DebugThisRecord     bool     `json:"debugThisRecord"`
+	Errors              []string `json:"errors"`
 	// SeqSessionID uint64 `json:"seqSessionId,omitempty"`
 }
 
@@ -211,6 +212,22 @@ func (r *EnrichedRecord) SetCmdLine(cmdLine string) {
 		// log.Println("Invalid command:", r.CmdLine)
 		r.Invalid = true
 	}
+}
+
+// Stripped returns record stripped of all info that is not available during prediction
+func Stripped(r EnrichedRecord) EnrichedRecord {
+	// clear the cmd itself
+	r.SetCmdLine("")
+	// replace after info with before info
+	r.PwdAfter = r.Pwd
+	r.RealPwdAfter = r.RealPwd
+	r.TimezoneAfter = r.TimezoneBefore
+	r.RealtimeAfter = r.RealtimeBefore
+	r.RealtimeAfterLocal = r.RealtimeBeforeLocal
+	// clear some more stuff
+	r.RealtimeDuration = 0
+	r.LastRecordOfSession = false
+	return r
 }
 
 // SetBeforeToAfter - set "before" members to "after" members
@@ -374,9 +391,4 @@ func (r *EnrichedRecord) DistanceTo(r2 EnrichedRecord, p DistParams) float64 {
 	// CmdLength
 
 	return dist
-}
-
-// Config struct
-type Config struct {
-	Port int
 }
