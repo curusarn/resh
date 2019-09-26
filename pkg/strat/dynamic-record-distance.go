@@ -8,6 +8,7 @@ import (
 	"github.com/curusarn/resh/pkg/records"
 )
 
+// DynamicRecordDistance prediction/recommendation strategy
 type DynamicRecordDistance struct {
 	history            []records.EnrichedRecord
 	DistParams         records.DistParams
@@ -23,6 +24,7 @@ type strDynDistEntry struct {
 	distance float64
 }
 
+// Init see name
 func (s *DynamicRecordDistance) Init() {
 	s.history = nil
 	s.pwdHistogram = map[string]int{}
@@ -30,6 +32,7 @@ func (s *DynamicRecordDistance) Init() {
 	s.gitOriginHistogram = map[string]int{}
 }
 
+// GetTitleAndDescription see name
 func (s *DynamicRecordDistance) GetTitleAndDescription() (string, string) {
 	return "dynamic record distance (depth:" + strconv.Itoa(s.MaxDepth) + ";" + s.Label + ")", "Use TF-IDF record distance to recommend commands"
 }
@@ -38,6 +41,7 @@ func (s *DynamicRecordDistance) idf(count int) float64 {
 	return math.Log(float64(len(s.history)) / float64(count))
 }
 
+// GetCandidates see name
 func (s *DynamicRecordDistance) GetCandidates(strippedRecord records.EnrichedRecord) []string {
 	if len(s.history) == 0 {
 		return nil
@@ -70,6 +74,7 @@ func (s *DynamicRecordDistance) GetCandidates(strippedRecord records.EnrichedRec
 	return hist
 }
 
+// AddHistoryRecord see name
 func (s *DynamicRecordDistance) AddHistoryRecord(record *records.EnrichedRecord) error {
 	// append record to front
 	s.history = append([]records.EnrichedRecord{*record}, s.history...)
@@ -79,6 +84,7 @@ func (s *DynamicRecordDistance) AddHistoryRecord(record *records.EnrichedRecord)
 	return nil
 }
 
+// ResetHistory see name
 func (s *DynamicRecordDistance) ResetHistory() error {
 	s.Init()
 	return nil

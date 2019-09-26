@@ -4,6 +4,7 @@ import (
 	"github.com/curusarn/resh/pkg/records"
 )
 
+// ISimpleStrategy interface
 type ISimpleStrategy interface {
 	GetTitleAndDescription() (string, string)
 	GetCandidates() []string
@@ -11,6 +12,7 @@ type ISimpleStrategy interface {
 	ResetHistory() error
 }
 
+// IStrategy interface
 type IStrategy interface {
 	GetTitleAndDescription() (string, string)
 	GetCandidates(r records.EnrichedRecord) []string

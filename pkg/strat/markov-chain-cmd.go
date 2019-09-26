@@ -8,6 +8,7 @@ import (
 	"github.com/mb-14/gomarkov"
 )
 
+// MarkovChainCmd prediction/recommendation strategy
 type MarkovChainCmd struct {
 	Order       int
 	history     []strMarkCmdHistoryEntry
@@ -24,15 +25,18 @@ type strMarkCmdEntry struct {
 	transProb float64
 }
 
+// Init see name
 func (s *MarkovChainCmd) Init() {
 	s.history = nil
 	s.historyCmds = nil
 }
 
+// GetTitleAndDescription see name
 func (s *MarkovChainCmd) GetTitleAndDescription() (string, string) {
 	return "command-based markov chain (order " + strconv.Itoa(s.Order) + ")", "Use command-based markov chain to recommend commands"
 }
 
+// GetCandidates see name
 func (s *MarkovChainCmd) GetCandidates() []string {
 	if len(s.history) < s.Order {
 		var hist []string
@@ -78,6 +82,7 @@ func (s *MarkovChainCmd) GetCandidates() []string {
 	return hist
 }
 
+// AddHistoryRecord see name
 func (s *MarkovChainCmd) AddHistoryRecord(record *records.EnrichedRecord) error {
 	s.history = append(s.history, strMarkCmdHistoryEntry{cmdLine: record.CmdLine, cmd: record.Command})
 	s.historyCmds = append(s.historyCmds, record.Command)
@@ -85,6 +90,7 @@ func (s *MarkovChainCmd) AddHistoryRecord(record *records.EnrichedRecord) error 
 	return nil
 }
 
+// ResetHistory see name
 func (s *MarkovChainCmd) ResetHistory() error {
 	s.Init()
 	return nil

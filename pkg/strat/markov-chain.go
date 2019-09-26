@@ -8,6 +8,7 @@ import (
 	"github.com/mb-14/gomarkov"
 )
 
+// MarkovChain prediction/recommendation strategy
 type MarkovChain struct {
 	Order   int
 	history []string
@@ -18,14 +19,17 @@ type strMarkEntry struct {
 	transProb float64
 }
 
+// Init see name
 func (s *MarkovChain) Init() {
 	s.history = nil
 }
 
+// GetTitleAndDescription see name
 func (s *MarkovChain) GetTitleAndDescription() (string, string) {
 	return "markov chain (order " + strconv.Itoa(s.Order) + ")", "Use markov chain to recommend commands"
 }
 
+// GetCandidates see name
 func (s *MarkovChain) GetCandidates() []string {
 	if len(s.history) < s.Order {
 		return s.history
@@ -58,12 +62,14 @@ func (s *MarkovChain) GetCandidates() []string {
 	return hist
 }
 
+// AddHistoryRecord see name
 func (s *MarkovChain) AddHistoryRecord(record *records.EnrichedRecord) error {
 	s.history = append(s.history, record.CmdLine)
 	// s.historySet[record.CmdLine] = true
 	return nil
 }
 
+// ResetHistory see name
 func (s *MarkovChain) ResetHistory() error {
 	s.Init()
 	return nil
