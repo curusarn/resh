@@ -41,7 +41,14 @@ sanitize:
 	#
 	#
 
-build: submodules bin/resh-collect bin/resh-daemon bin/resh-evaluate bin/resh-sanitize
+build: test submodules bin/resh-collect bin/resh-daemon bin/resh-evaluate bin/resh-sanitize
+
+test:
+	# Running tests
+	@for dir in {cmd,pkg}/* ; do \
+		echo $$dir ; \
+		go test $$dir/*.go ; \
+	done
 
 rebuild:
 	make clean

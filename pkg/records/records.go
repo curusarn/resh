@@ -127,8 +127,8 @@ func (r EnrichedRecord) ToString() (string, error) {
 	return string(jsonRec), nil
 }
 
-// Enrich - adds additional fields to the record
-func (r Record) Enrich() EnrichedRecord {
+// Enriched - returnd enriched record
+func Enriched(r Record) EnrichedRecord {
 	record := EnrichedRecord{Record: r}
 	// Get command/first word from commandline
 	var err error
@@ -153,8 +153,14 @@ func (r Record) Enrich() EnrichedRecord {
 
 // Validate - returns error if the record is invalid
 func (r *Record) Validate() error {
+	if r.CmdLine == "" {
+		return errors.New("There is no CmdLine")
+	}
 	if r.RealtimeBefore == 0 || r.RealtimeAfter == 0 {
 		return errors.New("There is no Time")
+	}
+	if r.RealtimeBeforeLocal == 0 || r.RealtimeAfterLocal == 0 {
+		return errors.New("There is no Local Time")
 	}
 	if r.RealPwd == "" || r.RealPwdAfter == "" {
 		return errors.New("There is no Real Pwd")
@@ -228,15 +234,6 @@ func Stripped(r EnrichedRecord) EnrichedRecord {
 	r.RealtimeDuration = 0
 	r.LastRecordOfSession = false
 	return r
-}
-
-// SetBeforeToAfter - set "before" members to "after" members
-func (r *EnrichedRecord) SetBeforeToAfter() {
-	r.Pwd = r.PwdAfter
-	r.RealPwd = r.RealPwdAfter
-	// r.TimezoneBefore = r.TimezoneAfter
-	// r.RealtimeBefore = r.RealtimeAfter
-	// r.RealtimeBeforeLocal = r.RealtimeAfterLocal
 }
 
 // GetCommandAndFirstWord func
