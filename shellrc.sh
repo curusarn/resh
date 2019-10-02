@@ -165,7 +165,7 @@ __resh_precmd() {
                 echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh revision: $(resh-collect -revision); resh revision of this terminal session: ${__RESH_REVISION})"
             fi
         fi
-        if [ "$__RESH_VERSION" == $(resh-collect -version) ] && [ "$__RESH_REVISION" == $(resh-collect -revision) ]; then
+        if [ "$__RESH_VERSION" = $(resh-collect -version) ] && [ "$__RESH_REVISION" = $(resh-collect -revision) ]; then
             resh-collect -requireVersion "$__RESH_VERSION" \
                         -requireRevision "$__RESH_REVISION" \
                         -cmdLine "$__RESH_CMDLINE" \
