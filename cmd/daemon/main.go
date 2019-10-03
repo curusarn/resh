@@ -126,6 +126,7 @@ func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func runServer(port int, outputPath string) {
 	http.HandleFunc("/status", statusHandler)
 	http.Handle("/record", &recordHandler{OutputPath: outputPath})
+	//http.Handle("/session_start", &recordHandler{OutputPath: outputPath})
 	http.ListenAndServe(":"+strconv.Itoa(port), nil)
 }
 

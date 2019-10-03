@@ -75,9 +75,13 @@ func main() {
 	machtype := flag.String("machtype", "", "$MACHTYPE")
 	gitCdup := flag.String("gitCdup", "", "git rev-parse --show-cdup")
 	gitRemote := flag.String("gitRemote", "", "git remote get-url origin")
+	gitCdupAfter := flag.String("gitCdupAfter", "", "git rev-parse --show-cdup")
+	gitRemoteAfter := flag.String("gitRemoteAfter", "", "git remote get-url origin")
 
 	gitCdupExitCode := flag.Int("gitCdupExitCode", -1, "... $?")
 	gitRemoteExitCode := flag.Int("gitRemoteExitCode", -1, "... $?")
+	gitCdupExitCodeAfter := flag.Int("gitCdupExitCodeAfter", -1, "... $?")
+	gitRemoteExitCodeAfter := flag.Int("gitRemoteExitCodeAfter", -1, "... $?")
 
 	// before after
 	timezoneBefore := flag.String("timezoneBefore", "", "")
@@ -161,6 +165,10 @@ func main() {
 	if *gitRemoteExitCode != 0 {
 		*gitRemote = ""
 	}
+	gitDirAfter, gitRealDirAfter := getGitDirs(*gitCdupAfter, *gitCdupExitCodeAfter, *pwd)
+	if *gitRemoteExitCodeAfter != 0 {
+		*gitRemoteAfter = ""
+	}
 
 	if *osReleaseID == "" {
 		*osReleaseID = "linux"
@@ -219,10 +227,13 @@ func main() {
 			RealtimeSinceSessionStart: realtimeSinceSessionStart,
 			RealtimeSinceBoot:         realtimeSinceBoot,
 
-			GitDir:          gitDir,
-			GitRealDir:      gitRealDir,
-			GitOriginRemote: *gitRemote,
-			MachineID:       readFileContent(machineIDPath),
+			GitDir:               gitDir,
+			GitRealDir:           gitRealDir,
+			GitOriginRemote:      *gitRemote,
+			GitDirAfter:          gitDirAfter,
+			GitRealDirAfter:      gitRealDirAfter,
+			GitOriginRemoteAfter: *gitRemoteAfter,
+			MachineID:            readFileContent(machineIDPath),
 
 			OsReleaseID:         *osReleaseID,
 			OsReleaseVersionID:  *osReleaseVersionID,

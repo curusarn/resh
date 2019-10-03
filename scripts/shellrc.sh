@@ -43,6 +43,10 @@ __resh_run_daemon() {
     nohup resh-daemon &>/dev/null & disown
 }
 
+# __resh_session_init() {
+#     resh-event session_start --sessionId "$__RESH_SESSION_ID" --sessionPid "$__RESH_SESSION_PID"
+# }
+# 
 __resh_bash_completion_init() {
     local bash_completion_dir=~/.resh/bash_completion.d
     # source user completion directory definitions
@@ -95,6 +99,7 @@ if [ -z "${__RESH_SESSION_ID+x}" ]; then
     export __RESH_SESSION_ID; __RESH_SESSION_ID=$(__resh_get_uuid)
     export __RESH_SESSION_PID="$$"
     # TODO add sesson time
+    # __resh_session_init __RESH_SESSION_ID __RESH_SESSION_PID
 fi
 
 # posix
@@ -178,6 +183,10 @@ __resh_precmd() {
     __RESH_RT_AFTER=$(__resh_get_epochrealtime)
     __RESH_TZ_AFTER=$(date +%z)
     __RESH_PWD_AFTER="$PWD"
+    __RESH_GIT_CDUP_AFTER="$(git rev-parse --show-cdup 2>/dev/null)"
+    __RESH_GIT_CDUP_EXIT_CODE_AFTER=$?
+    __RESH_GIT_REMOTE_AFTER="$(git remote get-url origin 2>/dev/null)"
+    __RESH_GIT_REMOTE_EXIT_CODE_AFTER=$?
     if [ -n "${__RESH_COLLECT}" ]; then
         if [ "$__RESH_VERSION" != "$(resh-collect -version)" ]; then
             # shellcheck source=shellrc.sh
@@ -223,6 +232,10 @@ __resh_precmd() {
                         -gitCdupExitCode "$__RESH_GIT_CDUP_EXIT_CODE" \
                         -gitRemote "$__RESH_GIT_REMOTE" \
                         -gitRemoteExitCode "$__RESH_GIT_REMOTE_EXIT_CODE" \
+                        -gitCdupAfter "$__RESH_GIT_CDUP_AFTER" \
+                        -gitCdupExitCodeAfter "$__RESH_GIT_CDUP_EXIT_CODE_AFTER" \
+                        -gitRemoteAfter "$__RESH_GIT_REMOTE_AFTER" \
+                        -gitRemoteExitCodeAfter "$__RESH_GIT_REMOTE_EXIT_CODE_AFTER" \
                         -realtimeBefore "$__RESH_RT_BEFORE" \
                         -realtimeAfter "$__RESH_RT_AFTER" \
                         -realtimeSession "$__RESH_RT_SESSION" \

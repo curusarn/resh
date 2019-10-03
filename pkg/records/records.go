@@ -56,10 +56,13 @@ type BaseRecord struct {
 	RealtimeSinceBoot         float64 `json:"realtimeSinceBoot"`
 	//Logs []string      `json: "logs"`
 
-	GitDir          string `json:"gitDir"`
-	GitRealDir      string `json:"gitRealDir"`
-	GitOriginRemote string `json:"gitOriginRemote"`
-	MachineID       string `json:"machineId"`
+	GitDir               string `json:"gitDir"`
+	GitRealDir           string `json:"gitRealDir"`
+	GitOriginRemote      string `json:"gitOriginRemote"`
+	GitDirAfter          string `json:"gitDirAfter"`
+	GitRealDirAfter      string `json:"gitRealDirAfter"`
+	GitOriginRemoteAfter string `json:"gitOriginRemoteAfter"`
+	MachineID            string `json:"machineId"`
 
 	OsReleaseID         string `json:"osReleaseId"`
 	OsReleaseVersionID  string `json:"osReleaseVersionId"`
