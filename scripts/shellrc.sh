@@ -4,6 +4,9 @@ PATH=$PATH:~/.resh/bin
 #     zmodload zsh/datetime
 # fi
 
+# shellcheck source=reshctl.sh
+. ~/.resh/reshctl.sh
+
 __resh_get_uuid() {
     cat /proc/sys/kernel/random/uuid 2>/dev/null || resh-uuid
 }
@@ -40,6 +43,27 @@ __resh_run_daemon() {
     nohup resh-daemon &>/dev/null & disown
 }
 
+__resh_bash_completion_init() {
+    local bash_completion_dir=~/.resh/bash_completion.d
+    # source user completion directory definitions
+    # taken from /usr/share/bash-completion/bash_completion
+    if [[ -d $bash_completion_dir && -r $bash_completion_dir && \
+        -x $bash_completion_dir ]]; then
+        for i in $(LC_ALL=C command ls "$bash_completion_dir"); do
+            i=$bash_completion_dir/$i
+            # shellcheck disable=SC2154
+            # shellcheck source=/dev/null
+            [[ ${i##*/} != @($_backup_glob|Makefile*|$_blacklist_glob) \
+                && -f $i && -r $i ]] && . "$i"
+        done
+    fi
+}
+
+__resh_zsh_completion_init() {
+    # shellcheck disable=SC2206
+    fpath=(~/.resh/zsh_completion.d $fpath)
+}
+
 __RESH_MACOS=0
 __RESH_LINUX=0
 __RESH_UNAME=$(uname)
@@ -53,19 +77,22 @@ else
 fi
 
 if [ -n "$ZSH_VERSION" ]; then
+    # shellcheck disable=SC1009
     __RESH_SHELL="zsh"
     __RESH_HOST="$HOST"
     __RESH_HOSTTYPE="$CPUTYPE"
+    __resh_zsh_completion_init
 elif [ -n "$BASH_VERSION" ]; then
     __RESH_SHELL="bash"
     __RESH_HOST="$HOSTNAME"
     __RESH_HOSTTYPE="$HOSTTYPE"
+    __resh_bash_completion_init
 else
     echo "resh PANIC unrecognized shell"
 fi
 
 if [ -z "${__RESH_SESSION_ID+x}" ]; then
-    export __RESH_SESSION_ID=$(__resh_get_uuid)
+    export __RESH_SESSION_ID; __RESH_SESSION_ID=$(__resh_get_uuid)
     export __RESH_SESSION_PID="$$"
     # TODO add sesson time
 fi
@@ -152,20 +179,22 @@ __resh_precmd() {
     __RESH_TZ_AFTER=$(date +%z)
     __RESH_PWD_AFTER="$PWD"
     if [ -n "${__RESH_COLLECT}" ]; then
-        if [ "$__RESH_VERSION" != $(resh-collect -version) ]; then
+        if [ "$__RESH_VERSION" != "$(resh-collect -version)" ]; then
+            # shellcheck source=shellrc.sh
             source ~/.resh/shellrc 
-            if [ "$__RESH_VERSION" != $(resh-collect -version) ]; then
+            if [ "$__RESH_VERSION" != "$(resh-collect -version)" ]; then
                 echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh version: $(resh-collect -version); resh version of this terminal session: ${__RESH_VERSION})"
             else
                 echo "RESH INFO: New RESH shellrc script was loaded - if you encounter any issues please restart this terminal session."
             fi
-        elif [ "$__RESH_REVISION" != $(resh-collect -revision) ]; then
+        elif [ "$__RESH_REVISION" != "$(resh-collect -revision)" ]; then
+            # shellcheck source=shellrc.sh
             source ~/.resh/shellrc 
-            if [ "$__RESH_REVISION" != $(resh-collect -revision) ]; then
+            if [ "$__RESH_REVISION" != "$(resh-collect -revision)" ]; then
                 echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh revision: $(resh-collect -revision); resh revision of this terminal session: ${__RESH_REVISION})"
             fi
         fi
-        if [ "$__RESH_VERSION" = $(resh-collect -version) ] && [ "$__RESH_REVISION" = $(resh-collect -revision) ]; then
+        if [ "$__RESH_VERSION" = "$(resh-collect -version)" ] && [ "$__RESH_REVISION" = "$(resh-collect -revision)" ]; then
             resh-collect -requireVersion "$__RESH_VERSION" \
                         -requireRevision "$__RESH_REVISION" \
                         -cmdLine "$__RESH_CMDLINE" \

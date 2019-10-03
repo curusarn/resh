@@ -41,7 +41,7 @@ sanitize:
 	#
 	#
 
-build: test_go submodules bin/resh-collect bin/resh-daemon bin/resh-evaluate bin/resh-sanitize
+build: submodules bin/resh-collect bin/resh-daemon bin/resh-evaluate bin/resh-sanitize bin/resh-control
 
 test_go:
 	# Running tests
@@ -50,7 +50,7 @@ test_go:
 		go test $$dir/*.go ; \
 	done
 
-test:
+test: test_go
 	scripts/test.sh
 
 rebuild:
@@ -60,15 +60,24 @@ rebuild:
 clean:
 	rm resh-*
 
-install: build submodules/bash-preexec/bash-preexec.sh scripts/shellrc.sh conf/config.toml scripts/uuid.sh | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config
+install: build submodules/bash-preexec/bash-preexec.sh scripts/shellrc.sh conf/config.toml scripts/uuid.sh \
+		 | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config $(HOME)/.resh/bash_completion.d $(HOME)/.resh/zsh_completion.d
 	# Copying files to resh directory ...
 	cp -f submodules/bash-preexec/bash-preexec.sh ~/.bash-preexec.sh
+	cp -f submodules/bash-zsh-compat-widgets/bindfunc.sh ~/.resh/bindfunc.sh
+
 	cp -f conf/config.toml ~/.config/resh.toml
+
 	cp -f scripts/shellrc.sh ~/.resh/shellrc
+	cp -f scripts/reshctl.sh scripts/bindutil.sh scripts/widgets.sh ~/.resh/
+
+	bin/resh-control completion bash > ~/.resh/bash_completion.d/_reshctl
+	bin/resh-control completion zsh > ~/.resh/zsh_completion.d/_reshctl
+
 	cp -f scripts/uuid.sh ~/.resh/bin/resh-uuid
 	cp -f bin/* ~/.resh/bin/
 	cp -f scripts/resh-evaluate-plot.py ~/.resh/bin/
-	cp -fr data/sanitizer ~/.resh/
+	cp -fr data/sanitizer ~/.resh/sanitizer_data
 	# backward compatibility: We have a new location for resh history file 
 	[ ! -f ~/.resh/history.json ] || mv ~/.resh/history.json ~/.resh_history.json 
 	# Adding resh shellrc to .bashrc ...
@@ -116,10 +125,12 @@ uninstall:
 	# Uninstalling ...
 	-rm -rf ~/.resh/
 
+bin/resh-control: cmd/control/cmd/*.go
+
 bin/resh-%: cmd/%/main.go pkg/*/*.go VERSION
 	go build ${GOFLAGS} -o $@ cmd/$*/*.go
 
-$(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config:
+$(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config $(HOME)/.resh/bash_completion.d $(HOME)/.resh/zsh_completion.d:
 	# Creating dirs ...
 	mkdir -p $@
 
