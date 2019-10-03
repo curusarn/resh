@@ -11,7 +11,8 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
-	common "github.com/curusarn/resh/common"
+	"github.com/curusarn/resh/pkg/cfg"
+	"github.com/curusarn/resh/pkg/records"
 
 	//  "os/exec"
 	"os/user"
@@ -30,11 +31,11 @@ func main() {
 	usr, _ := user.Current()
 	dir := usr.HomeDir
 	configPath := filepath.Join(dir, "/.config/resh.toml")
-	reshUuidPath := filepath.Join(dir, "/.resh/resh-uuid")
+	reshUUIDPath := filepath.Join(dir, "/.resh/resh-uuid")
 
-	machineIdPath := "/etc/machine-id"
+	machineIDPath := "/etc/machine-id"
 
-	var config common.Config
+	var config cfg.Config
 	if _, err := toml.DecodeFile(configPath, &config); err != nil {
 		log.Fatal("Error reading config:", err)
 	}
@@ -48,7 +49,7 @@ func main() {
 	exitCode := flag.Int("exitCode", -1, "exit code")
 	shell := flag.String("shell", "", "actual shell")
 	uname := flag.String("uname", "", "uname")
-	sessionId := flag.String("sessionId", "", "resh generated session id")
+	sessionID := flag.String("sessionId", "", "resh generated session id")
 
 	// posix variables
 	cols := flag.String("cols", "-1", "$COLUMNS")
@@ -82,10 +83,10 @@ func main() {
 	timezoneBefore := flag.String("timezoneBefore", "", "")
 	timezoneAfter := flag.String("timezoneAfter", "", "")
 
-	osReleaseId := flag.String("osReleaseId", "", "/etc/os-release ID")
-	osReleaseVersionId := flag.String("osReleaseVersionId", "",
+	osReleaseID := flag.String("osReleaseId", "", "/etc/os-release ID")
+	osReleaseVersionID := flag.String("osReleaseVersionId", "",
 		"/etc/os-release ID")
-	osReleaseIdLike := flag.String("osReleaseIdLike", "", "/etc/os-release ID")
+	osReleaseIDLike := flag.String("osReleaseIdLike", "", "/etc/os-release ID")
 	osReleaseName := flag.String("osReleaseName", "", "/etc/os-release ID")
 	osReleasePrettyName := flag.String("osReleasePrettyName", "",
 		"/etc/os-release ID")
@@ -161,8 +162,8 @@ func main() {
 		*gitRemote = ""
 	}
 
-	if *osReleaseId == "" {
-		*osReleaseId = "linux"
+	if *osReleaseID == "" {
+		*osReleaseID = "linux"
 	}
 	if *osReleaseName == "" {
 		*osReleaseName = "Linux"
@@ -171,78 +172,80 @@ func main() {
 		*osReleasePrettyName = "Linux"
 	}
 
-	rec := common.Record{
-		// core
-		CmdLine:   *cmdLine,
-		ExitCode:  *exitCode,
-		Shell:     *shell,
-		Uname:     *uname,
-		SessionId: *sessionId,
-
+	rec := records.Record{
 		// posix
 		Cols:  *cols,
 		Lines: *lines,
+		// core
+		BaseRecord: records.BaseRecord{
+			CmdLine:   *cmdLine,
+			ExitCode:  *exitCode,
+			Shell:     *shell,
+			Uname:     *uname,
+			SessionID: *sessionID,
 
-		Home:  *home,
-		Lang:  *lang,
-		LcAll: *lcAll,
-		Login: *login,
-		// Path:     *path,
-		Pwd:      *pwd,
-		PwdAfter: *pwdAfter,
-		ShellEnv: *shellEnv,
-		Term:     *term,
+			// posix
+			Home:  *home,
+			Lang:  *lang,
+			LcAll: *lcAll,
+			Login: *login,
+			// Path:     *path,
+			Pwd:      *pwd,
+			PwdAfter: *pwdAfter,
+			ShellEnv: *shellEnv,
+			Term:     *term,
 
-		// non-posix
-		RealPwd:      realPwd,
-		RealPwdAfter: realPwdAfter,
-		Pid:          *pid,
-		SessionPid:   *sessionPid,
-		Host:         *host,
-		Hosttype:     *hosttype,
-		Ostype:       *ostype,
-		Machtype:     *machtype,
-		Shlvl:        *shlvl,
+			// non-posix
+			RealPwd:      realPwd,
+			RealPwdAfter: realPwdAfter,
+			Pid:          *pid,
+			SessionPid:   *sessionPid,
+			Host:         *host,
+			Hosttype:     *hosttype,
+			Ostype:       *ostype,
+			Machtype:     *machtype,
+			Shlvl:        *shlvl,
 
-		// before after
-		TimezoneBefore: *timezoneBefore,
-		TimezoneAfter:  *timezoneAfter,
+			// before after
+			TimezoneBefore: *timezoneBefore,
+			TimezoneAfter:  *timezoneAfter,
 
-		RealtimeBefore:      realtimeBefore,
-		RealtimeAfter:       realtimeAfter,
-		RealtimeBeforeLocal: realtimeBeforeLocal,
-		RealtimeAfterLocal:  realtimeAfterLocal,
+			RealtimeBefore:      realtimeBefore,
+			RealtimeAfter:       realtimeAfter,
+			RealtimeBeforeLocal: realtimeBeforeLocal,
+			RealtimeAfterLocal:  realtimeAfterLocal,
 
-		RealtimeDuration:          realtimeDuration,
-		RealtimeSinceSessionStart: realtimeSinceSessionStart,
-		RealtimeSinceBoot:         realtimeSinceBoot,
+			RealtimeDuration:          realtimeDuration,
+			RealtimeSinceSessionStart: realtimeSinceSessionStart,
+			RealtimeSinceBoot:         realtimeSinceBoot,
 
-		GitDir:          gitDir,
-		GitRealDir:      gitRealDir,
-		GitOriginRemote: *gitRemote,
-		MachineId:       readFileContent(machineIdPath),
+			GitDir:          gitDir,
+			GitRealDir:      gitRealDir,
+			GitOriginRemote: *gitRemote,
+			MachineID:       readFileContent(machineIDPath),
 
-		OsReleaseId:         *osReleaseId,
-		OsReleaseVersionId:  *osReleaseVersionId,
-		OsReleaseIdLike:     *osReleaseIdLike,
-		OsReleaseName:       *osReleaseName,
-		OsReleasePrettyName: *osReleasePrettyName,
+			OsReleaseID:         *osReleaseID,
+			OsReleaseVersionID:  *osReleaseVersionID,
+			OsReleaseIDLike:     *osReleaseIDLike,
+			OsReleaseName:       *osReleaseName,
+			OsReleasePrettyName: *osReleasePrettyName,
 
-		ReshUuid:     readFileContent(reshUuidPath),
-		ReshVersion:  Version,
-		ReshRevision: Revision,
+			ReshUUID:     readFileContent(reshUUIDPath),
+			ReshVersion:  Version,
+			ReshRevision: Revision,
+		},
 	}
 	sendRecord(rec, strconv.Itoa(config.Port))
 }
 
-func sendRecord(r common.Record, port string) {
-	recJson, err := json.Marshal(r)
+func sendRecord(r records.Record, port string) {
+	recJSON, err := json.Marshal(r)
 	if err != nil {
 		log.Fatal("send err 1", err)
 	}
 
 	req, err := http.NewRequest("POST", "http://localhost:"+port+"/record",
-		bytes.NewBuffer(recJson))
+		bytes.NewBuffer(recJSON))
 	if err != nil {
 		log.Fatal("send err 2", err)
 	}
@@ -279,14 +282,14 @@ func getGitDirs(cdup string, exitCode int, pwd string) (string, string) {
 
 func getTimezoneOffsetInSeconds(zone string) float64 {
 	// date +%z -> "+0200"
-	hours_str := zone[:3]
-	mins_str := zone[3:]
-	hours, err := strconv.Atoi(hours_str)
+	hoursStr := zone[:3]
+	minsStr := zone[3:]
+	hours, err := strconv.Atoi(hoursStr)
 	if err != nil {
 		log.Println("err while parsing hours in timezone offset:", err)
 		return -1
 	}
-	mins, err := strconv.Atoi(mins_str)
+	mins, err := strconv.Atoi(minsStr)
 	if err != nil {
 		log.Println("err while parsing mins in timezone offset:", err)
 		return -1

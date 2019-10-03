@@ -19,7 +19,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/curusarn/resh/common"
+	"github.com/curusarn/resh/pkg/records"
 	giturls "github.com/whilp/git-urls"
 )
 
@@ -79,8 +79,8 @@ func main() {
 
 	scanner := bufio.NewScanner(inputFile)
 	for scanner.Scan() {
-		record := common.Record{}
-		fallbackRecord := common.FallbackRecord{}
+		record := records.Record{}
+		fallbackRecord := records.FallbackRecord{}
 		line := scanner.Text()
 		err = json.Unmarshal([]byte(line), &record)
 		if err != nil {
@@ -89,7 +89,7 @@ func main() {
 				log.Println("Line:", line)
 				log.Fatal("Decoding error:", err)
 			}
-			record = common.ConvertRecord(&fallbackRecord)
+			record = records.ConvertRecord(&fallbackRecord)
 		}
 		err = sanitizer.sanitizeRecord(&record)
 		if err != nil {
@@ -139,7 +139,7 @@ func loadData(fname string) map[string]bool {
 	return data
 }
 
-func (s *sanitizer) sanitizeRecord(record *common.Record) error {
+func (s *sanitizer) sanitizeRecord(record *records.Record) error {
 	// hash directories of the paths
 	record.Pwd = s.sanitizePath(record.Pwd)
 	record.RealPwd = s.sanitizePath(record.RealPwd)
@@ -153,7 +153,7 @@ func (s *sanitizer) sanitizeRecord(record *common.Record) error {
 	// hash the most sensitive info, do not tokenize
 	record.Host = s.hashToken(record.Host)
 	record.Login = s.hashToken(record.Login)
-	record.MachineId = s.hashToken(record.MachineId)
+	record.MachineID = s.hashToken(record.MachineID)
 
 	var err error
 	// this changes git url a bit but I'm still happy with the result

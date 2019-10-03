@@ -1,27 +1,30 @@
-package main
+package strat
 
-import (
-	"github.com/curusarn/resh/common"
-)
+import "github.com/curusarn/resh/pkg/records"
 
-type strategyDirectorySensitive struct {
+// DirectorySensitive prediction/recommendation strategy
+type DirectorySensitive struct {
 	history map[string][]string
 	lastPwd string
 }
 
-func (s *strategyDirectorySensitive) init() {
+// Init see name
+func (s *DirectorySensitive) Init() {
 	s.history = map[string][]string{}
 }
 
-func (s *strategyDirectorySensitive) GetTitleAndDescription() (string, string) {
+// GetTitleAndDescription see name
+func (s *DirectorySensitive) GetTitleAndDescription() (string, string) {
 	return "directory sensitive (recent)", "Use recent commands executed is the same directory"
 }
 
-func (s *strategyDirectorySensitive) GetCandidates() []string {
+// GetCandidates see name
+func (s *DirectorySensitive) GetCandidates() []string {
 	return s.history[s.lastPwd]
 }
 
-func (s *strategyDirectorySensitive) AddHistoryRecord(record *common.Record) error {
+// AddHistoryRecord see name
+func (s *DirectorySensitive) AddHistoryRecord(record *records.EnrichedRecord) error {
 	// work on history for PWD
 	pwd := record.Pwd
 	// remove previous occurance of record
@@ -36,7 +39,9 @@ func (s *strategyDirectorySensitive) AddHistoryRecord(record *common.Record) err
 	return nil
 }
 
-func (s *strategyDirectorySensitive) ResetHistory() error {
+// ResetHistory see name
+func (s *DirectorySensitive) ResetHistory() error {
+	s.Init()
 	s.history = map[string][]string{}
 	return nil
 }

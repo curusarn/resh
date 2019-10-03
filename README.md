@@ -17,6 +17,7 @@ If you are not happy with it you can uninstall it with a single command (`rm -rf
 The ultimate point of my thesis is to provide a context-based replacement/enhancement for bash and zsh shell history.
 
 The idea is to:
+
 - Save each command with metadata (device, directory, git, time, terminal session pid, ... see example below)
 - Recommend history based on saved metadata
   - e.g. it will be easier to get to commands specific to the project you are currently working on (based on directory, git repository url, ...)
@@ -45,9 +46,11 @@ If you install RESH, please give me some contact info using this form: https://f
 ## Installation
 
 ### Simplest
-Just run `bash -c "$(wget -O - https://raw.githubusercontent.com/curusarn/resh/master/rawinstall.sh)"` from anywhere.
+
+Just run `bash -c "$(wget -O - https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawinstall.sh)"` from anywhere.
 
 ### Simple
+
 1. Run `git clone https://github.com/curusarn/resh.git && cd resh`
 2. Run `make autoinstall` for assisted build & instalation.
     - OR Run `make install` if you know how to build Golang projects.
@@ -59,6 +62,7 @@ If you install RESH, please give me some contact info using this form: https://f
 Works in `bash` and `zsh`.
 
 Tested on:
+
 - Arch
 - MacOS
 - Ubuntu (18.04)

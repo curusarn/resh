@@ -14,7 +14,8 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	common "github.com/curusarn/resh/common"
+	"github.com/curusarn/resh/pkg/cfg"
+	"github.com/curusarn/resh/pkg/records"
 )
 
 // Version from git set during build
@@ -43,7 +44,7 @@ func main() {
 	log.SetOutput(f)
 	log.SetPrefix(strconv.Itoa(os.Getpid()) + " | ")
 
-	var config common.Config
+	var config cfg.Config
 	if _, err := toml.DecodeFile(configPath, &config); err != nil {
 		log.Println("Error reading config", err)
 		return
@@ -88,7 +89,7 @@ type recordHandler struct {
 
 func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK\n"))
-	record := common.Record{}
+	record := records.Record{}
 
 	jsn, err := ioutil.ReadAll(r.Body)
 	if err != nil {

@@ -1,12 +1,13 @@
-package main
+package strat
 
 import (
 	"sort"
 
-	"github.com/curusarn/resh/common"
+	"github.com/curusarn/resh/pkg/records"
 )
 
-type strategyFrequent struct {
+// Frequent prediction/recommendation strategy
+type Frequent struct {
 	history map[string]int
 }
 
@@ -15,15 +16,18 @@ type strFrqEntry struct {
 	count   int
 }
 
-func (s *strategyFrequent) init() {
+// Init see name
+func (s *Frequent) Init() {
 	s.history = map[string]int{}
 }
 
-func (s *strategyFrequent) GetTitleAndDescription() (string, string) {
+// GetTitleAndDescription see name
+func (s *Frequent) GetTitleAndDescription() (string, string) {
 	return "frequent", "Use frequent commands"
 }
 
-func (s *strategyFrequent) GetCandidates() []string {
+// GetCandidates see name
+func (s *Frequent) GetCandidates() []string {
 	var mapItems []strFrqEntry
 	for cmdLine, count := range s.history {
 		mapItems = append(mapItems, strFrqEntry{cmdLine, count})
@@ -36,12 +40,14 @@ func (s *strategyFrequent) GetCandidates() []string {
 	return hist
 }
 
-func (s *strategyFrequent) AddHistoryRecord(record *common.Record) error {
+// AddHistoryRecord see name
+func (s *Frequent) AddHistoryRecord(record *records.EnrichedRecord) error {
 	s.history[record.CmdLine]++
 	return nil
 }
 
-func (s *strategyFrequent) ResetHistory() error {
-	s.history = map[string]int{}
+// ResetHistory see name
+func (s *Frequent) ResetHistory() error {
+	s.Init()
 	return nil
 }
