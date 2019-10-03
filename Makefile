@@ -41,7 +41,7 @@ sanitize:
 	#
 	#
 
-build: submodules bin/resh-collect bin/resh-daemon bin/resh-evaluate bin/resh-sanitize bin/resh-control
+build: submodules bin/resh-collect bin/resh-postcollect bin/resh-daemon bin/resh-evaluate bin/resh-sanitize bin/resh-control
 
 test_go:
 	# Running tests

@@ -1,24 +1,20 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 
 	"github.com/BurntSushi/toml"
 	"github.com/curusarn/resh/pkg/cfg"
+	"github.com/curusarn/resh/pkg/collect"
 	"github.com/curusarn/resh/pkg/records"
 
 	//  "os/exec"
 	"os/user"
 	"path/filepath"
 	"strconv"
-	"strings"
 )
 
 // Version from git set during build
@@ -60,7 +56,6 @@ func main() {
 	login := flag.String("login", "", "$LOGIN")
 	// path := flag.String("path", "", "$PATH")
 	pwd := flag.String("pwd", "", "$PWD - present working directory")
-	pwdAfter := flag.String("pwdAfter", "", "$PWD after command")
 	shellEnv := flag.String("shellEnv", "", "$SHELL")
 	term := flag.String("term", "", "$TERM")
 
@@ -75,17 +70,12 @@ func main() {
 	machtype := flag.String("machtype", "", "$MACHTYPE")
 	gitCdup := flag.String("gitCdup", "", "git rev-parse --show-cdup")
 	gitRemote := flag.String("gitRemote", "", "git remote get-url origin")
-	gitCdupAfter := flag.String("gitCdupAfter", "", "git rev-parse --show-cdup")
-	gitRemoteAfter := flag.String("gitRemoteAfter", "", "git remote get-url origin")
 
 	gitCdupExitCode := flag.Int("gitCdupExitCode", -1, "... $?")
 	gitRemoteExitCode := flag.Int("gitRemoteExitCode", -1, "... $?")
-	gitCdupExitCodeAfter := flag.Int("gitCdupExitCodeAfter", -1, "... $?")
-	gitRemoteExitCodeAfter := flag.Int("gitRemoteExitCodeAfter", -1, "... $?")
 
 	// before after
 	timezoneBefore := flag.String("timezoneBefore", "", "")
-	timezoneAfter := flag.String("timezoneAfter", "", "")
 
 	osReleaseID := flag.String("osReleaseId", "", "/etc/os-release ID")
 	osReleaseVersionID := flag.String("osReleaseVersionId", "",
@@ -96,7 +86,6 @@ func main() {
 		"/etc/os-release ID")
 
 	rtb := flag.String("realtimeBefore", "-1", "before $EPOCHREALTIME")
-	rta := flag.String("realtimeAfter", "-1", "after $EPOCHREALTIME")
 	rtsess := flag.String("realtimeSession", "-1",
 		"on session start $EPOCHREALTIME")
 	rtsessboot := flag.String("realtimeSessSinceBoot", "-1",
@@ -125,10 +114,6 @@ func main() {
 			")")
 		os.Exit(3)
 	}
-	realtimeAfter, err := strconv.ParseFloat(*rta, 64)
-	if err != nil {
-		log.Fatal("Flag Parsing error (rta):", err)
-	}
 	realtimeBefore, err := strconv.ParseFloat(*rtb, 64)
 	if err != nil {
 		log.Fatal("Flag Parsing error (rtb):", err)
@@ -141,33 +126,21 @@ func main() {
 	if err != nil {
 		log.Fatal("Flag Parsing error (rt sess boot):", err)
 	}
-	realtimeDuration := realtimeAfter - realtimeBefore
 	realtimeSinceSessionStart := realtimeBefore - realtimeSessionStart
 	realtimeSinceBoot := realtimeSessSinceBoot + realtimeSinceSessionStart
 
-	timezoneBeforeOffset := getTimezoneOffsetInSeconds(*timezoneBefore)
-	timezoneAfterOffset := getTimezoneOffsetInSeconds(*timezoneAfter)
+	timezoneBeforeOffset := collect.GetTimezoneOffsetInSeconds(*timezoneBefore)
 	realtimeBeforeLocal := realtimeBefore + timezoneBeforeOffset
-	realtimeAfterLocal := realtimeAfter + timezoneAfterOffset
 
 	realPwd, err := filepath.EvalSymlinks(*pwd)
 	if err != nil {
 		log.Println("err while handling pwd realpath:", err)
 		realPwd = ""
 	}
-	realPwdAfter, err := filepath.EvalSymlinks(*pwdAfter)
-	if err != nil {
-		log.Println("err while handling pwdAfter realpath:", err)
-		realPwd = ""
-	}
 
-	gitDir, gitRealDir := getGitDirs(*gitCdup, *gitCdupExitCode, *pwd)
+	gitDir, gitRealDir := collect.GetGitDirs(*gitCdup, *gitCdupExitCode, *pwd)
 	if *gitRemoteExitCode != 0 {
 		*gitRemote = ""
-	}
-	gitDirAfter, gitRealDirAfter := getGitDirs(*gitCdupAfter, *gitCdupExitCodeAfter, *pwd)
-	if *gitRemoteExitCodeAfter != 0 {
-		*gitRemoteAfter = ""
 	}
 
 	if *osReleaseID == "" {
@@ -199,41 +172,32 @@ func main() {
 			Login: *login,
 			// Path:     *path,
 			Pwd:      *pwd,
-			PwdAfter: *pwdAfter,
 			ShellEnv: *shellEnv,
 			Term:     *term,
 
 			// non-posix
-			RealPwd:      realPwd,
-			RealPwdAfter: realPwdAfter,
-			Pid:          *pid,
-			SessionPid:   *sessionPid,
-			Host:         *host,
-			Hosttype:     *hosttype,
-			Ostype:       *ostype,
-			Machtype:     *machtype,
-			Shlvl:        *shlvl,
+			RealPwd:    realPwd,
+			Pid:        *pid,
+			SessionPid: *sessionPid,
+			Host:       *host,
+			Hosttype:   *hosttype,
+			Ostype:     *ostype,
+			Machtype:   *machtype,
+			Shlvl:      *shlvl,
 
 			// before after
 			TimezoneBefore: *timezoneBefore,
-			TimezoneAfter:  *timezoneAfter,
 
 			RealtimeBefore:      realtimeBefore,
-			RealtimeAfter:       realtimeAfter,
 			RealtimeBeforeLocal: realtimeBeforeLocal,
-			RealtimeAfterLocal:  realtimeAfterLocal,
 
-			RealtimeDuration:          realtimeDuration,
 			RealtimeSinceSessionStart: realtimeSinceSessionStart,
 			RealtimeSinceBoot:         realtimeSinceBoot,
 
-			GitDir:               gitDir,
-			GitRealDir:           gitRealDir,
-			GitOriginRemote:      *gitRemote,
-			GitDirAfter:          gitDirAfter,
-			GitRealDirAfter:      gitRealDirAfter,
-			GitOriginRemoteAfter: *gitRemoteAfter,
-			MachineID:            readFileContent(machineIDPath),
+			GitDir:          gitDir,
+			GitRealDir:      gitRealDir,
+			GitOriginRemote: *gitRemote,
+			MachineID:       collect.ReadFileContent(machineIDPath),
 
 			OsReleaseID:         *osReleaseID,
 			OsReleaseVersionID:  *osReleaseVersionID,
@@ -241,109 +205,12 @@ func main() {
 			OsReleaseName:       *osReleaseName,
 			OsReleasePrettyName: *osReleasePrettyName,
 
-			ReshUUID:     readFileContent(reshUUIDPath),
+			PartOne: true,
+
+			ReshUUID:     collect.ReadFileContent(reshUUIDPath),
 			ReshVersion:  Version,
 			ReshRevision: Revision,
 		},
 	}
-	sendRecord(rec, strconv.Itoa(config.Port))
+	collect.SendRecord(rec, strconv.Itoa(config.Port))
 }
-
-func sendRecord(r records.Record, port string) {
-	recJSON, err := json.Marshal(r)
-	if err != nil {
-		log.Fatal("send err 1", err)
-	}
-
-	req, err := http.NewRequest("POST", "http://localhost:"+port+"/record",
-		bytes.NewBuffer(recJSON))
-	if err != nil {
-		log.Fatal("send err 2", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	_, err = client.Do(req)
-	if err != nil {
-		log.Fatal("resh-daemon is not running :(")
-	}
-}
-
-func readFileContent(path string) string {
-	dat, err := ioutil.ReadFile(path)
-	if err != nil {
-		return ""
-		//log.Fatal("failed to open " + path)
-	}
-	return strings.TrimSuffix(string(dat), "\n")
-}
-
-func getGitDirs(cdup string, exitCode int, pwd string) (string, string) {
-	if exitCode != 0 {
-		return "", ""
-	}
-	abspath := filepath.Clean(filepath.Join(pwd, cdup))
-	realpath, err := filepath.EvalSymlinks(abspath)
-	if err != nil {
-		log.Println("err while handling git dir paths:", err)
-		return "", ""
-	}
-	return abspath, realpath
-}
-
-func getTimezoneOffsetInSeconds(zone string) float64 {
-	// date +%z -> "+0200"
-	hoursStr := zone[:3]
-	minsStr := zone[3:]
-	hours, err := strconv.Atoi(hoursStr)
-	if err != nil {
-		log.Println("err while parsing hours in timezone offset:", err)
-		return -1
-	}
-	mins, err := strconv.Atoi(minsStr)
-	if err != nil {
-		log.Println("err while parsing mins in timezone offset:", err)
-		return -1
-	}
-	secs := ((hours * 60) + mins) * 60
-	return float64(secs)
-}
-
-// func getGitRemote() string {
-// 	out, err := exec.Command("git", "remote", "get-url", "origin").Output()
-// 	if err != nil {
-// 		if exitError, ok := err.(*exec.ExitError); ok {
-// 			if exitError.ExitCode() == 128 {
-// 				return ""
-// 			}
-// 			log.Fatal("git remote cmd failed")
-// 		} else {
-// 			log.Fatal("git remote cmd failed w/o exit code")
-// 		}
-// 	}
-// 	return strings.TrimSuffix(string(out), "\n")
-// }
-//
-// func getGitDir() string {
-// 	// assume we are in pwd
-// 	gitWorkTree := os.Getenv("GIT_WORK_TREE")
-//
-// 	if gitWorkTree != "" {
-// 		return gitWorkTree
-// 	}
-// 	// we should look up the git directory ourselves
-// 	// OR leave it to resh daemon to not slow down user
-// 	out, err := exec.Command("git", "rev-parse", "--show-toplevel").Output()
-// 	if err != nil {
-// 		if exitError, ok := err.(*exec.ExitError); ok {
-// 			if exitError.ExitCode() == 128 {
-// 				return ""
-// 			}
-// 			log.Fatal("git rev-parse cmd failed")
-// 		} else {
-// 			log.Fatal("git rev-parse cmd failed w/o exit code")
-// 		}
-// 	}
-// 	return strings.TrimSuffix(string(out), "\n")
-// }
-// }

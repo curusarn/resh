@@ -84,7 +84,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type recordHandler struct {
-	OutputPath string
+	histfile chan records.Record
 }
 
 func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -103,19 +103,12 @@ func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Println("Payload: ", jsn)
 		return
 	}
-	f, err := os.OpenFile(h.OutputPath,
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Println("Could not open file", err)
-		return
+	h.histfile <- record
+	part := "2"
+	if record.PartOne {
+		part = "1"
 	}
-	defer f.Close()
-	_, err = f.Write(append(jsn, []byte("\n")...))
-	if err != nil {
-		log.Printf("Error while writing: %v, %s\n", record, err)
-		return
-	}
-	log.Println("Received: ", record.CmdLine)
+	log.Println("Received:", record.CmdLine, " - part", part)
 
 	// fmt.Println("cmd:", r.CmdLine)
 	// fmt.Println("pwd:", r.Pwd)
@@ -124,9 +117,13 @@ func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func runServer(port int, outputPath string) {
+	histfile := make(chan records.Record)
+	go HistfileWriter(histfile, outputPath)
+
 	http.HandleFunc("/status", statusHandler)
-	http.Handle("/record", &recordHandler{OutputPath: outputPath})
-	//http.Handle("/session_start", &recordHandler{OutputPath: outputPath})
+	http.Handle("/record", &recordHandler{histfile: histfile})
+	//http.Handle("/session_init", &sessionInitHandler{OutputPath: outputPath})
+	//http.Handle("/recall", &recallHandler{OutputPath: outputPath})
 	http.ListenAndServe(":"+strconv.Itoa(port), nil)
 }
 

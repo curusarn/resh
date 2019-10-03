@@ -89,7 +89,7 @@ func main() {
 				log.Println("Line:", line)
 				log.Fatal("Decoding error:", err)
 			}
-			record = records.ConvertRecord(&fallbackRecord)
+			record = records.Convert(&fallbackRecord)
 		}
 		err = sanitizer.sanitizeRecord(&record)
 		if err != nil {

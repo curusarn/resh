@@ -74,6 +74,18 @@ type BaseRecord struct {
 	ReshVersion  string `json:"reshVersion"`
 	ReshRevision string `json:"reshRevision"`
 
+	// records come in two parts (collect and postcollect)
+	PartOne     bool `json:"partOne,omitempty"` // false => part two
+	PartsMerged bool `json:"partsMerged"`
+	// special flag -> not an actual record but an session end
+	SessionExit bool `json:"sessionExit,omitempty"`
+
+	// recall metadata
+	Recalled       bool     `json:"recalled"`
+	RecallHistno   string   `json:"recallHistno,omitempty"`
+	RecallStrategy string   `json:"recallStrategy,omitempty"`
+	RecallActions  []string `json:"recallActions,omitempty"`
+
 	// added by sanitizatizer
 	Sanitized bool `json:"sanitized,omitempty"`
 	CmdLength int  `json:"cmdLength,omitempty"`
@@ -111,8 +123,8 @@ type FallbackRecord struct {
 	Lines int `json:"lines"` // notice the int type
 }
 
-// ConvertRecord from FallbackRecord to Record
-func ConvertRecord(r *FallbackRecord) Record {
+// Convert from FallbackRecord to Record
+func Convert(r *FallbackRecord) Record {
 	return Record{
 		BaseRecord: r.BaseRecord,
 		// these two lines are the only reason we are doing this
@@ -152,6 +164,35 @@ func Enriched(r Record) EnrichedRecord {
 	}
 	return record
 	// TODO: Detect and mark simple commands r.Simple
+}
+
+// Merge two records (part1 - collect + part2 - postcollect)
+func (r *Record) Merge(r2 Record) error {
+	if r.PartOne == false || r2.PartOne {
+		return errors.New("Expected part1 and part2 of the same record - usage: part1.Merge(part2)")
+	}
+	if r.SessionID != r2.SessionID {
+		return errors.New("Records to merge are not from the same sesion - r1:" + r.SessionID + " r2:" + r2.SessionID)
+	}
+	if r.CmdLine != r2.CmdLine || r.RealtimeBefore != r2.RealtimeBefore {
+		return errors.New("Records to merge are not parts of the same records - r1:" +
+			r.CmdLine + "(" + strconv.FormatFloat(r.RealtimeBefore, 'f', -1, 64) + ") r2:" +
+			r2.CmdLine + "(" + strconv.FormatFloat(r2.RealtimeBefore, 'f', -1, 64) + ")")
+	}
+	r.ExitCode = r2.ExitCode
+	r.PwdAfter = r2.PwdAfter
+	r.RealPwdAfter = r2.RealPwdAfter
+	r.GitDirAfter = r2.GitDirAfter
+	r.GitRealDirAfter = r2.GitRealDirAfter
+	r.RealtimeAfter = r2.RealtimeAfter
+	r.GitOriginRemoteAfter = r2.GitOriginRemoteAfter
+	r.TimezoneAfter = r2.TimezoneAfter
+	r.RealtimeAfterLocal = r2.RealtimeAfterLocal
+	r.RealtimeDuration = r2.RealtimeDuration
+
+	r.PartsMerged = true
+	r.PartOne = false
+	return nil
 }
 
 // Validate - returns error if the record is invalid
