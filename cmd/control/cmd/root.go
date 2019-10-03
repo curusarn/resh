@@ -2,13 +2,12 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/curusarn/resh/cmd/control/status"
 	"github.com/spf13/cobra"
 )
 
-var exitCode status.Code = status.DefaultInvalid
+var exitCode status.Code
 
 var rootCmd = &cobra.Command{
 	Use:   "reshctl",
@@ -29,10 +28,6 @@ func Execute() status.Code {
 	completionCmd.AddCommand(completionZshCmd)
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
-		return status.Fail
-	}
-	if exitCode == status.DefaultInvalid {
-		log.Println("reshctl FATAL ERROR: (sub)command didn't set exitCode!")
 		return status.Fail
 	}
 	return exitCode
