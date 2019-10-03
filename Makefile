@@ -129,7 +129,8 @@ $(HOME)/.resh/resh-uuid:
 
 .PHONY: submodules build install rebuild uninstall clean autoinstall
 
-submodules: | submodules/bash-preexec/bash-preexec.sh
+
+submodules: | submodules/bash-preexec/bash-preexec.sh submodules/bash-zsh-compat-widgets/bindfunc.sh
 	@# sets submodule.recurse to true if unset
 	@# sets status.submoduleSummary to true if unset
 	@git config --get submodule.recurse >/dev/null || git config --global submodule.recurse true
