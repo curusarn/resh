@@ -72,7 +72,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Could not create pidfile", err)
 	}
-	runServer(config.Port, outputPath)
+	runServer(config, outputPath)
 	err = os.Remove(pidfilePath)
 	if err != nil {
 		log.Println("Could not delete pidfile", err)
@@ -122,7 +122,7 @@ func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// fmt.Println("exit_code:", r.ExitCode)
 }
 
-func runServer(port int, outputPath string) {
+func runServer(config cfg.Config, outputPath string) {
 	var recordSubscribers []chan records.Record
 
 	histfileChan := make(chan records.Record)
@@ -132,13 +132,13 @@ func runServer(port int, outputPath string) {
 
 	sesswatchChan := make(chan records.Record)
 	recordSubscribers = append(recordSubscribers, sesswatchChan)
-	sesswatch.Go(sesswatchChan, []chan string{sessionsToDrop}, 10)
+	sesswatch.Go(sesswatchChan, []chan string{sessionsToDrop}, config.SesswatchPeriodSeconds)
 
 	http.HandleFunc("/status", statusHandler)
 	http.Handle("/record", &recordHandler{subscribers: recordSubscribers})
 	//http.Handle("/session_init", &sessionInitHandler{OutputPath: outputPath})
 	//http.Handle("/recall", &recallHandler{OutputPath: outputPath})
-	http.ListenAndServe(":"+strconv.Itoa(port), nil)
+	http.ListenAndServe(":"+strconv.Itoa(config.Port), nil)
 }
 
 func killDaemon(pidfile string) error {
