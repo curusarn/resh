@@ -90,7 +90,7 @@ install: build submodules/bash-preexec/bash-preexec.sh scripts/shellrc.sh conf/c
 	grep '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' ~/.zshrc ||\
 		echo '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' >> ~/.zshrc
 	# Restarting resh daemon ...
-	[ ! -f ~/.resh/resh.pid ] || kill -SIGTERM $$(cat ~/.resh/resh.pid)
+	-[ ! -f ~/.resh/resh.pid ] || kill -SIGTERM $$(cat ~/.resh/resh.pid)
 	nohup resh-daemon &>/dev/null & disown
 	# Final touch
 	touch ~/.resh_history.json

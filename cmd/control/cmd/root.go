@@ -26,6 +26,8 @@ func Execute() status.Code {
 	rootCmd.AddCommand(completionCmd)
 	completionCmd.AddCommand(completionBashCmd)
 	completionCmd.AddCommand(completionZshCmd)
+
+	rootCmd.AddCommand(debugCmd)
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		return status.Fail

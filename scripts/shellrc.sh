@@ -40,7 +40,7 @@ __resh_run_daemon() {
     if [ -n "$ZSH_VERSION" ]; then
         setopt LOCAL_OPTIONS NO_NOTIFY NO_MONITOR
     fi
-    nohup resh-daemon &>/dev/null & disown
+    nohup resh-daemon &>~/.resh/daemon_last_run_out.txt & disown
 }
 
 # __resh_session_init() {
@@ -219,7 +219,7 @@ __resh_preexec() {
                     -osReleaseIdLike "$__RESH_OS_RELEASE_ID_LIKE" \
                     -osReleaseName "$__RESH_OS_RELEASE_NAME" \
                     -osReleasePrettyName "$__RESH_OS_RELEASE_PRETTY_NAME" \
-                    &>~/.resh/client_last_run_out.txt || echo "resh-collect ERROR: $(head -n 1 ~/.resh/client_last_run_out.txt)"
+                    &>~/.resh/collect_last_run_out.txt || echo "resh-collect ERROR: $(head -n 1 ~/.resh/collect_last_run_out.txt)"
         fi
 }
 
@@ -233,22 +233,22 @@ __resh_precmd() {
     __RESH_GIT_REMOTE_AFTER="$(git remote get-url origin 2>/dev/null)"
     __RESH_GIT_REMOTE_EXIT_CODE_AFTER=$?
     if [ -n "${__RESH_COLLECT}" ]; then
-        if [ "$__RESH_VERSION" != "$(resh-collect -version)" ]; then
+        if [ "$__RESH_VERSION" != "$(resh-postcollect -version)" ]; then
             # shellcheck source=shellrc.sh
             source ~/.resh/shellrc 
-            if [ "$__RESH_VERSION" != "$(resh-collect -version)" ]; then
+            if [ "$__RESH_VERSION" != "$(resh-postcollect -version)" ]; then
                 echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh version: $(resh-collect -version); resh version of this terminal session: ${__RESH_VERSION})"
             else
                 echo "RESH INFO: New RESH shellrc script was loaded - if you encounter any issues please restart this terminal session."
             fi
-        elif [ "$__RESH_REVISION" != "$(resh-collect -revision)" ]; then
+        elif [ "$__RESH_REVISION" != "$(resh-postcollect -revision)" ]; then
             # shellcheck source=shellrc.sh
             source ~/.resh/shellrc 
-            if [ "$__RESH_REVISION" != "$(resh-collect -revision)" ]; then
+            if [ "$__RESH_REVISION" != "$(resh-postcollect -revision)" ]; then
                 echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh revision: $(resh-collect -revision); resh revision of this terminal session: ${__RESH_REVISION})"
             fi
         fi
-        if [ "$__RESH_VERSION" = "$(resh-collect -version)" ] && [ "$__RESH_REVISION" = "$(resh-collect -revision)" ]; then
+        if [ "$__RESH_VERSION" = "$(resh-postcollect -version)" ] && [ "$__RESH_REVISION" = "$(resh-postcollect -revision)" ]; then
             resh-postcollect -requireVersion "$__RESH_VERSION" \
                         -requireRevision "$__RESH_REVISION" \
                         -cmdLine "$__RESH_CMDLINE" \
@@ -262,7 +262,7 @@ __resh_precmd() {
                         -gitRemoteExitCodeAfter "$__RESH_GIT_REMOTE_EXIT_CODE_AFTER" \
                         -realtimeAfter "$__RESH_RT_AFTER" \
                         -timezoneAfter "$__RESH_TZ_AFTER" \
-                        &>~/.resh/client_last_run_out.txt || echo "resh-postcollect ERROR: $(head -n 1 ~/.resh/client_last_run_out.txt)"
+                        &>~/.resh/postcollect_last_run_out.txt || echo "resh-postcollect ERROR: $(head -n 1 ~/.resh/postcollect_last_run_out.txt)"
         fi
     fi
     unset __RESH_COLLECT
