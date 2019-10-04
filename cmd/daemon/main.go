@@ -15,7 +15,9 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/curusarn/resh/pkg/cfg"
+	"github.com/curusarn/resh/pkg/histfile"
 	"github.com/curusarn/resh/pkg/records"
+	"github.com/curusarn/resh/pkg/sesswatch"
 )
 
 // Version from git set during build
@@ -84,31 +86,35 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type recordHandler struct {
-	histfile chan records.Record
+	subscribers []chan records.Record
 }
 
 func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK\n"))
-	record := records.Record{}
-
 	jsn, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Println("Error reading the body", err)
-		return
-	}
+	// run rest of the handler as goroutine to prevent any hangups
+	go func() {
+		if err != nil {
+			log.Println("Error reading the body", err)
+			return
+		}
 
-	err = json.Unmarshal(jsn, &record)
-	if err != nil {
-		log.Println("Decoding error: ", err)
-		log.Println("Payload: ", jsn)
-		return
-	}
-	h.histfile <- record
-	part := "2"
-	if record.PartOne {
-		part = "1"
-	}
-	log.Println("Received:", record.CmdLine, " - part", part)
+		record := records.Record{}
+		err = json.Unmarshal(jsn, &record)
+		if err != nil {
+			log.Println("Decoding error: ", err)
+			log.Println("Payload: ", jsn)
+			return
+		}
+		for _, sub := range h.subscribers {
+			sub <- record
+		}
+		part := "2"
+		if record.PartOne {
+			part = "1"
+		}
+		log.Println("Received:", record.CmdLine, " - part", part)
+	}()
 
 	// fmt.Println("cmd:", r.CmdLine)
 	// fmt.Println("pwd:", r.Pwd)
@@ -117,11 +123,19 @@ func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func runServer(port int, outputPath string) {
-	histfile := make(chan records.Record)
-	go HistfileWriter(histfile, outputPath)
+	var recordSubscribers []chan records.Record
+
+	histfileChan := make(chan records.Record)
+	recordSubscribers = append(recordSubscribers, histfileChan)
+	sessionsToDrop := make(chan string)
+	histfile.Go(histfileChan, outputPath, sessionsToDrop)
+
+	sesswatchChan := make(chan records.Record)
+	recordSubscribers = append(recordSubscribers, sesswatchChan)
+	sesswatch.Go(sesswatchChan, []chan string{sessionsToDrop}, 10)
 
 	http.HandleFunc("/status", statusHandler)
-	http.Handle("/record", &recordHandler{histfile: histfile})
+	http.Handle("/record", &recordHandler{subscribers: recordSubscribers})
 	//http.Handle("/session_init", &sessionInitHandler{OutputPath: outputPath})
 	//http.Handle("/recall", &recallHandler{OutputPath: outputPath})
 	http.ListenAndServe(":"+strconv.Itoa(port), nil)
