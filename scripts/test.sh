@@ -7,8 +7,10 @@ for f in scripts/*.sh; do
     shellcheck $f --shell=bash --severity=error || exit 1
 done
 
-echo "Checking Zsh syntax of scripts/shellrc.sh ..."
-! zsh -n scripts/shellrc.sh && echo "Zsh syntax check failed!" && exit 1
+for f in scripts/{shellrc,util,reshctl,hooks}.sh; do
+    echo "Checking Zsh syntax of $f ..."
+    ! zsh -n scripts/shellrc.sh && echo "Zsh syntax check failed!" && exit 1
+done
 
 for sh in bash zsh; do
     echo "Running functions in scripts/shellrc.sh using $sh ..."
