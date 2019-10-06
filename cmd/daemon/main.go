@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/json"
+
 	//"flag"
 	"io/ioutil"
 	"log"
@@ -15,9 +15,6 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/curusarn/resh/pkg/cfg"
-	"github.com/curusarn/resh/pkg/histfile"
-	"github.com/curusarn/resh/pkg/records"
-	"github.com/curusarn/resh/pkg/sesswatch"
 )
 
 // Version from git set during build
@@ -85,62 +82,6 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Status OK")
 }
 
-type recordHandler struct {
-	subscribers []chan records.Record
-}
-
-func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("OK\n"))
-	jsn, err := ioutil.ReadAll(r.Body)
-	// run rest of the handler as goroutine to prevent any hangups
-	go func() {
-		if err != nil {
-			log.Println("Error reading the body", err)
-			return
-		}
-
-		record := records.Record{}
-		err = json.Unmarshal(jsn, &record)
-		if err != nil {
-			log.Println("Decoding error: ", err)
-			log.Println("Payload: ", jsn)
-			return
-		}
-		for _, sub := range h.subscribers {
-			sub <- record
-		}
-		part := "2"
-		if record.PartOne {
-			part = "1"
-		}
-		log.Println("Received:", record.CmdLine, " - part", part)
-	}()
-
-	// fmt.Println("cmd:", r.CmdLine)
-	// fmt.Println("pwd:", r.Pwd)
-	// fmt.Println("git:", r.GitWorkTree)
-	// fmt.Println("exit_code:", r.ExitCode)
-}
-
-func runServer(config cfg.Config, outputPath string) {
-	var recordSubscribers []chan records.Record
-
-	histfileChan := make(chan records.Record)
-	recordSubscribers = append(recordSubscribers, histfileChan)
-	sessionsToDrop := make(chan string)
-	histfile.Go(histfileChan, outputPath, sessionsToDrop)
-
-	sesswatchChan := make(chan records.Record)
-	recordSubscribers = append(recordSubscribers, sesswatchChan)
-	sesswatch.Go(sesswatchChan, []chan string{sessionsToDrop}, config.SesswatchPeriodSeconds)
-
-	http.HandleFunc("/status", statusHandler)
-	http.Handle("/record", &recordHandler{subscribers: recordSubscribers})
-	//http.Handle("/session_init", &sessionInitHandler{OutputPath: outputPath})
-	//http.Handle("/recall", &recallHandler{OutputPath: outputPath})
-	http.ListenAndServe(":"+strconv.Itoa(config.Port), nil)
-}
-
 func killDaemon(pidfile string) error {
 	dat, err := ioutil.ReadFile(pidfile)
 	if err != nil {
@@ -170,25 +111,4 @@ func isDaemonRunning(port int) (bool, error) {
 	}
 	defer resp.Body.Close()
 	return true, nil
-	//body, err := ioutil.ReadAll(resp.Body)
-
-	//    dat, err := ioutil.ReadFile(pidfile)
-	//    if err != nil {
-	//        log.Println("Reading pid file failed", err)
-	//        return false, err
-	//    }
-	//    log.Print(string(dat))
-	//    pid, err := strconv.ParseInt(string(dat), 10, 64)
-	//    if err != nil {
-	//        log.Fatal(err)
-	//    }
-	//    process, err := os.FindProcess(int(pid))
-	//    if err != nil {
-	//        log.Printf("Failed to find process: %s\n", err)
-	//        return false, err
-	//    } else {
-	//        err := process.Signal(syscall.Signal(0))
-	//        log.Printf("process.Signal on pid %d returned: %v\n", pid, err)
-	//    }
-	//    return true, nil
 }

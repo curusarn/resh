@@ -41,7 +41,7 @@ sanitize:
 	#
 	#
 
-build: submodules bin/resh-collect bin/resh-postcollect bin/resh-daemon bin/resh-evaluate bin/resh-sanitize bin/resh-control
+build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect bin/resh-daemon bin/resh-evaluate bin/resh-sanitize bin/resh-control 
 
 test_go:
 	# Running tests
@@ -69,7 +69,7 @@ install: build submodules/bash-preexec/bash-preexec.sh scripts/shellrc.sh conf/c
 	cp -f conf/config.toml ~/.config/resh.toml
 
 	cp -f scripts/shellrc.sh ~/.resh/shellrc
-	cp -f scripts/reshctl.sh scripts/bindutil.sh scripts/widgets.sh ~/.resh/
+	cp -f scripts/reshctl.sh scripts/widgets.sh scripts/hooks.sh scripts/util.sh ~/.resh/
 
 	bin/resh-control completion bash > ~/.resh/bash_completion.d/_reshctl
 	bin/resh-control completion zsh > ~/.resh/zsh_completion.d/_reshctl
@@ -92,6 +92,12 @@ install: build submodules/bash-preexec/bash-preexec.sh scripts/shellrc.sh conf/c
 	# Restarting resh daemon ...
 	-[ ! -f ~/.resh/resh.pid ] || kill -SIGTERM $$(cat ~/.resh/resh.pid)
 	nohup resh-daemon &>/dev/null & disown
+	# Reloading rc files
+	. ~/.resh/shellrc
+	# Generating resh-uuid
+	[ -e "$(HOME)/.resh/resh-uuid" ] \
+		|| cat /proc/sys/kernel/random/uuid > "$(HOME)/.resh/resh-uuid" 2>/dev/null \
+		|| ./uuid.sh > "$(HOME)/.resh/resh-uuid" 2>/dev/null 
 	# Final touch
 	touch ~/.resh_history.json
 	#
@@ -127,7 +133,7 @@ uninstall:
 
 bin/resh-control: cmd/control/cmd/*.go
 
-bin/resh-%: cmd/%/main.go pkg/*/*.go VERSION
+bin/resh-%: cmd/%/*.go pkg/*/*.go VERSION
 	go build ${GOFLAGS} -o $@ cmd/$*/*.go
 
 $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config $(HOME)/.resh/bash_completion.d $(HOME)/.resh/zsh_completion.d:

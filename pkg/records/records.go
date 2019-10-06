@@ -35,7 +35,7 @@ type BaseRecord struct {
 	RealPwd      string `json:"realPwd"`
 	RealPwdAfter string `json:"realPwdAfter"`
 	Pid          int    `json:"pid"`
-	SessionPid   int    `json:"sessionPid"`
+	SessionPID   int    `json:"sessionPid"`
 	Host         string `json:"host"`
 	Hosttype     string `json:"hosttype"`
 	Ostype       string `json:"ostype"`
@@ -82,7 +82,7 @@ type BaseRecord struct {
 
 	// recall metadata
 	Recalled       bool     `json:"recalled"`
-	RecallHistno   string   `json:"recallHistno,omitempty"`
+	RecallHistno   int      `json:"recallHistno,omitempty"`
 	RecallStrategy string   `json:"recallStrategy,omitempty"`
 	RecallActions  []string `json:"recallActions,omitempty"`
 

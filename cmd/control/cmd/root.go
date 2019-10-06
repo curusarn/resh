@@ -28,6 +28,8 @@ func Execute() status.Code {
 	completionCmd.AddCommand(completionZshCmd)
 
 	rootCmd.AddCommand(debugCmd)
+	debugCmd.AddCommand(debugReloadCmd)
+	debugCmd.AddCommand(debugOutputCmd)
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		return status.Fail

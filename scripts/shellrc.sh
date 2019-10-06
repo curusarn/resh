@@ -4,69 +4,12 @@ PATH=$PATH:~/.resh/bin
 #     zmodload zsh/datetime
 # fi
 
+# shellcheck source=hooks.sh
+. ~/.resh/hooks.sh
+# shellcheck source=util.sh
+. ~/.resh/util.sh
 # shellcheck source=reshctl.sh
 . ~/.resh/reshctl.sh
-
-__resh_get_uuid() {
-    cat /proc/sys/kernel/random/uuid 2>/dev/null || resh-uuid
-}
-
-__resh_get_epochrealtime() {
-    if date +%s.%N | grep -vq 'N'; then
-        # GNU date
-        date +%s.%N
-    elif gdate --version >/dev/null && gdate +%s.%N | grep -vq 'N'; then
-        # GNU date take 2
-        gdate +%s.%N
-    elif [ -n "$ZSH_VERSION" ]; then
-        # zsh fallback using $EPOCHREALTIME
-        if [ -z "${__RESH_ZSH_LOADED_DATETIME+x}" ]; then
-            zmodload zsh/datetime
-            __RESH_ZSH_LOADED_DATETIME=1
-        fi
-        echo "$EPOCHREALTIME"
-    else
-        # dumb date 
-        # XXX: we lost precison beyond seconds
-        date +%s
-        if [ -z "${__RESH_DATE_WARN+x}" ]; then
-            echo "resh WARN: can't get precise time - consider installing GNU date!"
-            __RESH_DATE_WARN=1
-        fi
-    fi
-}
-
-__resh_run_daemon() {
-    if [ -n "$ZSH_VERSION" ]; then
-        setopt LOCAL_OPTIONS NO_NOTIFY NO_MONITOR
-    fi
-    nohup resh-daemon &>~/.resh/daemon_last_run_out.txt & disown
-}
-
-# __resh_session_init() {
-#     resh-event session_start --sessionId "$__RESH_SESSION_ID" --sessionPid "$__RESH_SESSION_PID"
-# }
-# 
-__resh_bash_completion_init() {
-    local bash_completion_dir=~/.resh/bash_completion.d
-    # source user completion directory definitions
-    # taken from /usr/share/bash-completion/bash_completion
-    if [[ -d $bash_completion_dir && -r $bash_completion_dir && \
-        -x $bash_completion_dir ]]; then
-        for i in $(LC_ALL=C command ls "$bash_completion_dir"); do
-            i=$bash_completion_dir/$i
-            # shellcheck disable=SC2154
-            # shellcheck source=/dev/null
-            [[ ${i##*/} != @($_backup_glob|Makefile*|$_blacklist_glob) \
-                && -f $i && -r $i ]] && . "$i"
-        done
-    fi
-}
-
-__resh_zsh_completion_init() {
-    # shellcheck disable=SC2206
-    fpath=(~/.resh/zsh_completion.d $fpath)
-}
 
 __RESH_MACOS=0
 __RESH_LINUX=0
@@ -93,13 +36,6 @@ elif [ -n "$BASH_VERSION" ]; then
     __resh_bash_completion_init
 else
     echo "resh PANIC unrecognized shell"
-fi
-
-if [ -z "${__RESH_SESSION_ID+x}" ]; then
-    export __RESH_SESSION_ID; __RESH_SESSION_ID=$(__resh_get_uuid)
-    export __RESH_SESSION_PID="$$"
-    # TODO add sesson time
-    # __resh_session_init __RESH_SESSION_ID __RESH_SESSION_PID
 fi
 
 # posix
@@ -133,140 +69,12 @@ __RESH_REVISION=$(resh-collect -revision)
 
 __resh_run_daemon
 
-__resh_preexec() {
-    # core
-    __RESH_COLLECT=1
-    __RESH_CMDLINE="$1"
-
-    # posix
-    __RESH_COLS="$COLUMNS"
-    __RESH_LANG="$LANG"
-    __RESH_LC_ALL="$LC_ALL"
-    # other LC ?
-    __RESH_LINES="$LINES"
-    # __RESH_PATH="$PATH"
-    __RESH_PWD="$PWD"
-    
-    # non-posix
-    __RESH_SHLVL="$SHLVL"
-    __RESH_GIT_CDUP="$(git rev-parse --show-cdup 2>/dev/null)"
-    __RESH_GIT_CDUP_EXIT_CODE=$?
-    __RESH_GIT_REMOTE="$(git remote get-url origin 2>/dev/null)"
-    __RESH_GIT_REMOTE_EXIT_CODE=$?
-    #__RESH_GIT_TOPLEVEL="$(git rev-parse --show-toplevel)"
-    #__RESH_GIT_TOPLEVEL_EXIT_CODE=$?
-
-    if [ -n "$ZSH_VERSION" ]; then
-        # assume Zsh
-        __RESH_PID="$$" # current pid
-    elif [ -n "$BASH_VERSION" ]; then
-        # assume Bash
-        __RESH_PID="$BASHPID" # current pid
-    fi
-    # time
-    __RESH_TZ_BEFORE=$(date +%z)
-    # __RESH_RT_BEFORE="$EPOCHREALTIME"
-    __RESH_RT_BEFORE=$(__resh_get_epochrealtime)
-
-    if [ "$__RESH_VERSION" != "$(resh-collect -version)" ]; then
-        # shellcheck source=shellrc.sh
-        source ~/.resh/shellrc 
-        if [ "$__RESH_VERSION" != "$(resh-collect -version)" ]; then
-            echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh version: $(resh-collect -version); resh version of this terminal session: ${__RESH_VERSION})"
-        else
-            echo "RESH INFO: New RESH shellrc script was loaded - if you encounter any issues please restart this terminal session."
-        fi
-    elif [ "$__RESH_REVISION" != "$(resh-collect -revision)" ]; then
-        # shellcheck source=shellrc.sh
-        source ~/.resh/shellrc 
-        if [ "$__RESH_REVISION" != "$(resh-collect -revision)" ]; then
-            echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh revision: $(resh-collect -revision); resh revision of this terminal session: ${__RESH_REVISION})"
-        fi
-    fi
-    if [ "$__RESH_VERSION" = "$(resh-collect -version)" ] && [ "$__RESH_REVISION" = "$(resh-collect -revision)" ]; then
-        resh-collect -requireVersion "$__RESH_VERSION" \
-                    -requireRevision "$__RESH_REVISION" \
-                    -cmdLine "$__RESH_CMDLINE" \
-                    -shell "$__RESH_SHELL" \
-                    -uname "$__RESH_UNAME" \
-                    -sessionId "$__RESH_SESSION_ID" \
-                    -cols "$__RESH_COLS" \
-                    -home "$__RESH_HOME" \
-                    -lang "$__RESH_LANG" \
-                    -lcAll "$__RESH_LC_ALL" \
-                    -lines "$__RESH_LINES" \
-                    -login "$__RESH_LOGIN" \
-                    -pwd "$__RESH_PWD" \
-                    -shellEnv "$__RESH_SHELL_ENV" \
-                    -term "$__RESH_TERM" \
-                    -pid "$__RESH_PID" \
-                    -sessionPid "$__RESH_SESSION_PID" \
-                    -host "$__RESH_HOST" \
-                    -hosttype "$__RESH_HOSTTYPE" \
-                    -ostype "$__RESH_OSTYPE" \
-                    -machtype "$__RESH_MACHTYPE" \
-                    -shlvl "$__RESH_SHLVL" \
-                    -gitCdup "$__RESH_GIT_CDUP" \
-                    -gitCdupExitCode "$__RESH_GIT_CDUP_EXIT_CODE" \
-                    -gitRemote "$__RESH_GIT_REMOTE" \
-                    -gitRemoteExitCode "$__RESH_GIT_REMOTE_EXIT_CODE" \
-                    -realtimeBefore "$__RESH_RT_BEFORE" \
-                    -realtimeSession "$__RESH_RT_SESSION" \
-                    -realtimeSessSinceBoot "$__RESH_RT_SESS_SINCE_BOOT" \
-                    -timezoneBefore "$__RESH_TZ_BEFORE" \
-                    -osReleaseId "$__RESH_OS_RELEASE_ID" \
-                    -osReleaseVersionId "$__RESH_OS_RELEASE_VERSION_ID" \
-                    -osReleaseIdLike "$__RESH_OS_RELEASE_ID_LIKE" \
-                    -osReleaseName "$__RESH_OS_RELEASE_NAME" \
-                    -osReleasePrettyName "$__RESH_OS_RELEASE_PRETTY_NAME" \
-                    &>~/.resh/collect_last_run_out.txt || echo "resh-collect ERROR: $(head -n 1 ~/.resh/collect_last_run_out.txt)"
-        fi
-}
-
-__resh_precmd() {
-    __RESH_EXIT_CODE=$?
-    __RESH_RT_AFTER=$(__resh_get_epochrealtime)
-    __RESH_TZ_AFTER=$(date +%z)
-    __RESH_PWD_AFTER="$PWD"
-    __RESH_GIT_CDUP_AFTER="$(git rev-parse --show-cdup 2>/dev/null)"
-    __RESH_GIT_CDUP_EXIT_CODE_AFTER=$?
-    __RESH_GIT_REMOTE_AFTER="$(git remote get-url origin 2>/dev/null)"
-    __RESH_GIT_REMOTE_EXIT_CODE_AFTER=$?
-    if [ -n "${__RESH_COLLECT}" ]; then
-        if [ "$__RESH_VERSION" != "$(resh-postcollect -version)" ]; then
-            # shellcheck source=shellrc.sh
-            source ~/.resh/shellrc 
-            if [ "$__RESH_VERSION" != "$(resh-postcollect -version)" ]; then
-                echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh version: $(resh-collect -version); resh version of this terminal session: ${__RESH_VERSION})"
-            else
-                echo "RESH INFO: New RESH shellrc script was loaded - if you encounter any issues please restart this terminal session."
-            fi
-        elif [ "$__RESH_REVISION" != "$(resh-postcollect -revision)" ]; then
-            # shellcheck source=shellrc.sh
-            source ~/.resh/shellrc 
-            if [ "$__RESH_REVISION" != "$(resh-postcollect -revision)" ]; then
-                echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh revision: $(resh-collect -revision); resh revision of this terminal session: ${__RESH_REVISION})"
-            fi
-        fi
-        if [ "$__RESH_VERSION" = "$(resh-postcollect -version)" ] && [ "$__RESH_REVISION" = "$(resh-postcollect -revision)" ]; then
-            resh-postcollect -requireVersion "$__RESH_VERSION" \
-                        -requireRevision "$__RESH_REVISION" \
-                        -cmdLine "$__RESH_CMDLINE" \
-                        -realtimeBefore "$__RESH_RT_BEFORE" \
-                        -exitCode "$__RESH_EXIT_CODE" \
-                        -sessionId "$__RESH_SESSION_ID" \
-                        -pwdAfter "$__RESH_PWD_AFTER" \
-                        -gitCdupAfter "$__RESH_GIT_CDUP_AFTER" \
-                        -gitCdupExitCodeAfter "$__RESH_GIT_CDUP_EXIT_CODE_AFTER" \
-                        -gitRemoteAfter "$__RESH_GIT_REMOTE_AFTER" \
-                        -gitRemoteExitCodeAfter "$__RESH_GIT_REMOTE_EXIT_CODE_AFTER" \
-                        -realtimeAfter "$__RESH_RT_AFTER" \
-                        -timezoneAfter "$__RESH_TZ_AFTER" \
-                        &>~/.resh/postcollect_last_run_out.txt || echo "resh-postcollect ERROR: $(head -n 1 ~/.resh/postcollect_last_run_out.txt)"
-        fi
-    fi
-    unset __RESH_COLLECT
-}
+if [ -z "${__RESH_SESSION_ID+x}" ]; then
+    export __RESH_SESSION_ID; __RESH_SESSION_ID=$(__resh_get_uuid)
+    export __RESH_SESSION_PID="$$"
+    # TODO add sesson time
+    __resh_session_init
+fi
 
 # do not add more hooks when shellrc is sourced again  
 if [ -z "${__RESH_PREEXEC_PRECMD_HOOKS_ADDED+x}" ]; then

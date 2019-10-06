@@ -12,4 +12,6 @@ const (
 	EnableAll = 100
 	// DisableAll exit code - tells reshctl() wrapper to disable_all
 	DisableAll = 110
+	// ReloadRcFiles exit code - tells reshctl() wrapper to reload shellrc resh file
+	ReloadRcFiles = 200
 )

@@ -11,7 +11,6 @@ import (
 	"github.com/curusarn/resh/pkg/collect"
 	"github.com/curusarn/resh/pkg/records"
 
-	//  "os/exec"
 	"os/user"
 	"path/filepath"
 	"strconv"
@@ -35,17 +34,12 @@ func main() {
 	if _, err := toml.DecodeFile(configPath, &config); err != nil {
 		log.Fatal("Error reading config:", err)
 	}
-	recall := flag.Bool("recall", false, "Recall command on position --histno")
-	recallHistno := flag.Int("histno", 0, "Recall command on position --histno")
-
 	showVersion := flag.Bool("version", false, "Show version and exit")
 	showRevision := flag.Bool("revision", false, "Show git revision and exit")
 
 	requireVersion := flag.String("requireVersion", "", "abort if version doesn't match")
 	requireRevision := flag.String("requireRevision", "", "abort if revision doesn't match")
 
-	cmdLine := flag.String("cmdLine", "", "command line")
-	exitCode := flag.Int("exitCode", -1, "exit code")
 	shell := flag.String("shell", "", "actual shell")
 	uname := flag.String("uname", "", "uname")
 	sessionID := flag.String("sessionId", "", "resh generated session id")
@@ -57,8 +51,6 @@ func main() {
 	lang := flag.String("lang", "", "$LANG")
 	lcAll := flag.String("lcAll", "", "$LC_ALL")
 	login := flag.String("login", "", "$LOGIN")
-	// path := flag.String("path", "", "$PATH")
-	pwd := flag.String("pwd", "", "$PWD - present working directory")
 	shellEnv := flag.String("shellEnv", "", "$SHELL")
 	term := flag.String("term", "", "$TERM")
 
@@ -71,11 +63,6 @@ func main() {
 	hosttype := flag.String("hosttype", "", "$HOSTTYPE")
 	ostype := flag.String("ostype", "", "$OSTYPE")
 	machtype := flag.String("machtype", "", "$MACHTYPE")
-	gitCdup := flag.String("gitCdup", "", "git rev-parse --show-cdup")
-	gitRemote := flag.String("gitRemote", "", "git remote get-url origin")
-
-	gitCdupExitCode := flag.Int("gitCdupExitCode", -1, "... $?")
-	gitRemoteExitCode := flag.Int("gitRemoteExitCode", -1, "... $?")
 
 	// before after
 	timezoneBefore := flag.String("timezoneBefore", "", "")
@@ -117,10 +104,6 @@ func main() {
 			")")
 		os.Exit(3)
 	}
-	if *recallHistno != 0 && *recall == false {
-		log.Println("Option '--recall' only works with '--histno' option - exiting!")
-		os.Exit(4)
-	}
 	realtimeBefore, err := strconv.ParseFloat(*rtb, 64)
 	if err != nil {
 		log.Fatal("Flag Parsing error (rtb):", err)
@@ -139,17 +122,6 @@ func main() {
 	timezoneBeforeOffset := collect.GetTimezoneOffsetInSeconds(*timezoneBefore)
 	realtimeBeforeLocal := realtimeBefore + timezoneBeforeOffset
 
-	realPwd, err := filepath.EvalSymlinks(*pwd)
-	if err != nil {
-		log.Println("err while handling pwd realpath:", err)
-		realPwd = ""
-	}
-
-	gitDir, gitRealDir := collect.GetGitDirs(*gitCdup, *gitCdupExitCode, *pwd)
-	if *gitRemoteExitCode != 0 {
-		*gitRemote = ""
-	}
-
 	if *osReleaseID == "" {
 		*osReleaseID = "linux"
 	}
@@ -166,10 +138,6 @@ func main() {
 		Lines: *lines,
 		// core
 		BaseRecord: records.BaseRecord{
-			RecallHistno: *recallHistno,
-
-			CmdLine:   *cmdLine,
-			ExitCode:  *exitCode,
 			Shell:     *shell,
 			Uname:     *uname,
 			SessionID: *sessionID,
@@ -180,12 +148,10 @@ func main() {
 			LcAll: *lcAll,
 			Login: *login,
 			// Path:     *path,
-			Pwd:      *pwd,
 			ShellEnv: *shellEnv,
 			Term:     *term,
 
 			// non-posix
-			RealPwd:    realPwd,
 			Pid:        *pid,
 			SessionPID: *sessionPid,
 			Host:       *host,
@@ -203,10 +169,7 @@ func main() {
 			RealtimeSinceSessionStart: realtimeSinceSessionStart,
 			RealtimeSinceBoot:         realtimeSinceBoot,
 
-			GitDir:          gitDir,
-			GitRealDir:      gitRealDir,
-			GitOriginRemote: *gitRemote,
-			MachineID:       collect.ReadFileContent(machineIDPath),
+			MachineID: collect.ReadFileContent(machineIDPath),
 
 			OsReleaseID:         *osReleaseID,
 			OsReleaseVersionID:  *osReleaseVersionID,
@@ -214,16 +177,10 @@ func main() {
 			OsReleaseName:       *osReleaseName,
 			OsReleasePrettyName: *osReleasePrettyName,
 
-			PartOne: true,
-
 			ReshUUID:     collect.ReadFileContent(reshUUIDPath),
 			ReshVersion:  Version,
 			ReshRevision: Revision,
 		},
 	}
-	if *recall {
-		fmt.Print(collect.SendRecallRequest(rec, strconv.Itoa(config.Port)))
-	} else {
-		collect.SendRecord(rec, strconv.Itoa(config.Port), "/record")
-	}
+	collect.SendRecord(rec, strconv.Itoa(config.Port), "/session_init")
 }

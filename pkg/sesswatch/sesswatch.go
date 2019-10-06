@@ -18,28 +18,23 @@ type sesswatch struct {
 }
 
 // Go runs the session watcher - watches sessions and sends
-func Go(input chan records.Record, sessionsToDrop []chan string, sleepSeconds uint) {
+func Go(sessionsToWatch chan records.Record, sessionsToDrop []chan string, sleepSeconds uint) {
 	sw := sesswatch{sessionsToDrop: sessionsToDrop, sleepSeconds: sleepSeconds, watchedSessions: map[string]bool{}}
-	go sw.waiter(input)
+	go sw.waiter(sessionsToWatch)
 }
 
 func (s *sesswatch) waiter(sessionsToWatch chan records.Record) {
 	for {
 		func() {
 			record := <-sessionsToWatch
-			session := record.SessionID
-			pid := record.SessionPid
-			if record.PartOne == false {
-				log.Println("sesswatch: part2 - ignoring:", session, "~", pid)
-				return // continue
-			}
-			log.Println("sesswatch: got session ~ pid:", session, "~", pid)
+			id := record.SessionID
+			pid := record.SessionPID
 			s.mutex.Lock()
 			defer s.mutex.Unlock()
-			if s.watchedSessions[session] == false {
-				log.Println("sesswatch: start watching NEW session ~ pid:", session, "~", pid)
-				s.watchedSessions[session] = true
-				go s.watcher(session, record.SessionPid)
+			if s.watchedSessions[id] == false {
+				log.Println("sesswatch: start watching NEW session ~ pid:", id, "~", pid)
+				s.watchedSessions[id] = true
+				go s.watcher(id, pid)
 			}
 		}()
 	}

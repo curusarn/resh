@@ -143,5 +143,5 @@ func main() {
 			ReshRevision: Revision,
 		},
 	}
-	collect.SendRecord(rec, strconv.Itoa(config.Port))
+	collect.SendRecord(rec, strconv.Itoa(config.Port), "/record")
 }
