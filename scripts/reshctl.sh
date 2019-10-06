@@ -39,11 +39,11 @@ reshctl() {
     # run resh-control aka the real reshctl
     resh-control "$@"
     # modify current shell session based on exit status
-    local status=$?
-    case "$status" in
+    local _status=$?
+    case "$_status" in
     0|1)
         # success | fail
-        return "$status"
+        return "$_status"
         ;;
     # enable
     100)
@@ -64,7 +64,7 @@ reshctl() {
         ;;
     *)
         echo "reshctl() FATAL ERROR: unknown status" >&2
-        return "$status"
+        return "$_status"
         ;;
     esac
 }
