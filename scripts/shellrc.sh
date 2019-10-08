@@ -73,6 +73,7 @@ if [ -z "${__RESH_SESSION_ID+x}" ]; then
     export __RESH_SESSION_ID; __RESH_SESSION_ID=$(__resh_get_uuid)
     export __RESH_SESSION_PID="$$"
     # TODO add sesson time
+    __resh_reset_variables
     __resh_session_init
 fi
 

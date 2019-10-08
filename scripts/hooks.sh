@@ -1,11 +1,20 @@
 
-__resh_preexec() {
+__resh_reset_variables() {
     __RESH_HISTNO=0
+    __RESH_HISTNO_ZERO_LINE=""
+    __RESH_HIST_PREV_LINE=""
+    __RESH_HIST_RECALL_ACTIONS=""
+    __RESH_HIST_NO_PREFIX_MODE=0
+}
+
+__resh_preexec() {
     # core
     __RESH_COLLECT=1
     __RESH_CMDLINE="$1" # not local to preserve it for postcollect (useful as sanity check)
-    __resh_collect --cmdLine "$__RESH_CMDLINE" \
+    __resh_collect --cmdLine "$__RESH_CMDLINE" --recall-actions "$__RESH_HIST_RECALL_ACTIONS" \
         &>~/.resh/collect_last_run_out.txt || echo "resh-collect ERROR: $(head -n 1 ~/.resh/collect_last_run_out.txt)"
+
+    __resh_reset_variables
 }
 
 # used for collect and collect --recall
@@ -90,6 +99,7 @@ __resh_collect() {
                     -osReleaseIdLike "$__RESH_OS_RELEASE_ID_LIKE" \
                     -osReleaseName "$__RESH_OS_RELEASE_NAME" \
                     -osReleasePrettyName "$__RESH_OS_RELEASE_PRETTY_NAME" \
+                    -histno "$__RESH_HISTNO" \
                     "$@"
         fi
 }

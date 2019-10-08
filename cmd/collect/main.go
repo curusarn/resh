@@ -35,20 +35,27 @@ func main() {
 	if _, err := toml.DecodeFile(configPath, &config); err != nil {
 		log.Fatal("Error reading config:", err)
 	}
+	// recall command
 	recall := flag.Bool("recall", false, "Recall command on position --histno")
 	recallHistno := flag.Int("histno", 0, "Recall command on position --histno")
+	recallPrefix := flag.String("prefix-search", "", "Recall command based on prefix --prefix-search")
 
+	// version
 	showVersion := flag.Bool("version", false, "Show version and exit")
 	showRevision := flag.Bool("revision", false, "Show git revision and exit")
 
 	requireVersion := flag.String("requireVersion", "", "abort if version doesn't match")
 	requireRevision := flag.String("requireRevision", "", "abort if revision doesn't match")
 
+	// core
 	cmdLine := flag.String("cmdLine", "", "command line")
 	exitCode := flag.Int("exitCode", -1, "exit code")
 	shell := flag.String("shell", "", "actual shell")
 	uname := flag.String("uname", "", "uname")
 	sessionID := flag.String("sessionId", "", "resh generated session id")
+
+	// recall metadata
+	recallActions := flag.String("recall-actions", "", "recall actions that took place before executing the command")
 
 	// posix variables
 	cols := flag.String("cols", "-1", "$COLUMNS")
@@ -121,6 +128,11 @@ func main() {
 		log.Println("Option '--recall' only works with '--histno' option - exiting!")
 		os.Exit(4)
 	}
+	if *recallPrefix != "" && *recall == false {
+		log.Println("Option '--prefix-search' only works with '--recall' option - exiting!")
+		os.Exit(4)
+	}
+
 	realtimeBefore, err := strconv.ParseFloat(*rtb, 64)
 	if err != nil {
 		log.Fatal("Flag Parsing error (rtb):", err)
@@ -150,15 +162,15 @@ func main() {
 		*gitRemote = ""
 	}
 
-	if *osReleaseID == "" {
-		*osReleaseID = "linux"
-	}
-	if *osReleaseName == "" {
-		*osReleaseName = "Linux"
-	}
-	if *osReleasePrettyName == "" {
-		*osReleasePrettyName = "Linux"
-	}
+	// if *osReleaseID == "" {
+	// 	*osReleaseID = "linux"
+	// }
+	// if *osReleaseName == "" {
+	// 	*osReleaseName = "Linux"
+	// }
+	// if *osReleasePrettyName == "" {
+	// 	*osReleasePrettyName = "Linux"
+	// }
 
 	rec := records.Record{
 		// posix
@@ -219,6 +231,9 @@ func main() {
 			ReshUUID:     collect.ReadFileContent(reshUUIDPath),
 			ReshVersion:  Version,
 			ReshRevision: Revision,
+
+			RecallActions: []string{*recallActions},
+			RecallPrefix:  *recallPrefix,
 		},
 	}
 	if *recall {

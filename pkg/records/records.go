@@ -86,6 +86,9 @@ type BaseRecord struct {
 	RecallStrategy string   `json:"recallStrategy,omitempty"`
 	RecallActions  []string `json:"recallActions,omitempty"`
 
+	// recall command
+	RecallPrefix string `json:"recallPrefix,omitempty"`
+
 	// added by sanitizatizer
 	Sanitized bool `json:"sanitized,omitempty"`
 	CmdLength int  `json:"cmdLength,omitempty"`

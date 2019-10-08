@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/curusarn/resh/pkg/records"
@@ -94,13 +95,22 @@ func (s *Dispatch) addRecentRecord(sessionID string, record records.Record) erro
 	}
 	session.mutex.Lock()
 	defer session.mutex.Unlock()
-	session.recent = append(session.recent, record)
-	log.Println("sesshist: record:", record.CmdLine, "; added to session:", sessionID, "; session len:", len(session.recent))
+	session.recentRecords = append(session.recentRecords, record)
+	// remove previous occurance of record
+	for i := len(session.recentCmdLines) - 1; i >= 0; i-- {
+		if session.recentCmdLines[i] == record.CmdLine {
+			session.recentCmdLines = append(session.recentCmdLines[:i], session.recentCmdLines[i+1:]...)
+		}
+	}
+	// append new record
+	session.recentCmdLines = append(session.recentCmdLines, record.CmdLine)
+	log.Println("sesshist: record:", record.CmdLine, "; added to session:", sessionID,
+		"; session len:", len(session.recentCmdLines), "; session len w/ dups:", len(session.recentRecords))
 	return nil
 }
 
 // Recall command from recent session history
-func (s *Dispatch) Recall(sessionID string, histno int) (string, error) {
+func (s *Dispatch) Recall(sessionID string, histno int, prefix string) (string, error) {
 	s.mutex.RLock()
 	session, found := s.sessions[sessionID]
 	s.mutex.RUnlock()
@@ -108,18 +118,25 @@ func (s *Dispatch) Recall(sessionID string, histno int) (string, error) {
 	if found == false {
 		return "", errors.New("sesshist ERROR: No session history for SessionID " + sessionID)
 	}
+	if prefix == "" {
+		session.mutex.Lock()
+		defer session.mutex.Unlock()
+		return session.getRecordByHistno(histno)
+	}
 	session.mutex.Lock()
 	defer session.mutex.Unlock()
-	return session.getRecordByHistno(histno)
+	return session.searchRecordByPrefix(prefix, histno)
 }
 
 type sesshist struct {
-	recent []records.Record
-	mutex  sync.Mutex
+	recentRecords  []records.Record
+	recentCmdLines []string // deduplicated
+	// cmdLines map[string]int
+	mutex sync.Mutex
 }
 
 func (s *sesshist) getRecordByHistno(histno int) (string, error) {
-	// records get appended to the end of the slice
+	// addRecords() appends records to the end of the slice
 	// 	-> this func handles the indexing
 	if histno == 0 {
 		return "", errors.New("sesshist ERROR: 'histno == 0' is not a record from history")
@@ -127,9 +144,35 @@ func (s *sesshist) getRecordByHistno(histno int) (string, error) {
 	if histno < 0 {
 		return "", errors.New("sesshist ERROR: 'histno < 0' is a command from future (not supperted yet)")
 	}
-	index := len(s.recent) - histno
+	index := len(s.recentCmdLines) - histno
 	if index < 0 {
-		return "", errors.New("sesshist ERROR: 'histno > number of commands in the session' (" + strconv.Itoa(len(s.recent)) + ")")
+		return "", errors.New("sesshist ERROR: 'histno > number of commands in the session' (" + strconv.Itoa(len(s.recentCmdLines)) + ")")
 	}
-	return s.recent[index].CmdLine, nil
+	return s.recentCmdLines[index], nil
+}
+
+func (s *sesshist) searchRecordByPrefix(prefix string, histno int) (string, error) {
+	if histno == 0 {
+		return "", errors.New("sesshist ERROR: 'histno == 0' is not a record from history")
+	}
+	if histno < 0 {
+		return "", errors.New("sesshist ERROR: 'histno < 0' is a command from future (not supperted yet)")
+	}
+	index := len(s.recentCmdLines) - histno
+	if index < 0 {
+		return "", errors.New("sesshist ERROR: 'histno > number of commands in the session' (" + strconv.Itoa(len(s.recentCmdLines)) + ")")
+	}
+	cmdLines := []string{}
+	for i := len(s.recentCmdLines) - 1; i >= 0; i-- {
+		if strings.HasPrefix(s.recentCmdLines[i], prefix) {
+			cmdLines = append(cmdLines, s.recentCmdLines[i])
+			if len(cmdLines) >= histno {
+				break
+			}
+		}
+	}
+	if len(cmdLines) < histno {
+		return "", errors.New("sesshist ERROR: 'histno > number of commands matching with given prefix' (" + strconv.Itoa(len(cmdLines)) + ")")
+	}
+	return cmdLines[histno-1], nil
 }

@@ -29,7 +29,7 @@ func (h *recallHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Println("Payload:", jsn)
 		return
 	}
-	cmd, err := h.sesshistDispatch.Recall(rec.SessionID, rec.RecallHistno)
+	cmd, err := h.sesshistDispatch.Recall(rec.SessionID, rec.RecallHistno, rec.RecallPrefix)
 	if err != nil {
 		log.Println("/recall - sess id:", rec.SessionID, " - histno:", rec.RecallHistno, " -> ERROR")
 		log.Println("Recall error:", err)
