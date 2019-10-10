@@ -5,8 +5,8 @@
 . ~/.resh/widgets.sh
 
 __resh_bind_arrows() {
-    bindfunc '\C-k' __resh_widget_arrow_up_compat
-    bindfunc '\C-j' __resh_widget_arrow_down_compat
+    bindfunc '\e[A' __resh_widget_arrow_up_compat
+    bindfunc '\e[B' __resh_widget_arrow_down_compat
     return 0
 }
 

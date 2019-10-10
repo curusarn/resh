@@ -5,16 +5,17 @@ __resh_reset_variables() {
     __RESH_HIST_PREV_LINE=""
     __RESH_HIST_RECALL_ACTIONS=""
     __RESH_HIST_NO_PREFIX_MODE=0
+    __RESH_HIST_RECALL_STRATEGY=""
 }
 
 __resh_preexec() {
     # core
     __RESH_COLLECT=1
     __RESH_CMDLINE="$1" # not local to preserve it for postcollect (useful as sanity check)
-    __resh_collect --cmdLine "$__RESH_CMDLINE" --recall-actions "$__RESH_HIST_RECALL_ACTIONS" \
+    __resh_collect --cmdLine "$__RESH_CMDLINE" \
+        --recall-actions "$__RESH_HIST_RECALL_ACTIONS" \
+        --recall-strategy "$__RESH_HIST_RECALL_STRATEGY" \
         &>~/.resh/collect_last_run_out.txt || echo "resh-collect ERROR: $(head -n 1 ~/.resh/collect_last_run_out.txt)"
-
-    __resh_reset_variables
 }
 
 # used for collect and collect --recall
@@ -152,6 +153,7 @@ __resh_precmd() {
                         -timezoneAfter "$__RESH_TZ_AFTER" \
                         &>~/.resh/postcollect_last_run_out.txt || echo "resh-postcollect ERROR: $(head -n 1 ~/.resh/postcollect_last_run_out.txt)"
         fi
+        __resh_reset_variables
     fi
     unset __RESH_COLLECT
 }

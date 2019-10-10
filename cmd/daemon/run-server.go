@@ -11,7 +11,7 @@ import (
 	"github.com/curusarn/resh/pkg/sesswatch"
 )
 
-func runServer(config cfg.Config, outputPath string) {
+func runServer(config cfg.Config, historyPath string) {
 	var recordSubscribers []chan records.Record
 	var sessionInitSubscribers []chan records.Record
 	var sessionDropSubscribers []chan string
@@ -23,14 +23,16 @@ func runServer(config cfg.Config, outputPath string) {
 	sessionDropSubscribers = append(sessionDropSubscribers, sesshistSessionsToDrop)
 	sesshistRecords := make(chan records.Record)
 	recordSubscribers = append(recordSubscribers, sesshistRecords)
-	sesshistDispatch := sesshist.NewDispatch(sesshistSessionsToInit, sesshistSessionsToDrop, sesshistRecords)
 
 	// histfile
 	histfileRecords := make(chan records.Record)
 	recordSubscribers = append(recordSubscribers, histfileRecords)
 	histfileSessionsToDrop := make(chan string)
 	sessionDropSubscribers = append(sessionDropSubscribers, histfileSessionsToDrop)
-	histfile.Go(histfileRecords, outputPath, histfileSessionsToDrop)
+	histfileBox := histfile.New(histfileRecords, historyPath, 10000, histfileSessionsToDrop)
+
+	// sesshist New
+	sesshistDispatch := sesshist.NewDispatch(sesshistSessionsToInit, sesshistSessionsToDrop, sesshistRecords, histfileBox, config.SesshistInitHistorySize)
 
 	// sesswatch
 	sesswatchSessionsToWatch := make(chan records.Record)

@@ -1,10 +1,12 @@
 package records
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"log"
 	"math"
+	"os"
 	"strconv"
 	"strings"
 
@@ -81,10 +83,11 @@ type BaseRecord struct {
 	SessionExit bool `json:"sessionExit,omitempty"`
 
 	// recall metadata
-	Recalled       bool     `json:"recalled"`
-	RecallHistno   int      `json:"recallHistno,omitempty"`
-	RecallStrategy string   `json:"recallStrategy,omitempty"`
-	RecallActions  []string `json:"recallActions,omitempty"`
+	Recalled         bool     `json:"recalled"`
+	RecallHistno     int      `json:"recallHistno,omitempty"`
+	RecallStrategy   string   `json:"recallStrategy,omitempty"`
+	RecallActionsRaw string   `json:"recallActionsRaw,omitempty"`
+	RecallActions    []string `json:"recallActions,omitempty"`
 
 	// recall command
 	RecallPrefix string `json:"recallPrefix,omitempty"`
@@ -177,11 +180,10 @@ func (r *Record) Merge(r2 Record) error {
 	if r.SessionID != r2.SessionID {
 		return errors.New("Records to merge are not from the same sesion - r1:" + r.SessionID + " r2:" + r2.SessionID)
 	}
-	if r.CmdLine != r2.CmdLine || r.RealtimeBefore != r2.RealtimeBefore {
-		return errors.New("Records to merge are not parts of the same records - r1:" +
-			r.CmdLine + "(" + strconv.FormatFloat(r.RealtimeBefore, 'f', -1, 64) + ") r2:" +
-			r2.CmdLine + "(" + strconv.FormatFloat(r2.RealtimeBefore, 'f', -1, 64) + ")")
+	if r.CmdLine != r2.CmdLine {
+		return errors.New("Records to merge are not parts of the same records - r1:" + r.CmdLine + " r2:" + r2.CmdLine)
 	}
+	// r.RealtimeBefore != r2.RealtimeBefore - can't be used because of bash-preexec runs when it's not supposed to
 	r.ExitCode = r2.ExitCode
 	r.PwdAfter = r2.PwdAfter
 	r.RealPwdAfter = r2.RealPwdAfter
@@ -435,4 +437,51 @@ func (r *EnrichedRecord) DistanceTo(r2 EnrichedRecord, p DistParams) float64 {
 	// CmdLength
 
 	return dist
+}
+
+// LoadCmdLinesFromFile loads limit cmdlines from file
+func LoadCmdLinesFromFile(fname string, limit int) []string {
+	recs := LoadFromFile(fname, limit*3) // assume that at least 1/3 of commands is unique
+	var cmdLines []string
+	cmdLinesSet := map[string]bool{}
+	for i := len(recs) - 1; i >= 0; i-- {
+		cmdLine := recs[i].CmdLine
+		if cmdLinesSet[cmdLine] {
+			continue
+		}
+		cmdLinesSet[cmdLine] = true
+		cmdLines = append([]string{cmdLine}, cmdLines...)
+		if len(cmdLines) > limit {
+			break
+		}
+	}
+	return cmdLines
+}
+
+// LoadFromFile loads at most 'limit' records from 'fname' file
+func LoadFromFile(fname string, limit int) []Record {
+	file, err := os.Open(fname)
+	if err != nil {
+		log.Fatal("Open() resh history file error:", err)
+	}
+	defer file.Close()
+
+	var recs []Record
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		record := Record{}
+		fallbackRecord := FallbackRecord{}
+		line := scanner.Text()
+		err = json.Unmarshal([]byte(line), &record)
+		if err != nil {
+			err = json.Unmarshal([]byte(line), &fallbackRecord)
+			if err != nil {
+				log.Println("Line:", line)
+				log.Fatal("Decoding error:", err)
+			}
+			record = Convert(&fallbackRecord)
+		}
+		recs = append(recs, record)
+	}
+	return recs
 }

@@ -56,6 +56,7 @@ func main() {
 
 	// recall metadata
 	recallActions := flag.String("recall-actions", "", "recall actions that took place before executing the command")
+	recallStrategy := flag.String("recall-strategy", "", "recall strategy used during recall actions")
 
 	// posix variables
 	cols := flag.String("cols", "-1", "$COLUMNS")
@@ -123,10 +124,6 @@ func main() {
 			"; resh revision of this terminal session: " + *requireRevision +
 			")")
 		os.Exit(3)
-	}
-	if *recallHistno != 0 && *recall == false {
-		log.Println("Option '--recall' only works with '--histno' option - exiting!")
-		os.Exit(4)
 	}
 	if *recallPrefix != "" && *recall == false {
 		log.Println("Option '--prefix-search' only works with '--recall' option - exiting!")
@@ -232,8 +229,9 @@ func main() {
 			ReshVersion:  Version,
 			ReshRevision: Revision,
 
-			RecallActions: []string{*recallActions},
-			RecallPrefix:  *recallPrefix,
+			RecallActionsRaw: *recallActions,
+			RecallPrefix:     *recallPrefix,
+			RecallStrategy:   *recallStrategy,
 		},
 	}
 	if *recall {

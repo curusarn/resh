@@ -1,2 +1,3 @@
 port = 2627 
 sesswatchPeriodSeconds = 120 
+sesshistInitHistorySize = 1000

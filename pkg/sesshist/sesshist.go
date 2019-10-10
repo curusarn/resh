@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/curusarn/resh/pkg/histfile"
 	"github.com/curusarn/resh/pkg/records"
 )
 
@@ -14,11 +15,20 @@ import (
 type Dispatch struct {
 	sessions map[string]*sesshist
 	mutex    sync.RWMutex
+
+	history         *histfile.Histfile
+	historyInitSize int
 }
 
 // NewDispatch creates a new sesshist.Dispatch and starts necessary gorutines
-func NewDispatch(sessionsToInit chan records.Record, sessionsToDrop chan string, recordsToAdd chan records.Record) *Dispatch {
-	s := Dispatch{sessions: map[string]*sesshist{}}
+func NewDispatch(sessionsToInit chan records.Record, sessionsToDrop chan string,
+	recordsToAdd chan records.Record, history *histfile.Histfile, historyInitSize int) *Dispatch {
+
+	s := Dispatch{
+		sessions:        map[string]*sesshist{},
+		history:         history,
+		historyInitSize: historyInitSize,
+	}
 	go s.sessionInitializer(sessionsToInit)
 	go s.sessionDropper(sessionsToDrop)
 	go s.recordAdder(recordsToAdd)
@@ -54,6 +64,7 @@ func (s *Dispatch) recordAdder(recordsToAdd chan records.Record) {
 
 // InitSession struct
 func (s *Dispatch) initSession(sessionID string) error {
+	log.Println("sesshist: initializing session - " + sessionID)
 	s.mutex.RLock()
 	_, found := s.sessions[sessionID]
 	s.mutex.RUnlock()
@@ -62,9 +73,17 @@ func (s *Dispatch) initSession(sessionID string) error {
 		return errors.New("sesshist ERROR: Can't INIT already existing session " + sessionID)
 	}
 
+	log.Println("sesshist: loading history to populate session - " + sessionID)
+	historyCmdLines := s.history.GetRecentCmdLines(s.historyInitSize)
+
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	s.sessions[sessionID] = &sesshist{}
+	// init sesshist and populate it with history loaded from file
+	s.sessions[sessionID] = &sesshist{
+		recentCmdLines:    historyCmdLines,
+		cmdLinesLastIndex: map[string]int{},
+	}
+	log.Println("sesshist: session init done - " + sessionID)
 	return nil
 }
 
@@ -91,19 +110,22 @@ func (s *Dispatch) addRecentRecord(sessionID string, record records.Record) erro
 	s.mutex.RUnlock()
 
 	if found == false {
-		return errors.New("sesshist ERROR: No session history for SessionID " + sessionID + " (should we create one?)")
+		log.Println("sesshist ERROR: addRecontRecord(): No session history for SessionID " + sessionID + " - creating session history.")
+		s.initSession(sessionID)
+		return s.addRecentRecord(sessionID, record)
 	}
 	session.mutex.Lock()
 	defer session.mutex.Unlock()
 	session.recentRecords = append(session.recentRecords, record)
 	// remove previous occurance of record
-	for i := len(session.recentCmdLines) - 1; i >= 0; i-- {
-		if session.recentCmdLines[i] == record.CmdLine {
-			session.recentCmdLines = append(session.recentCmdLines[:i], session.recentCmdLines[i+1:]...)
-		}
+	cmdLine := record.CmdLine
+	idx, found := session.cmdLinesLastIndex[cmdLine]
+	if found {
+		session.recentCmdLines = append(session.recentCmdLines[:idx], session.recentCmdLines[idx+1:]...)
 	}
+	session.cmdLinesLastIndex[cmdLine] = len(session.recentCmdLines)
 	// append new record
-	session.recentCmdLines = append(session.recentCmdLines, record.CmdLine)
+	session.recentCmdLines = append(session.recentCmdLines, cmdLine)
 	log.Println("sesshist: record:", record.CmdLine, "; added to session:", sessionID,
 		"; session len:", len(session.recentCmdLines), "; session len w/ dups:", len(session.recentRecords))
 	return nil
@@ -116,7 +138,8 @@ func (s *Dispatch) Recall(sessionID string, histno int, prefix string) (string, 
 	s.mutex.RUnlock()
 
 	if found == false {
-		return "", errors.New("sesshist ERROR: No session history for SessionID " + sessionID)
+		// go s.initSession(sessionID)
+		return "", errors.New("sesshist ERROR: No session history for SessionID " + sessionID + " - should we create one?")
 	}
 	if prefix == "" {
 		session.mutex.Lock()
@@ -129,10 +152,10 @@ func (s *Dispatch) Recall(sessionID string, histno int, prefix string) (string, 
 }
 
 type sesshist struct {
-	recentRecords  []records.Record
-	recentCmdLines []string // deduplicated
-	// cmdLines map[string]int
-	mutex sync.Mutex
+	recentRecords     []records.Record
+	recentCmdLines    []string // deduplicated
+	cmdLinesLastIndex map[string]int
+	mutex             sync.Mutex
 }
 
 func (s *sesshist) getRecordByHistno(histno int) (string, error) {
