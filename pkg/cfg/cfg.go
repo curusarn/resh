@@ -2,5 +2,7 @@ package cfg
 
 // Config struct
 type Config struct {
-	Port int
+	Port                    int
+	SesswatchPeriodSeconds  uint
+	SesshistInitHistorySize int
 }

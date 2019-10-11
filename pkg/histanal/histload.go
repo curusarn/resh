@@ -162,7 +162,7 @@ func (e *HistLoad) loadHistoryRecords(fname string) []records.EnrichedRecord {
 				log.Println("Line:", line)
 				log.Fatal("Decoding error:", err)
 			}
-			record = records.ConvertRecord(&fallbackRecord)
+			record = records.Convert(&fallbackRecord)
 		}
 		if e.sanitizedInput == false {
 			if record.CmdLength != 0 {

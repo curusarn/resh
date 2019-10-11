@@ -1,10 +1,12 @@
 package records
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"log"
 	"math"
+	"os"
 	"strconv"
 	"strings"
 
@@ -35,7 +37,7 @@ type BaseRecord struct {
 	RealPwd      string `json:"realPwd"`
 	RealPwdAfter string `json:"realPwdAfter"`
 	Pid          int    `json:"pid"`
-	SessionPid   int    `json:"sessionPid"`
+	SessionPID   int    `json:"sessionPid"`
 	Host         string `json:"host"`
 	Hosttype     string `json:"hosttype"`
 	Ostype       string `json:"ostype"`
@@ -56,10 +58,13 @@ type BaseRecord struct {
 	RealtimeSinceBoot         float64 `json:"realtimeSinceBoot"`
 	//Logs []string      `json: "logs"`
 
-	GitDir          string `json:"gitDir"`
-	GitRealDir      string `json:"gitRealDir"`
-	GitOriginRemote string `json:"gitOriginRemote"`
-	MachineID       string `json:"machineId"`
+	GitDir               string `json:"gitDir"`
+	GitRealDir           string `json:"gitRealDir"`
+	GitOriginRemote      string `json:"gitOriginRemote"`
+	GitDirAfter          string `json:"gitDirAfter"`
+	GitRealDirAfter      string `json:"gitRealDirAfter"`
+	GitOriginRemoteAfter string `json:"gitOriginRemoteAfter"`
+	MachineID            string `json:"machineId"`
 
 	OsReleaseID         string `json:"osReleaseId"`
 	OsReleaseVersionID  string `json:"osReleaseVersionId"`
@@ -70,6 +75,22 @@ type BaseRecord struct {
 	ReshUUID     string `json:"reshUuid"`
 	ReshVersion  string `json:"reshVersion"`
 	ReshRevision string `json:"reshRevision"`
+
+	// records come in two parts (collect and postcollect)
+	PartOne     bool `json:"partOne,omitempty"` // false => part two
+	PartsMerged bool `json:"partsMerged"`
+	// special flag -> not an actual record but an session end
+	SessionExit bool `json:"sessionExit,omitempty"`
+
+	// recall metadata
+	Recalled         bool     `json:"recalled"`
+	RecallHistno     int      `json:"recallHistno,omitempty"`
+	RecallStrategy   string   `json:"recallStrategy,omitempty"`
+	RecallActionsRaw string   `json:"recallActionsRaw,omitempty"`
+	RecallActions    []string `json:"recallActions,omitempty"`
+
+	// recall command
+	RecallPrefix string `json:"recallPrefix,omitempty"`
 
 	// added by sanitizatizer
 	Sanitized bool `json:"sanitized,omitempty"`
@@ -108,8 +129,8 @@ type FallbackRecord struct {
 	Lines int `json:"lines"` // notice the int type
 }
 
-// ConvertRecord from FallbackRecord to Record
-func ConvertRecord(r *FallbackRecord) Record {
+// Convert from FallbackRecord to Record
+func Convert(r *FallbackRecord) Record {
 	return Record{
 		BaseRecord: r.BaseRecord,
 		// these two lines are the only reason we are doing this
@@ -149,6 +170,34 @@ func Enriched(r Record) EnrichedRecord {
 	}
 	return record
 	// TODO: Detect and mark simple commands r.Simple
+}
+
+// Merge two records (part1 - collect + part2 - postcollect)
+func (r *Record) Merge(r2 Record) error {
+	if r.PartOne == false || r2.PartOne {
+		return errors.New("Expected part1 and part2 of the same record - usage: part1.Merge(part2)")
+	}
+	if r.SessionID != r2.SessionID {
+		return errors.New("Records to merge are not from the same sesion - r1:" + r.SessionID + " r2:" + r2.SessionID)
+	}
+	if r.CmdLine != r2.CmdLine {
+		return errors.New("Records to merge are not parts of the same records - r1:" + r.CmdLine + " r2:" + r2.CmdLine)
+	}
+	// r.RealtimeBefore != r2.RealtimeBefore - can't be used because of bash-preexec runs when it's not supposed to
+	r.ExitCode = r2.ExitCode
+	r.PwdAfter = r2.PwdAfter
+	r.RealPwdAfter = r2.RealPwdAfter
+	r.GitDirAfter = r2.GitDirAfter
+	r.GitRealDirAfter = r2.GitRealDirAfter
+	r.RealtimeAfter = r2.RealtimeAfter
+	r.GitOriginRemoteAfter = r2.GitOriginRemoteAfter
+	r.TimezoneAfter = r2.TimezoneAfter
+	r.RealtimeAfterLocal = r2.RealtimeAfterLocal
+	r.RealtimeDuration = r2.RealtimeDuration
+
+	r.PartsMerged = true
+	r.PartOne = false
+	return nil
 }
 
 // Validate - returns error if the record is invalid
@@ -388,4 +437,51 @@ func (r *EnrichedRecord) DistanceTo(r2 EnrichedRecord, p DistParams) float64 {
 	// CmdLength
 
 	return dist
+}
+
+// LoadCmdLinesFromFile loads limit cmdlines from file
+func LoadCmdLinesFromFile(fname string, limit int) []string {
+	recs := LoadFromFile(fname, limit*3) // assume that at least 1/3 of commands is unique
+	var cmdLines []string
+	cmdLinesSet := map[string]bool{}
+	for i := len(recs) - 1; i >= 0; i-- {
+		cmdLine := recs[i].CmdLine
+		if cmdLinesSet[cmdLine] {
+			continue
+		}
+		cmdLinesSet[cmdLine] = true
+		cmdLines = append([]string{cmdLine}, cmdLines...)
+		if len(cmdLines) > limit {
+			break
+		}
+	}
+	return cmdLines
+}
+
+// LoadFromFile loads at most 'limit' records from 'fname' file
+func LoadFromFile(fname string, limit int) []Record {
+	file, err := os.Open(fname)
+	if err != nil {
+		log.Fatal("Open() resh history file error:", err)
+	}
+	defer file.Close()
+
+	var recs []Record
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		record := Record{}
+		fallbackRecord := FallbackRecord{}
+		line := scanner.Text()
+		err = json.Unmarshal([]byte(line), &record)
+		if err != nil {
+			err = json.Unmarshal([]byte(line), &fallbackRecord)
+			if err != nil {
+				log.Println("Line:", line)
+				log.Fatal("Decoding error:", err)
+			}
+			record = Convert(&fallbackRecord)
+		}
+		recs = append(recs, record)
+	}
+	return recs
 }

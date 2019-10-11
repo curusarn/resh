@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/json"
+
 	//"flag"
 	"io/ioutil"
 	"log"
@@ -15,7 +15,6 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/curusarn/resh/pkg/cfg"
-	"github.com/curusarn/resh/pkg/records"
 )
 
 // Version from git set during build
@@ -32,7 +31,7 @@ func main() {
 	dir := usr.HomeDir
 	pidfilePath := filepath.Join(dir, ".resh/resh.pid")
 	configPath := filepath.Join(dir, ".config/resh.toml")
-	outputPath := filepath.Join(dir, ".resh_history.json")
+	historyPath := filepath.Join(dir, ".resh_history.json")
 	logPath := filepath.Join(dir, ".resh/daemon.log")
 
 	f, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
@@ -70,7 +69,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Could not create pidfile", err)
 	}
-	runServer(config.Port, outputPath)
+	runServer(config, historyPath)
 	err = os.Remove(pidfilePath)
 	if err != nil {
 		log.Println("Could not delete pidfile", err)
@@ -81,52 +80,6 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK; version: " + Version +
 		"; revision: " + Revision + "\n"))
 	log.Println("Status OK")
-}
-
-type recordHandler struct {
-	OutputPath string
-}
-
-func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("OK\n"))
-	record := records.Record{}
-
-	jsn, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Println("Error reading the body", err)
-		return
-	}
-
-	err = json.Unmarshal(jsn, &record)
-	if err != nil {
-		log.Println("Decoding error: ", err)
-		log.Println("Payload: ", jsn)
-		return
-	}
-	f, err := os.OpenFile(h.OutputPath,
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Println("Could not open file", err)
-		return
-	}
-	defer f.Close()
-	_, err = f.Write(append(jsn, []byte("\n")...))
-	if err != nil {
-		log.Printf("Error while writing: %v, %s\n", record, err)
-		return
-	}
-	log.Println("Received: ", record.CmdLine)
-
-	// fmt.Println("cmd:", r.CmdLine)
-	// fmt.Println("pwd:", r.Pwd)
-	// fmt.Println("git:", r.GitWorkTree)
-	// fmt.Println("exit_code:", r.ExitCode)
-}
-
-func runServer(port int, outputPath string) {
-	http.HandleFunc("/status", statusHandler)
-	http.Handle("/record", &recordHandler{OutputPath: outputPath})
-	http.ListenAndServe(":"+strconv.Itoa(port), nil)
 }
 
 func killDaemon(pidfile string) error {
@@ -158,25 +111,4 @@ func isDaemonRunning(port int) (bool, error) {
 	}
 	defer resp.Body.Close()
 	return true, nil
-	//body, err := ioutil.ReadAll(resp.Body)
-
-	//    dat, err := ioutil.ReadFile(pidfile)
-	//    if err != nil {
-	//        log.Println("Reading pid file failed", err)
-	//        return false, err
-	//    }
-	//    log.Print(string(dat))
-	//    pid, err := strconv.ParseInt(string(dat), 10, 64)
-	//    if err != nil {
-	//        log.Fatal(err)
-	//    }
-	//    process, err := os.FindProcess(int(pid))
-	//    if err != nil {
-	//        log.Printf("Failed to find process: %s\n", err)
-	//        return false, err
-	//    } else {
-	//        err := process.Signal(syscall.Signal(0))
-	//        log.Printf("process.Signal on pid %d returned: %v\n", pid, err)
-	//    }
-	//    return true, nil
 }

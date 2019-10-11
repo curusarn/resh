@@ -1,0 +1,118 @@
+package collect
+
+import (
+	"bytes"
+	"encoding/json"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"path/filepath"
+	"strconv"
+	"strings"
+
+	"github.com/curusarn/resh/pkg/records"
+)
+
+// SingleResponse json struct
+type SingleResponse struct {
+	CmdLine string `json:"cmdline"`
+}
+
+// SendRecallRequest to daemon
+func SendRecallRequest(r records.Record, port string) string {
+	recJSON, err := json.Marshal(r)
+	if err != nil {
+		log.Fatal("send err 1", err)
+	}
+
+	req, err := http.NewRequest("POST", "http://localhost:"+port+"/recall",
+		bytes.NewBuffer(recJSON))
+	if err != nil {
+		log.Fatal("send err 2", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal("resh-daemon is not running :(")
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal("read response error")
+	}
+	log.Println(string(body))
+	response := SingleResponse{}
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		log.Fatal("unmarshal resp error: ", err)
+	}
+	log.Println(response)
+	return response.CmdLine
+}
+
+// SendRecord to daemon
+func SendRecord(r records.Record, port, path string) {
+	recJSON, err := json.Marshal(r)
+	if err != nil {
+		log.Fatal("send err 1", err)
+	}
+
+	req, err := http.NewRequest("POST", "http://localhost:"+port+path,
+		bytes.NewBuffer(recJSON))
+	if err != nil {
+		log.Fatal("send err 2", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	_, err = client.Do(req)
+	if err != nil {
+		log.Fatal("resh-daemon is not running :(")
+	}
+}
+
+// ReadFileContent and return it as a string
+func ReadFileContent(path string) string {
+	dat, err := ioutil.ReadFile(path)
+	if err != nil {
+		return ""
+		//log.Fatal("failed to open " + path)
+	}
+	return strings.TrimSuffix(string(dat), "\n")
+}
+
+// GetGitDirs based on result of git "cdup" command
+func GetGitDirs(cdup string, exitCode int, pwd string) (string, string) {
+	if exitCode != 0 {
+		return "", ""
+	}
+	abspath := filepath.Clean(filepath.Join(pwd, cdup))
+	realpath, err := filepath.EvalSymlinks(abspath)
+	if err != nil {
+		log.Println("err while handling git dir paths:", err)
+		return "", ""
+	}
+	return abspath, realpath
+}
+
+// GetTimezoneOffsetInSeconds based on zone returned by date command
+func GetTimezoneOffsetInSeconds(zone string) float64 {
+	// date +%z -> "+0200"
+	hoursStr := zone[:3]
+	minsStr := zone[3:]
+	hours, err := strconv.Atoi(hoursStr)
+	if err != nil {
+		log.Println("err while parsing hours in timezone offset:", err)
+		return -1
+	}
+	mins, err := strconv.Atoi(minsStr)
+	if err != nil {
+		log.Println("err while parsing mins in timezone offset:", err)
+		return -1
+	}
+	secs := ((hours * 60) + mins) * 60
+	return float64(secs)
+}
