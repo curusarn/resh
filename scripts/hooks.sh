@@ -114,6 +114,7 @@ __resh_precmd() {
     local __RESH_GIT_CDUP_EXIT_CODE_AFTER
     local __RESH_GIT_REMOTE_AFTER
     local __RESH_GIT_REMOTE_EXIT_CODE_AFTER
+    local __RESH_SHLVL="$SHLVL"
     __RESH_RT_AFTER=$(__resh_get_epochrealtime)
     __RESH_TZ_AFTER=$(date +%z)
     __RESH_PWD_AFTER="$PWD"
@@ -144,6 +145,7 @@ __resh_precmd() {
                         -realtimeBefore "$__RESH_RT_BEFORE" \
                         -exitCode "$__RESH_EXIT_CODE" \
                         -sessionId "$__RESH_SESSION_ID" \
+                        -shlvl "$__RESH_SHLVL" \
                         -pwdAfter "$__RESH_PWD_AFTER" \
                         -gitCdupAfter "$__RESH_GIT_CDUP_AFTER" \
                         -gitCdupExitCodeAfter "$__RESH_GIT_CDUP_EXIT_CODE_AFTER" \

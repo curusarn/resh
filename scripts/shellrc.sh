@@ -69,6 +69,8 @@ __RESH_REVISION=$(resh-collect -revision)
 
 __resh_run_daemon
 
+# block for anything we only want to do once per session
+# NOTE: nested shells are still the same session
 if [ -z "${__RESH_SESSION_ID+x}" ]; then
     export __RESH_SESSION_ID; __RESH_SESSION_ID=$(__resh_get_uuid)
     export __RESH_SESSION_PID="$$"
@@ -77,9 +79,12 @@ if [ -z "${__RESH_SESSION_ID+x}" ]; then
     __resh_session_init
 fi
 
-# do not add more hooks when shellrc is sourced again  
-if [ -z "${__RESH_PREEXEC_PRECMD_HOOKS_ADDED+x}" ]; then
+# block for anything we only want to do once per shell
+if [ -z "${__RESH_INIT_DONE+x}" ]; then
     preexec_functions+=(__resh_preexec)
     precmd_functions+=(__resh_precmd)
-    __RESH_PREEXEC_PRECMD_HOOKS_ADDED=1
+
+    __resh_reset_variables
+
+    __RESH_INIT_DONE=1
 fi

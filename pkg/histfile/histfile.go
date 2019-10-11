@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"strconv"
 	"sync"
 
 	"github.com/curusarn/resh/pkg/records"
@@ -67,17 +68,19 @@ func (h *Histfile) writer(input chan records.Record) {
 			h.sessionsMutex.Lock()
 			defer h.sessionsMutex.Unlock()
 
+			// allows nested sessions to merge records properly
+			mergeID := record.SessionID + "_" + strconv.Itoa(record.Shlvl)
 			if record.PartOne {
-				if _, found := h.sessions[record.SessionID]; found {
+				if _, found := h.sessions[mergeID]; found {
 					log.Println("histfile WARN: Got another first part of the records before merging the previous one - overwriting! " +
 						"(this happens in bash because bash-preexec runs when it's not supposed to)")
 				}
-				h.sessions[record.SessionID] = record
+				h.sessions[mergeID] = record
 			} else {
-				if part1, found := h.sessions[record.SessionID]; found == false {
-					log.Println("histfile ERROR: Got second part of records and nothing to merge it with - ignoring!")
+				if part1, found := h.sessions[mergeID]; found == false {
+					log.Println("histfile ERROR: Got second part of records and nothing to merge it with - ignoring! (mergeID:", mergeID, ")")
 				} else {
-					delete(h.sessions, record.SessionID)
+					delete(h.sessions, mergeID)
 					go h.mergeAndWriteRecord(part1, record)
 				}
 			}

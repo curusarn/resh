@@ -19,7 +19,7 @@ __resh_helper_arrow_pre() {
     # "NO_PREFIX_MODE" => set prefix to empty string
     [ "$__RESH_HIST_NO_PREFIX_MODE" -eq 1 ] && __RESH_PREFIX=""
     # histno == 0 => save current line
-    [ $__RESH_HISTNO -eq 0 ] && __RESH_HISTNO_ZERO_LINE=$BUFFER
+    [ "$__RESH_HISTNO" -eq 0 ] && __RESH_HISTNO_ZERO_LINE=$BUFFER
 }
 __resh_helper_arrow_post() {
     # cursor at the beginning of the line => activate "NO_PREFIX_MODE"
@@ -38,7 +38,7 @@ __resh_widget_arrow_up() {
     # increment histno
     __RESH_HISTNO=$((__RESH_HISTNO+1))
     # back at histno == 0 => restore original line
-    if [ $__RESH_HISTNO -eq 0 ]; then
+    if [ "$__RESH_HISTNO" -eq 0 ]; then
         BUFFER=$__RESH_HISTNO_ZERO_LINE
     else
         # run recall
@@ -46,7 +46,7 @@ __resh_widget_arrow_up() {
         NEW_BUFFER="$(__resh_collect --recall --prefix-search "$__RESH_PREFIX" 2> ~/.resh/arrow_up_last_run_out.txt)"
         # IF new buffer in non-empty THEN use the new buffer ELSE revert histno change
         # shellcheck disable=SC2015
-        [ ${#NEW_BUFFER} -gt 0 ] && BUFFER=$NEW_BUFFER || __RESH_HISTNO=$((__RESH_HISTNO-1))
+        [ "${#NEW_BUFFER}" -gt 0 ] && BUFFER=$NEW_BUFFER || __RESH_HISTNO=$((__RESH_HISTNO-1))
     fi
     # run post helper
     __resh_helper_arrow_post
@@ -59,9 +59,9 @@ __resh_widget_arrow_down() {
     # increment histno
     __RESH_HISTNO=$((__RESH_HISTNO-1))
     # prevent HISTNO from getting negative (for now)
-    [ $__RESH_HISTNO -lt 0 ] && __RESH_HISTNO=0
+    [ "$__RESH_HISTNO" -lt 0 ] && __RESH_HISTNO=0
     # back at histno == 0 => restore original line
-    if [ $__RESH_HISTNO -eq 0 ]; then
+    if [ "$__RESH_HISTNO" -eq 0 ]; then
         BUFFER=$__RESH_HISTNO_ZERO_LINE
     else
         # run recall
@@ -69,7 +69,7 @@ __resh_widget_arrow_down() {
         NEW_BUFFER="$(__resh_collect --recall --prefix-search "$__RESH_PREFIX" 2> ~/.resh/arrow_down_last_run_out.txt)"
         # IF new buffer in non-empty THEN use the new buffer ELSE revert histno change
         # shellcheck disable=SC2015
-        [ ${#NEW_BUFFER} -gt 0 ] && BUFFER=$NEW_BUFFER || (( __RESH_HISTNO++ ))
+        [ "${#NEW_BUFFER}" -gt 0 ] && BUFFER=$NEW_BUFFER || (( __RESH_HISTNO++ ))
     fi
     __resh_helper_arrow_post
 }
