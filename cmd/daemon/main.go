@@ -70,10 +70,12 @@ func main() {
 		log.Fatal("Could not create pidfile", err)
 	}
 	runServer(config, historyPath)
+	log.Println("main: Removing pidfile ...")
 	err = os.Remove(pidfilePath)
 	if err != nil {
 		log.Println("Could not delete pidfile", err)
 	}
+	log.Println("main: Shutdown - bye")
 }
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
@@ -92,7 +94,7 @@ func killDaemon(pidfile string) error {
 	if err != nil {
 		log.Fatal("Pidfile contents are malformed", err)
 	}
-	cmd := exec.Command("kill", strconv.Itoa(pid))
+	cmd := exec.Command("kill", "-s", "sigint", strconv.Itoa(pid))
 	err = cmd.Run()
 	if err != nil {
 		log.Printf("Command finished with error: %v", err)
