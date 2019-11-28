@@ -41,7 +41,7 @@ If you install RESH, please give me some contact info using this form: https://f
 ## Prereqisities
 
 - `git`
-- `golang` (>1.11 if possible but we can deal with old ones as well)
+- `golang` >1.6 (preferably >1.11)
 
 ## Installation
 
@@ -64,6 +64,7 @@ Works in `bash` and `zsh`.
 Tested on:
 
 - Arch
+- Manjaro
 - MacOS
 - Ubuntu (18.04)
 - really old Ubuntu (16.04)
