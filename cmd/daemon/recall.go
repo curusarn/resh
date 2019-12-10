@@ -24,7 +24,7 @@ func (h *recallHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rec := records.Record{}
+	rec := records.SlimRecord{}
 	log.Println("/recall unmarshaling record ...")
 	err = json.Unmarshal(jsn, &rec)
 	if err != nil {

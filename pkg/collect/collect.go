@@ -19,7 +19,7 @@ type SingleResponse struct {
 }
 
 // SendRecallRequest to daemon
-func SendRecallRequest(r records.Record, port string) string {
+func SendRecallRequest(r records.SlimRecord, port string) string {
 	recJSON, err := json.Marshal(r)
 	if err != nil {
 		log.Fatal("send err 1", err)

@@ -129,6 +129,21 @@ type FallbackRecord struct {
 	Lines int `json:"lines"` // notice the int type
 }
 
+// SlimRecord used for recalling because unmarshalling record w/ 50+ fields is too slow
+type SlimRecord struct {
+	SessionID    string `json:"sessionId"`
+	RecallHistno int    `json:"recallHistno,omitempty"`
+	RecallPrefix string `json:"recallPrefix,omitempty"`
+
+	// extra recall - we might use these in the future
+	// Pwd string `json:"pwd"`
+	// RealPwd string `json:"realPwd"`
+	// GitDir          string `json:"gitDir"`
+	// GitRealDir      string `json:"gitRealDir"`
+	// GitOriginRemote string `json:"gitOriginRemote"`
+
+}
+
 // Convert from FallbackRecord to Record
 func Convert(r *FallbackRecord) Record {
 	return Record{
