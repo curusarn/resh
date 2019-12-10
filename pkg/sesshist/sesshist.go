@@ -133,7 +133,9 @@ func (s *Dispatch) addRecentRecord(sessionID string, record records.Record) erro
 
 // Recall command from recent session history
 func (s *Dispatch) Recall(sessionID string, histno int, prefix string) (string, error) {
+	log.Println("sesshist - recall: RLocking main lock ...")
 	s.mutex.RLock()
+	log.Println("sesshist - recall: Getting session history struct ...")
 	session, found := s.sessions[sessionID]
 	s.mutex.RUnlock()
 
@@ -141,13 +143,14 @@ func (s *Dispatch) Recall(sessionID string, histno int, prefix string) (string, 
 		// go s.initSession(sessionID)
 		return "", errors.New("sesshist ERROR: No session history for SessionID " + sessionID + " - should we create one?")
 	}
-	if prefix == "" {
-		session.mutex.Lock()
-		defer session.mutex.Unlock()
-		return session.getRecordByHistno(histno)
-	}
+	log.Println("sesshist - recall: Locking session lock ...")
 	session.mutex.Lock()
 	defer session.mutex.Unlock()
+	if prefix == "" {
+		log.Println("sesshist - recall: Getting records by histno ...")
+		return session.getRecordByHistno(histno)
+	}
+	log.Println("sesshist - recall: Searching for records by prefix ...")
 	return session.searchRecordByPrefix(prefix, histno)
 }
 

@@ -48,6 +48,10 @@ func main() {
 		log.Println("Error reading config", err)
 		return
 	}
+	if config.Debug {
+		log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+	}
+
 	res, err := isDaemonRunning(config.Port)
 	if err != nil {
 		log.Println("Error while checking if the daemon is runnnig", err)

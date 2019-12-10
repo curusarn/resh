@@ -39,7 +39,9 @@ func runServer(config cfg.Config, historyPath string) {
 	histfileBox := histfile.New(histfileRecords, historyPath, 10000, histfileSessionsToDrop, histfileSignals, shutdown)
 
 	// sesshist New
-	sesshistDispatch := sesshist.NewDispatch(sesshistSessionsToInit, sesshistSessionsToDrop, sesshistRecords, histfileBox, config.SesshistInitHistorySize)
+	sesshistDispatch := sesshist.NewDispatch(sesshistSessionsToInit, sesshistSessionsToDrop,
+		sesshistRecords, histfileBox,
+		config.SesshistInitHistorySize)
 
 	// sesswatch
 	sesswatchSessionsToWatch := make(chan records.Record)
