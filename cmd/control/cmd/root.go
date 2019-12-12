@@ -18,10 +18,12 @@ var rootCmd = &cobra.Command{
 // Execute reshctl
 func Execute() status.Code {
 	rootCmd.AddCommand(disableCmd)
-	// disableCmd.AddCommand(disableRecallingCmd)
+	disableCmd.AddCommand(disableArrowKeyBindingsCmd)
+	disableCmd.AddCommand(disableArrowKeyBindingsGlobalCmd)
 
 	rootCmd.AddCommand(enableCmd)
-	// enableCmd.AddCommand(enableRecallingCmd)
+	enableCmd.AddCommand(enableArrowKeyBindingsCmd)
+	enableCmd.AddCommand(enableArrowKeyBindingsGlobalCmd)
 
 	rootCmd.AddCommand(completionCmd)
 	completionCmd.AddCommand(completionBashCmd)

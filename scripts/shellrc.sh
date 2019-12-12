@@ -23,13 +23,13 @@ else
     echo "resh PANIC unrecognized OS"
 fi
 
-if [ -n "$ZSH_VERSION" ]; then
+if [ -n "${ZSH_VERSION-}" ]; then
     # shellcheck disable=SC1009
     __RESH_SHELL="zsh"
     __RESH_HOST="$HOST"
     __RESH_HOSTTYPE="$CPUTYPE"
     __resh_zsh_completion_init
-elif [ -n "$BASH_VERSION" ]; then
+elif [ -n "${BASH_VERSION-}" ]; then
     __RESH_SHELL="bash"
     __RESH_HOST="$HOSTNAME"
     __RESH_HOSTTYPE="$HOSTTYPE"

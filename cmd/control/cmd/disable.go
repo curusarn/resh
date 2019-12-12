@@ -7,18 +7,22 @@ import (
 
 var disableCmd = &cobra.Command{
 	Use:   "disable",
-	Short: "disable RESH features",
-	Long:  `Disables RESH bindings for arrows and C-R.`,
+	Short: "disable RESH features (arrow key bindings)",
+}
+
+var disableArrowKeyBindingsCmd = &cobra.Command{
+	Use:   "arrow_key_bindings",
+	Short: "disable bindings for arrow keys (up/down) FOR THIS SHELL SESSION",
 	Run: func(cmd *cobra.Command, args []string) {
-		exitCode = status.DisableAll
+		exitCode = status.DisableArrowKeyBindings
 	},
 }
 
-// var disableRecallingCmd = &cobra.Command{
-// 	Use:   "keybind",
-// 	Short: "Disables RESH bindings for arrows and C-R.",
-// 	Long:  `Disables RESH bindings for arrows and C-R.`,
-// 	Run: func(cmd *cobra.Command, args []string) {
-// 		exitCode = status.DisableAll
-// 	},
-// }
+var disableArrowKeyBindingsGlobalCmd = &cobra.Command{
+	Use:   "arrow_key_bindings_global",
+	Short: "disable bindings for arrow keys (up/down) FOR THIS AND ALL FUTURE SHELL SESSIONS",
+	Run: func(cmd *cobra.Command, args []string) {
+		// TODO: config set arrow_key_bindings true
+		exitCode = status.DisableArrowKeyBindings
+	},
+}

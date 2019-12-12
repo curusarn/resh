@@ -131,7 +131,7 @@ uninstall:
 	# Uninstalling ...
 	-rm -rf ~/.resh/
 
-bin/resh-control: cmd/control/cmd/*.go
+bin/resh-control: cmd/control/cmd/*.go cmd/control/status/*.go
 
 bin/resh-%: cmd/%/*.go pkg/*/*.go VERSION
 	go build ${GOFLAGS} -o $@ cmd/$*/*.go
