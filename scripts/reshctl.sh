@@ -9,10 +9,14 @@ __resh_bind_arrows() {
         echo "RESH arrow key bindings are already enabled!"
         return 1 
     fi
-    bindfunc --revert '\e[A' __resh_widget_arrow_up_compat
+    bindfunc --revert '\eOA' __resh_widget_arrow_up_compat
     __RESH_bindfunc_revert_arrow_up_bind=$_bindfunc_revert
-    bindfunc --revert '\e[B' __resh_widget_arrow_down_compat
+    bindfunc --revert '\e[A' __resh_widget_arrow_up_compat
+    __RESH_bindfunc_revert_arrow_up_bind_vim=$_bindfunc_revert
+    bindfunc --revert '\eOB' __resh_widget_arrow_down_compat
     __RESH_bindfunc_revert_arrow_down_bind=$_bindfunc_revert
+    bindfunc --revert '\e[B' __resh_widget_arrow_down_compat
+    __RESH_bindfunc_revert_arrow_down_bind_vim=$_bindfunc_revert
     __RESH_arrow_keys_bind_enabled=1
     return 0
 }
@@ -33,6 +37,7 @@ __resh_unbind_arrows() {
         echo "Warn: Couldn't revert arrow UP binding because 'revert command' is empty."
     else
         eval "$__RESH_bindfunc_revert_arrow_up_bind"
+        [ -z "${__RESH_bindfunc_revert_arrow_up_bind_vim+x}" ] || eval "$__RESH_bindfunc_revert_arrow_up_bind_vim"
         echo "RESH arrow up binding successfully disabled ✓"
         __RESH_arrow_keys_bind_enabled=0
     fi
@@ -41,6 +46,7 @@ __resh_unbind_arrows() {
         echo "Warn: Couldn't revert arrow DOWN binding because 'revert command' is empty."
     else
         eval "$__RESH_bindfunc_revert_arrow_down_bind"
+        [ -z "${__RESH_bindfunc_revert_arrow_up_bind_vim+x}" ] || eval "$__RESH_bindfunc_revert_arrow_up_bind_vim"
         echo "RESH arrow down binding successfully disabled ✓"
         __RESH_arrow_keys_bind_enabled=0
     fi
