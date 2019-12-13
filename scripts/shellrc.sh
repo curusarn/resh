@@ -86,5 +86,14 @@ if [ -z "${__RESH_INIT_DONE+x}" ]; then
 
     __resh_reset_variables
 
+    if [ "$__RESH_SHELL" = bash ] ; then
+        [ "$(resh-config --key BindArrowKeysBash)" = true ] && reshctl enable arrow_key_bindings
+    elif [ "$__RESH_SHELL" = zsh ] ; then
+        [ "$(resh-config --key BindArrowKeysZsh)" = true ] && reshctl enable arrow_key_bindings
+    else
+        echo "RESH error: unknown shell (init)"
+        echo "$__RESH_SHELL"
+    fi
+
     __RESH_INIT_DONE=1
 fi
