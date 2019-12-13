@@ -78,6 +78,7 @@ reshctl() {
 
     # modify current shell session based on exit status
     local _status=$?
+    # echo $_status
     # unexport current shell  
     unset __RESH_ctl_shell
     case "$_status" in
@@ -110,6 +111,12 @@ reshctl() {
     200)
         # reload rc files
         . ~/.resh/shellrc
+        return 0
+        ;;
+    201)
+        # inspect session history 
+        # reshctl debug inspect N
+        resh-inspect --sessionID "$__RESH_SESSION_ID" --count "${3-10}"
         return 0
         ;;
     *)

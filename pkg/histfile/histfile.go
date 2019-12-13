@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/curusarn/resh/pkg/histlist"
 	"github.com/curusarn/resh/pkg/records"
 )
 
@@ -16,10 +17,10 @@ type Histfile struct {
 	sessions      map[string]records.Record
 	historyPath   string
 
-	recentMutex       sync.Mutex
-	recentRecords     []records.Record
-	recentCmdLines    []string // deduplicated
-	cmdLinesLastIndex map[string]int
+	recentMutex   sync.Mutex
+	recentRecords []records.Record
+
+	cmdLines histlist.Histlist
 }
 
 // New creates new histfile and runs two gorutines on it
@@ -27,9 +28,9 @@ func New(input chan records.Record, historyPath string, initHistSize int, sessio
 	signals chan os.Signal, shutdownDone chan string) *Histfile {
 
 	hf := Histfile{
-		sessions:          map[string]records.Record{},
-		historyPath:       historyPath,
-		cmdLinesLastIndex: map[string]int{},
+		sessions:    map[string]records.Record{},
+		historyPath: historyPath,
+		cmdLines:    histlist.New(),
 	}
 	go hf.loadHistory(initHistSize)
 	go hf.writer(input, signals, shutdownDone)
@@ -40,7 +41,9 @@ func New(input chan records.Record, historyPath string, initHistSize int, sessio
 func (h *Histfile) loadHistory(initHistSize int) {
 	h.recentMutex.Lock()
 	defer h.recentMutex.Unlock()
-	h.recentCmdLines = records.LoadCmdLinesFromFile(h.historyPath, initHistSize)
+	log.Println("histfile: Loading history from file ...")
+	h.cmdLines = records.LoadCmdLinesFromFile(h.historyPath, initHistSize)
+	log.Println("histfile: History loaded - cmdLine count:", len(h.cmdLines.List))
 }
 
 // sessionGC reads sessionIDs from channel and deletes them from histfile struct
@@ -121,12 +124,12 @@ func (h *Histfile) mergeAndWriteRecord(part1, part2 records.Record) {
 		defer h.recentMutex.Unlock()
 		h.recentRecords = append(h.recentRecords, part1)
 		cmdLine := part1.CmdLine
-		idx, found := h.cmdLinesLastIndex[cmdLine]
+		idx, found := h.cmdLines.LastIndex[cmdLine]
 		if found {
-			h.recentCmdLines = append(h.recentCmdLines[:idx], h.recentCmdLines[idx+1:]...)
+			h.cmdLines.List = append(h.cmdLines.List[:idx], h.cmdLines.List[idx+1:]...)
 		}
-		h.cmdLinesLastIndex[cmdLine] = len(h.recentCmdLines)
-		h.recentCmdLines = append(h.recentCmdLines, cmdLine)
+		h.cmdLines.LastIndex[cmdLine] = len(h.cmdLines.List)
+		h.cmdLines.List = append(h.cmdLines.List, cmdLine)
 	}()
 
 	writeRecord(part1, h.historyPath)
@@ -153,6 +156,11 @@ func writeRecord(rec records.Record, outputPath string) {
 }
 
 // GetRecentCmdLines returns recent cmdLines
-func (h *Histfile) GetRecentCmdLines(limit int) []string {
-	return h.recentCmdLines
+func (h *Histfile) GetRecentCmdLines(limit int) histlist.Histlist {
+	h.recentMutex.Lock()
+	defer h.recentMutex.Unlock()
+	log.Println("histfile: History requested ...")
+	hl := histlist.Copy(h.cmdLines)
+	log.Println("histfile: History copied - cmdLine count:", len(hl.List))
+	return hl
 }

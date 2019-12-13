@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/curusarn/resh/pkg/histfile"
+	"github.com/curusarn/resh/pkg/histlist"
 	"github.com/curusarn/resh/pkg/records"
 )
 
@@ -80,8 +81,7 @@ func (s *Dispatch) initSession(sessionID string) error {
 	defer s.mutex.Unlock()
 	// init sesshist and populate it with history loaded from file
 	s.sessions[sessionID] = &sesshist{
-		recentCmdLines:    historyCmdLines,
-		cmdLinesLastIndex: map[string]int{},
+		recentCmdLines: historyCmdLines,
 	}
 	log.Println("sesshist: session init done - " + sessionID)
 	return nil
@@ -105,8 +105,11 @@ func (s *Dispatch) dropSession(sessionID string) error {
 
 // AddRecent record to session
 func (s *Dispatch) addRecentRecord(sessionID string, record records.Record) error {
+	log.Println("sesshist: Adding a record, RLocking main lock ...")
 	s.mutex.RLock()
+	log.Println("sesshist: Getting a session ...")
 	session, found := s.sessions[sessionID]
+	log.Println("sesshist: RUnlocking main lock ...")
 	s.mutex.RUnlock()
 
 	if found == false {
@@ -114,20 +117,27 @@ func (s *Dispatch) addRecentRecord(sessionID string, record records.Record) erro
 		s.initSession(sessionID)
 		return s.addRecentRecord(sessionID, record)
 	}
+	log.Println("sesshist: RLocking session lock (w/ defer) ...")
 	session.mutex.Lock()
 	defer session.mutex.Unlock()
 	session.recentRecords = append(session.recentRecords, record)
 	// remove previous occurance of record
+	log.Println("sesshist: Looking for duplicate cmdLine ...")
 	cmdLine := record.CmdLine
-	idx, found := session.cmdLinesLastIndex[cmdLine]
+	// trim spaces to have less duplicates in the sesshist
+	cmdLine = strings.TrimRight(cmdLine, " ")
+	idx, found := session.recentCmdLines.LastIndex[cmdLine]
 	if found {
-		session.recentCmdLines = append(session.recentCmdLines[:idx], session.recentCmdLines[idx+1:]...)
+		log.Println("sesshist: Removing duplicate cmdLine at index:", idx, " out of", len(session.recentCmdLines.List), "...")
+		session.recentCmdLines.List = append(session.recentCmdLines.List[:idx], session.recentCmdLines.List[idx+1:]...)
 	}
-	session.cmdLinesLastIndex[cmdLine] = len(session.recentCmdLines)
+	log.Println("sesshist: Updating last index ...")
+	session.recentCmdLines.LastIndex[cmdLine] = len(session.recentCmdLines.List)
 	// append new record
-	session.recentCmdLines = append(session.recentCmdLines, cmdLine)
+	log.Println("sesshist: Appending cmdLine ...")
+	session.recentCmdLines.List = append(session.recentCmdLines.List, cmdLine)
 	log.Println("sesshist: record:", record.CmdLine, "; added to session:", sessionID,
-		"; session len:", len(session.recentCmdLines), "; session len w/ dups:", len(session.recentRecords))
+		"; session len:", len(session.recentCmdLines.List), "; session len (records):", len(session.recentRecords))
 	return nil
 }
 
@@ -154,11 +164,38 @@ func (s *Dispatch) Recall(sessionID string, histno int, prefix string) (string, 
 	return session.searchRecordByPrefix(prefix, histno)
 }
 
+// Inspect commands in recent session history
+func (s *Dispatch) Inspect(sessionID string, count int) ([]string, error) {
+	prefix := ""
+	log.Println("sesshist - inspect: RLocking main lock ...")
+	s.mutex.RLock()
+	log.Println("sesshist - inspect: Getting session history struct ...")
+	session, found := s.sessions[sessionID]
+	s.mutex.RUnlock()
+
+	if found == false {
+		// go s.initSession(sessionID)
+		return nil, errors.New("sesshist ERROR: No session history for SessionID " + sessionID + " - should we create one?")
+	}
+	log.Println("sesshist - inspect: Locking session lock ...")
+	session.mutex.Lock()
+	defer session.mutex.Unlock()
+	if prefix == "" {
+		log.Println("sesshist - inspect: Getting records by histno ...")
+		idx := len(session.recentCmdLines.List) - count
+		if idx < 0 {
+			idx = 0
+		}
+		return session.recentCmdLines.List[idx:], nil
+	}
+	log.Println("sesshist - inspect: Searching for records by prefix ... ERROR - Not implemented")
+	return nil, errors.New("sesshist ERROR: Inspect - Searching for records by prefix Not implemented yet")
+}
+
 type sesshist struct {
-	recentRecords     []records.Record
-	recentCmdLines    []string // deduplicated
-	cmdLinesLastIndex map[string]int
-	mutex             sync.Mutex
+	mutex          sync.Mutex
+	recentRecords  []records.Record
+	recentCmdLines histlist.Histlist
 }
 
 func (s *sesshist) getRecordByHistno(histno int) (string, error) {
@@ -170,11 +207,11 @@ func (s *sesshist) getRecordByHistno(histno int) (string, error) {
 	if histno < 0 {
 		return "", errors.New("sesshist ERROR: 'histno < 0' is a command from future (not supperted yet)")
 	}
-	index := len(s.recentCmdLines) - histno
+	index := len(s.recentCmdLines.List) - histno
 	if index < 0 {
-		return "", errors.New("sesshist ERROR: 'histno > number of commands in the session' (" + strconv.Itoa(len(s.recentCmdLines)) + ")")
+		return "", errors.New("sesshist ERROR: 'histno > number of commands in the session' (" + strconv.Itoa(len(s.recentCmdLines.List)) + ")")
 	}
-	return s.recentCmdLines[index], nil
+	return s.recentCmdLines.List[index], nil
 }
 
 func (s *sesshist) searchRecordByPrefix(prefix string, histno int) (string, error) {
@@ -184,14 +221,14 @@ func (s *sesshist) searchRecordByPrefix(prefix string, histno int) (string, erro
 	if histno < 0 {
 		return "", errors.New("sesshist ERROR: 'histno < 0' is a command from future (not supperted yet)")
 	}
-	index := len(s.recentCmdLines) - histno
+	index := len(s.recentCmdLines.List) - histno
 	if index < 0 {
-		return "", errors.New("sesshist ERROR: 'histno > number of commands in the session' (" + strconv.Itoa(len(s.recentCmdLines)) + ")")
+		return "", errors.New("sesshist ERROR: 'histno > number of commands in the session' (" + strconv.Itoa(len(s.recentCmdLines.List)) + ")")
 	}
 	cmdLines := []string{}
-	for i := len(s.recentCmdLines) - 1; i >= 0; i-- {
-		if strings.HasPrefix(s.recentCmdLines[i], prefix) {
-			cmdLines = append(cmdLines, s.recentCmdLines[i])
+	for i := len(s.recentCmdLines.List) - 1; i >= 0; i-- {
+		if strings.HasPrefix(s.recentCmdLines.List[i], prefix) {
+			cmdLines = append(cmdLines, s.recentCmdLines.List[i])
 			if len(cmdLines) >= histno {
 				break
 			}

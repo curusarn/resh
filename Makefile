@@ -41,7 +41,8 @@ sanitize:
 	#
 	#
 
-build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect bin/resh-daemon bin/resh-evaluate bin/resh-sanitize bin/resh-control bin/resh-config
+build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect bin/resh-daemon\
+ bin/resh-evaluate bin/resh-sanitize bin/resh-control bin/resh-config bin/resh-inspect
 
 test_go:
 	# Running tests
@@ -92,7 +93,7 @@ install: build submodules/bash-preexec/bash-preexec.sh scripts/shellrc.sh conf/c
 	@# Deleting zsh completion cache - for future use
 	@# [ ! -e ~/.zcompdump ] || rm ~/.zcompdump
 	# Restarting resh daemon ...
-	-if [ ! -f ~/.resh/resh.pid ]; then\
+	-if [ -f ~/.resh/resh.pid ]; then\
 		kill -SIGTERM $$(cat ~/.resh/resh.pid);\
 		rm ~/.resh/resh.pid;\
 	 fi
@@ -136,9 +137,7 @@ uninstall:
 	# Uninstalling ...
 	-rm -rf ~/.resh/
 
-bin/resh-control: cmd/control/cmd/*.go cmd/control/status/*.go
-
-bin/resh-%: cmd/%/*.go pkg/*/*.go VERSION
+bin/resh-%: cmd/%/*.go pkg/*/*.go VERSION cmd/control/cmd/*.go cmd/control/status/status.go
 	go build ${GOFLAGS} -o $@ cmd/$*/*.go
 
 $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config $(HOME)/.resh/bash_completion.d $(HOME)/.resh/zsh_completion.d:

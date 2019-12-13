@@ -30,6 +30,7 @@ func Execute() status.Code {
 
 	rootCmd.AddCommand(debugCmd)
 	debugCmd.AddCommand(debugReloadCmd)
+	debugCmd.AddCommand(debugInspectCmd)
 	debugCmd.AddCommand(debugOutputCmd)
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

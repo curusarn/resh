@@ -14,4 +14,6 @@ const (
 	DisableArrowKeyBindings = 111
 	// ReloadRcFiles exit code - tells reshctl() wrapper to reload shellrc resh file
 	ReloadRcFiles = 200
+	// InspectSessionHistory exit code - tells reshctl() wrapper to take current sessionID and send /inspect request to daemon
+	InspectSessionHistory = 201
 )

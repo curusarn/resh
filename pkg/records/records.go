@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/curusarn/resh/pkg/histlist"
 	"github.com/mattn/go-shellwords"
 )
 
@@ -455,7 +456,7 @@ func (r *EnrichedRecord) DistanceTo(r2 EnrichedRecord, p DistParams) float64 {
 }
 
 // LoadCmdLinesFromFile loads limit cmdlines from file
-func LoadCmdLinesFromFile(fname string, limit int) []string {
+func LoadCmdLinesFromFile(fname string, limit int) histlist.Histlist {
 	recs := LoadFromFile(fname, limit*3) // assume that at least 1/3 of commands is unique
 	var cmdLines []string
 	cmdLinesSet := map[string]bool{}
@@ -470,11 +471,17 @@ func LoadCmdLinesFromFile(fname string, limit int) []string {
 			break
 		}
 	}
-	return cmdLines
+	hl := histlist.New()
+	hl.List = cmdLines
+	for idx, cmdLine := range cmdLines {
+		hl.LastIndex[cmdLine] = idx
+	}
+	return hl
 }
 
 // LoadFromFile loads at most 'limit' records from 'fname' file
 func LoadFromFile(fname string, limit int) []Record {
+	// NOTE: limit does nothing atm
 	file, err := os.Open(fname)
 	if err != nil {
 		log.Fatal("Open() resh history file error:", err)

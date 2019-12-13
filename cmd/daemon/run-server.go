@@ -54,6 +54,7 @@ func runServer(config cfg.Config, historyPath string) {
 	mux.Handle("/record", &recordHandler{subscribers: recordSubscribers})
 	mux.Handle("/session_init", &sessionInitHandler{subscribers: sessionInitSubscribers})
 	mux.Handle("/recall", &recallHandler{sesshistDispatch: sesshistDispatch})
+	mux.Handle("/inspect", &inspectHandler{sesshistDispatch: sesshistDispatch})
 
 	server := &http.Server{Addr: ":" + strconv.Itoa(config.Port), Handler: mux}
 	go server.ListenAndServe()

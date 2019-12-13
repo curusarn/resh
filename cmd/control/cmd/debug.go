@@ -25,6 +25,14 @@ var debugReloadCmd = &cobra.Command{
 	},
 }
 
+var debugInspectCmd = &cobra.Command{
+	Use:   "inspect",
+	Short: "inspect session history",
+	Run: func(cmd *cobra.Command, args []string) {
+		exitCode = status.InspectSessionHistory
+	},
+}
+
 var debugOutputCmd = &cobra.Command{
 	Use:   "output",
 	Short: "shows output from last runs of resh",
