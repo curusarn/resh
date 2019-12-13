@@ -10,20 +10,20 @@ import (
 // completionCmd represents the completion command
 var completionCmd = &cobra.Command{
 	Use:   "completion",
-	Short: "Generates bash/zsh completion scripts",
+	Short: "generate bash/zsh completion scripts",
 	Long: `To load completion run
 
 . <(reshctl completion bash) 
 
 OR 
 
-. <(reshctl completion zsh) 
+. <(reshctl completion zsh) && compdef _reshctl reshctl
 `,
 }
 
 var completionBashCmd = &cobra.Command{
 	Use:   "bash",
-	Short: "Generates bash completion scripts",
+	Short: "generate bash completion scripts",
 	Long: `To load completion run
 
 . <(reshctl completion bash) 
@@ -36,10 +36,10 @@ var completionBashCmd = &cobra.Command{
 
 var completionZshCmd = &cobra.Command{
 	Use:   "zsh",
-	Short: "Generates zsh completion scripts",
+	Short: "generate zsh completion scripts",
 	Long: `To load completion run
 
-. <(reshctl completion zsh) 
+. <(reshctl completion zsh) && compdef _reshctl reshctl
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		rootCmd.GenZshCompletion(os.Stdout)

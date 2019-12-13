@@ -11,8 +11,7 @@ var exitCode status.Code
 
 var rootCmd = &cobra.Command{
 	Use:   "reshctl",
-	Short: "Reshctl (RESH control) - enables you to enable/disable features and more.",
-	Long:  `Enables you to enable/disable RESH bindings for arrows and C-R.`,
+	Short: "Reshctl (RESH control) - enable/disable RESH features and more.",
 }
 
 // Execute reshctl
