@@ -58,7 +58,7 @@ rebuild:
 	make build
 
 clean:
-	rm resh-*
+	rm bin/resh-*
 
 install: build submodules/bash-preexec/bash-preexec.sh scripts/shellrc.sh conf/config.toml scripts/uuid.sh \
 		 | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config $(HOME)/.resh/bash_completion.d $(HOME)/.resh/zsh_completion.d

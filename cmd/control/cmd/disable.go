@@ -20,9 +20,11 @@ var disableArrowKeyBindingsCmd = &cobra.Command{
 
 var disableArrowKeyBindingsGlobalCmd = &cobra.Command{
 	Use:   "arrow_key_bindings_global",
-	Short: "disable bindings for arrow keys (up/down) FOR THIS AND ALL FUTURE SHELL SESSIONS",
+	Short: "disable bindings for arrow keys (up/down) FOR FUTURE SHELL SESSIONS",
+	Long: "Disable bindings for arrow keys (up/down) FOR FUTURE SHELL SESSIONS.\n" +
+		"Note that this only affects sessions of the same shell.\n" +
+		"(e.g. running this in zsh will only affect future zsh sessions)",
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: config set arrow_key_bindings true
-		exitCode = status.DisableArrowKeyBindings
+		exitCode = enableDisableArrowKeyBindingsGlobally(false)
 	},
 }

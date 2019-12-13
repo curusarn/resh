@@ -6,7 +6,7 @@
 
 __resh_bind_arrows() {
     if [ "${__RESH_arrow_keys_bind_enabled-0}" != 0 ]; then
-        echo "Error: RESH arrow key bindings are already enabled!"
+        echo "RESH arrow key bindings are already enabled!"
         return 1 
     fi
     bindfunc --revert '\e[A' __resh_widget_arrow_up_compat
@@ -28,17 +28,21 @@ __resh_unbind_arrows() {
         echo "Error: Can't disable arrow key bindings because they are not enabled!"
         return 1 
     fi
+
     if [ -z "${__RESH_bindfunc_revert_arrow_up_bind+x}" ]; then
         echo "Warn: Couldn't revert arrow UP binding because 'revert command' is empty."
     else
         eval "$__RESH_bindfunc_revert_arrow_up_bind"
         echo "RESH arrow up binding successfully disabled ✓"
+        __RESH_arrow_keys_bind_enabled=0
     fi
+
     if [ -z "${__RESH_bindfunc_revert_arrow_down_bind+x}" ]; then
         echo "Warn: Couldn't revert arrow DOWN binding because 'revert command' is empty."
     else
         eval "$__RESH_bindfunc_revert_arrow_down_bind"
         echo "RESH arrow down binding successfully disabled ✓"
+        __RESH_arrow_keys_bind_enabled=0
     fi
     return 0
 }
@@ -60,10 +64,16 @@ __resh_unbind_all() {
 }
 
 reshctl() {
+    # local log=~/.resh/reshctl.log
+    # export current shell because resh-control needs to know
+    export __RESH_ctl_shell=$__RESH_SHELL
     # run resh-control aka the real reshctl
     resh-control "$@"
+
     # modify current shell session based on exit status
     local _status=$?
+    # unexport current shell  
+    unset __RESH_ctl_shell
     case "$_status" in
     0|1)
         # success | fail

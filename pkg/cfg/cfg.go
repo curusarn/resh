@@ -6,4 +6,6 @@ type Config struct {
 	SesswatchPeriodSeconds  uint
 	SesshistInitHistorySize int
 	Debug                   bool
+	BindArrowKeysBash       bool
+	BindArrowKeysZsh        bool
 }
