@@ -46,7 +46,7 @@ __resh_unbind_arrows() {
         echo "Warn: Couldn't revert arrow DOWN binding because 'revert command' is empty."
     else
         eval "$__RESH_bindfunc_revert_arrow_down_bind"
-        [ -z "${__RESH_bindfunc_revert_arrow_up_bind_vim+x}" ] || eval "$__RESH_bindfunc_revert_arrow_up_bind_vim"
+        [ -z "${__RESH_bindfunc_revert_arrow_down_bind_vim+x}" ] || eval "$__RESH_bindfunc_revert_arrow_down_bind_vim"
         echo "RESH arrow down binding successfully disabled ✓"
         __RESH_arrow_keys_bind_enabled=0
     fi
