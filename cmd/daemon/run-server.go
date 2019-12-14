@@ -13,7 +13,7 @@ import (
 	"github.com/curusarn/resh/pkg/signalhandler"
 )
 
-func runServer(config cfg.Config, historyPath string) {
+func runServer(config cfg.Config, reshHistoryPath, bashHistoryPath, zshHistoryPath string) {
 	var recordSubscribers []chan records.Record
 	var sessionInitSubscribers []chan records.Record
 	var sessionDropSubscribers []chan string
@@ -36,7 +36,12 @@ func runServer(config cfg.Config, historyPath string) {
 	sessionDropSubscribers = append(sessionDropSubscribers, histfileSessionsToDrop)
 	histfileSignals := make(chan os.Signal)
 	signalSubscribers = append(signalSubscribers, histfileSignals)
-	histfileBox := histfile.New(histfileRecords, historyPath, 10000, histfileSessionsToDrop, histfileSignals, shutdown)
+	maxHistSize := 10000 // lines
+	minHistSizeKB := 100 // roughly lines
+	histfileBox := histfile.New(histfileRecords, histfileSessionsToDrop,
+		reshHistoryPath, bashHistoryPath, zshHistoryPath,
+		maxHistSize, minHistSizeKB,
+		histfileSignals, shutdown)
 
 	// sesshist New
 	sesshistDispatch := sesshist.NewDispatch(sesshistSessionsToInit, sesshistSessionsToDrop,

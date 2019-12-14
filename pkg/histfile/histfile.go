@@ -3,6 +3,7 @@ package histfile
 import (
 	"encoding/json"
 	"log"
+	"math"
 	"os"
 	"strconv"
 	"sync"
@@ -20,30 +21,68 @@ type Histfile struct {
 	recentMutex   sync.Mutex
 	recentRecords []records.Record
 
-	cmdLines histlist.Histlist
+	// NOTE: we have separate histories which only differ if there was not enough resh_history
+	//			resh_history itself is common for both bash and zsh
+	bashCmdLines histlist.Histlist
+	zshCmdLines  histlist.Histlist
 }
 
-// New creates new histfile and runs two gorutines on it
-func New(input chan records.Record, historyPath string, initHistSize int, sessionsToDrop chan string,
+// New creates new histfile and runs its gorutines
+func New(input chan records.Record, sessionsToDrop chan string,
+	reshHistoryPath string, bashHistoryPath string, zshHistoryPath string,
+	maxInitHistSize int, minInitHistSizeKB int,
 	signals chan os.Signal, shutdownDone chan string) *Histfile {
 
 	hf := Histfile{
-		sessions:    map[string]records.Record{},
-		historyPath: historyPath,
-		cmdLines:    histlist.New(),
+		sessions:     map[string]records.Record{},
+		historyPath:  reshHistoryPath,
+		bashCmdLines: histlist.New(),
+		zshCmdLines:  histlist.New(),
 	}
-	go hf.loadHistory(initHistSize)
+	go hf.loadHistory(bashHistoryPath, zshHistoryPath, maxInitHistSize, minInitHistSizeKB)
 	go hf.writer(input, signals, shutdownDone)
 	go hf.sessionGC(sessionsToDrop)
 	return &hf
 }
 
-func (h *Histfile) loadHistory(initHistSize int) {
+// loadsHistory from resh_history and if there is not enough of it also load native shell histories
+func (h *Histfile) loadHistory(bashHistoryPath, zshHistoryPath string, maxInitHistSize, minInitHistSizeKB int) {
 	h.recentMutex.Lock()
 	defer h.recentMutex.Unlock()
-	log.Println("histfile: Loading history from file ...")
-	h.cmdLines = records.LoadCmdLinesFromFile(h.historyPath, initHistSize)
-	log.Println("histfile: History loaded - cmdLine count:", len(h.cmdLines.List))
+	log.Println("histfile: Checking if resh_history is large enough ...")
+	fi, err := os.Stat(h.historyPath)
+	var size int
+	if err != nil {
+		log.Println("histfile ERROR: failed to stat resh_history file:", err)
+	} else {
+		size = int(fi.Size())
+	}
+	useNativeHistories := false
+	if size/1024 < minInitHistSizeKB {
+		useNativeHistories = true
+		log.Println("histfile WARN: resh_history is too small - loading native bash and zsh history ...")
+		h.bashCmdLines = records.LoadCmdLinesFromBashFile(bashHistoryPath)
+		log.Println("histfile: bash history loaded - cmdLine count:", len(h.bashCmdLines.List))
+		h.zshCmdLines = records.LoadCmdLinesFromZshFile(zshHistoryPath)
+		log.Println("histfile: zsh history loaded - cmdLine count:", len(h.zshCmdLines.List))
+		// no maxInitHistSize when using native histories
+		maxInitHistSize = math.MaxInt32
+	}
+	log.Println("histfile: Loading resh history from file ...")
+	reshCmdLines := histlist.New()
+	// NOTE: keeping this weird interface for now because we might use it in the future
+	//			when we only load bash or zsh history
+	records.LoadCmdLinesFromFile(&reshCmdLines, h.historyPath, maxInitHistSize)
+	log.Println("histfile: resh history loaded - cmdLine count:", len(reshCmdLines.List))
+	if useNativeHistories == false {
+		h.bashCmdLines = reshCmdLines
+		h.zshCmdLines = histlist.Copy(reshCmdLines)
+		return
+	}
+	h.bashCmdLines.AddHistlist(reshCmdLines)
+	log.Println("histfile: bash history + resh history - cmdLine count:", len(h.bashCmdLines.List))
+	h.zshCmdLines.AddHistlist(reshCmdLines)
+	log.Println("histfile: zsh history + resh history - cmdLine count:", len(h.zshCmdLines.List))
 }
 
 // sessionGC reads sessionIDs from channel and deletes them from histfile struct
@@ -124,12 +163,8 @@ func (h *Histfile) mergeAndWriteRecord(part1, part2 records.Record) {
 		defer h.recentMutex.Unlock()
 		h.recentRecords = append(h.recentRecords, part1)
 		cmdLine := part1.CmdLine
-		idx, found := h.cmdLines.LastIndex[cmdLine]
-		if found {
-			h.cmdLines.List = append(h.cmdLines.List[:idx], h.cmdLines.List[idx+1:]...)
-		}
-		h.cmdLines.LastIndex[cmdLine] = len(h.cmdLines.List)
-		h.cmdLines.List = append(h.cmdLines.List, cmdLine)
+		h.bashCmdLines.AddCmdLine(cmdLine)
+		h.zshCmdLines.AddCmdLine(cmdLine)
 	}()
 
 	writeRecord(part1, h.historyPath)
@@ -156,11 +191,21 @@ func writeRecord(rec records.Record, outputPath string) {
 }
 
 // GetRecentCmdLines returns recent cmdLines
-func (h *Histfile) GetRecentCmdLines(limit int) histlist.Histlist {
+func (h *Histfile) GetRecentCmdLines(shell string, limit int) histlist.Histlist {
+	// NOTE: limit does nothing atm
 	h.recentMutex.Lock()
 	defer h.recentMutex.Unlock()
 	log.Println("histfile: History requested ...")
-	hl := histlist.Copy(h.cmdLines)
-	log.Println("histfile: History copied - cmdLine count:", len(hl.List))
+	var hl histlist.Histlist
+	if shell == "bash" {
+		hl = histlist.Copy(h.bashCmdLines)
+		log.Println("histfile: history copied (bash) - cmdLine count:", len(hl.List))
+		return hl
+	}
+	if shell != "zsh" {
+		log.Println("histfile ERROR: Unknown shell: ", shell)
+	}
+	hl = histlist.Copy(h.zshCmdLines)
+	log.Println("histfile: history copied (zsh) - cmdLine count:", len(hl.List))
 	return hl
 }

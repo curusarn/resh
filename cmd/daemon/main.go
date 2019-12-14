@@ -31,7 +31,9 @@ func main() {
 	dir := usr.HomeDir
 	pidfilePath := filepath.Join(dir, ".resh/resh.pid")
 	configPath := filepath.Join(dir, ".config/resh.toml")
-	historyPath := filepath.Join(dir, ".resh_history.json")
+	reshHistoryPath := filepath.Join(dir, ".resh_history.json")
+	bashHistoryPath := filepath.Join(dir, ".bash_history")
+	zshHistoryPath := filepath.Join(dir, ".zsh_history")
 	logPath := filepath.Join(dir, ".resh/daemon.log")
 
 	f, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
@@ -73,7 +75,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Could not create pidfile", err)
 	}
-	runServer(config, historyPath)
+	runServer(config, reshHistoryPath, bashHistoryPath, zshHistoryPath)
 	log.Println("main: Removing pidfile ...")
 	err = os.Remove(pidfilePath)
 	if err != nil {

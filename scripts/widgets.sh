@@ -37,8 +37,12 @@ __resh_widget_arrow_up() {
     __RESH_HIST_RECALL_ACTIONS="$__RESH_HIST_RECALL_ACTIONS;arrow_up:$__RESH_PREFIX"
     # increment histno
     __RESH_HISTNO=$((__RESH_HISTNO+1))
-    # back at histno == 0 => restore original line
-    if [ "$__RESH_HISTNO" -eq 0 ]; then
+    if [ "${#__RESH_HISTNO_MAX}" -gt 0 ] && [ "${__RESH_HISTNO}" -gt "${__RESH_HISTNO_MAX}" ]; then
+        # end of the session -> don't recall, do nothing
+        # fix histno
+        __RESH_HISTNO=$((__RESH_HISTNO-1))
+    elif [ "$__RESH_HISTNO" -eq 0 ]; then
+        # back at histno == 0 => restore original line
         BUFFER=$__RESH_HISTNO_ZERO_LINE
     else
         # run recall
@@ -46,7 +50,12 @@ __resh_widget_arrow_up() {
         NEW_BUFFER="$(__resh_collect --recall --prefix-search "$__RESH_PREFIX" 2> ~/.resh/arrow_up_last_run_out.txt)"
         # IF new buffer in non-empty THEN use the new buffer ELSE revert histno change
         # shellcheck disable=SC2015
-        [ "${#NEW_BUFFER}" -gt 0 ] && BUFFER=$NEW_BUFFER || __RESH_HISTNO=$((__RESH_HISTNO-1))
+        if [ "${#NEW_BUFFER}" -gt 0 ]; then
+            BUFFER=$NEW_BUFFER
+        else
+            __RESH_HISTNO=$((__RESH_HISTNO-1))
+            __RESH_HISTNO_MAX=$__RESH_HISTNO
+        fi
     fi
     # run post helper
     __resh_helper_arrow_post

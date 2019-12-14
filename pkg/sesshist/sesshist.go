@@ -40,7 +40,7 @@ func (s *Dispatch) sessionInitializer(sessionsToInit chan records.Record) {
 	for {
 		record := <-sessionsToInit
 		log.Println("sesshist: got session to init - " + record.SessionID)
-		s.initSession(record.SessionID)
+		s.initSession(record.SessionID, record.Shell)
 	}
 }
 
@@ -64,7 +64,7 @@ func (s *Dispatch) recordAdder(recordsToAdd chan records.Record) {
 }
 
 // InitSession struct
-func (s *Dispatch) initSession(sessionID string) error {
+func (s *Dispatch) initSession(sessionID string, shell string) error {
 	log.Println("sesshist: initializing session - " + sessionID)
 	s.mutex.RLock()
 	_, found := s.sessions[sessionID]
@@ -75,7 +75,7 @@ func (s *Dispatch) initSession(sessionID string) error {
 	}
 
 	log.Println("sesshist: loading history to populate session - " + sessionID)
-	historyCmdLines := s.history.GetRecentCmdLines(s.historyInitSize)
+	historyCmdLines := s.history.GetRecentCmdLines(shell, s.historyInitSize)
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -113,29 +113,15 @@ func (s *Dispatch) addRecentRecord(sessionID string, record records.Record) erro
 	s.mutex.RUnlock()
 
 	if found == false {
-		log.Println("sesshist ERROR: addRecontRecord(): No session history for SessionID " + sessionID + " - creating session history.")
-		s.initSession(sessionID)
+		log.Println("sesshist ERROR: addRecentRecord(): No session history for SessionID " + sessionID + " - creating session history.")
+		s.initSession(sessionID, record.Shell)
 		return s.addRecentRecord(sessionID, record)
 	}
 	log.Println("sesshist: RLocking session lock (w/ defer) ...")
 	session.mutex.Lock()
 	defer session.mutex.Unlock()
 	session.recentRecords = append(session.recentRecords, record)
-	// remove previous occurance of record
-	log.Println("sesshist: Looking for duplicate cmdLine ...")
-	cmdLine := record.CmdLine
-	// trim spaces to have less duplicates in the sesshist
-	cmdLine = strings.TrimRight(cmdLine, " ")
-	idx, found := session.recentCmdLines.LastIndex[cmdLine]
-	if found {
-		log.Println("sesshist: Removing duplicate cmdLine at index:", idx, " out of", len(session.recentCmdLines.List), "...")
-		session.recentCmdLines.List = append(session.recentCmdLines.List[:idx], session.recentCmdLines.List[idx+1:]...)
-	}
-	log.Println("sesshist: Updating last index ...")
-	session.recentCmdLines.LastIndex[cmdLine] = len(session.recentCmdLines.List)
-	// append new record
-	log.Println("sesshist: Appending cmdLine ...")
-	session.recentCmdLines.List = append(session.recentCmdLines.List, cmdLine)
+	session.recentCmdLines.AddCmdLine(record.CmdLine)
 	log.Println("sesshist: record:", record.CmdLine, "; added to session:", sessionID,
 		"; session len:", len(session.recentCmdLines.List), "; session len (records):", len(session.recentRecords))
 	return nil
