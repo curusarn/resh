@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 
+resh_git_dir=~/.resh_git
+
 if ! go version &>/dev/null; then
     echo
     echo "==========================================================================="
     echo
-    echo "Please INSTALL GOLANG and run this again"
+    echo "Please INSTALL GOLANG"
+    echo "after that rerun this script: \`cd $resh_git_dir && make autoinstall\`"
     echo
     if [ "$(uname)" = "Darwin" ]; then
         echo 'You can probably use `brew install go`.'
@@ -53,6 +56,8 @@ else
     echo "==========================================================================="
     echo "Your Golang version is older than 1.11 - we can't use go modules for build!"
     echo "It's RECOMMENDED to update your Golang! (press Ctrl+C and update Golang manually)"
+    echo "after that rerun this script: \`cd $resh_git_dir && make autoinstall\`"
+    echo
     
     if [ "$(uname)" = "Linux" ]; then
         . /etc/os-release
@@ -64,6 +69,7 @@ else
     echo
     echo "I will try to build the project using dep. (I will let you review each step.)"
     echo "Continue? (Any key to continue / Ctrl+C to cancel)" 
+    # shellcheck disable=2162 disable=2034
     read x
 
     take_care_of_gopath=0
@@ -73,6 +79,7 @@ else
         echo "GOPATH env variable is unset!"
         echo "I will take care of GOPATH. (I will create tmp GOPATH.)"
         echo "Continue? (Any key to continue / Ctrl+C to cancel)" 
+        # shellcheck disable=2162 disable=2034
         read x
 
         GOPATH=$(mktemp -d /tmp/gopath-XXX) \
@@ -91,6 +98,7 @@ else
         echo "It appears that you don't have dep installed!"
         echo "I will install dep. (I will install it from GitHub.)"
         echo "Continue? (Any key to continue / Ctrl+C to cancel)" 
+        # shellcheck disable=2162 disable=2034
         read x
         
         curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
@@ -106,6 +114,7 @@ else
             echo "It seems that current directory is not in the GOPATH!"
             echo "I will copy the project to appropriate GOPATH directory."
             echo "Continue? (Any key to continue / Ctrl+C to cancel)" 
+            # shellcheck disable=2162 disable=2034
             read x
         fi
         cp -rf ./* .git* "$project_path" && echo "Copied files to $project_path"

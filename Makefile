@@ -63,49 +63,54 @@ clean:
 
 install: build submodules/bash-preexec/bash-preexec.sh scripts/shellrc.sh conf/config.toml scripts/uuid.sh \
 		 | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config $(HOME)/.resh/bash_completion.d $(HOME)/.resh/zsh_completion.d
-	# Copying files to resh directory ...
-	cp -f submodules/bash-preexec/bash-preexec.sh ~/.bash-preexec.sh
-	cp -f submodules/bash-zsh-compat-widgets/bindfunc.sh ~/.resh/bindfunc.sh
+	# Copying files ...
+	@cp -f submodules/bash-preexec/bash-preexec.sh ~/.bash-preexec.sh
+	@cp -f submodules/bash-zsh-compat-widgets/bindfunc.sh ~/.resh/bindfunc.sh
 
-	cp -f conf/config.toml ~/.config/resh.toml
+	@cp -f conf/config.toml ~/.config/resh.toml
 
-	cp -f scripts/shellrc.sh ~/.resh/shellrc
-	cp -f scripts/reshctl.sh scripts/widgets.sh scripts/hooks.sh scripts/util.sh ~/.resh/
+	@cp -f scripts/shellrc.sh ~/.resh/shellrc
+	@cp -f scripts/reshctl.sh scripts/widgets.sh scripts/hooks.sh scripts/util.sh ~/.resh/
 
-	bin/resh-control completion bash > ~/.resh/bash_completion.d/_reshctl
-	bin/resh-control completion zsh > ~/.resh/zsh_completion.d/_reshctl
+	# Generating completions for reshctl ...
+	@bin/resh-control completion bash > ~/.resh/bash_completion.d/_reshctl
+	@bin/resh-control completion zsh > ~/.resh/zsh_completion.d/_reshctl
 
-	cp -f scripts/uuid.sh ~/.resh/bin/resh-uuid
-	cp -f bin/* ~/.resh/bin/
-	cp -f scripts/resh-evaluate-plot.py ~/.resh/bin/
-	cp -fr data/sanitizer ~/.resh/sanitizer_data
-	# backward compatibility: We have a new location for resh history file 
-	[ ! -f ~/.resh/history.json ] || mv ~/.resh/history.json ~/.resh_history.json 
+	# Copying more files ...
+	@cp -f scripts/uuid.sh ~/.resh/bin/resh-uuid
+	@cp -f bin/* ~/.resh/bin/
+	@cp -f scripts/resh-evaluate-plot.py ~/.resh/bin/
+	@cp -fr data/sanitizer ~/.resh/sanitizer_data
+
+	@# backward compatibility: We have a new location for resh history file 
+	@[ ! -f ~/.resh/history.json ] || mv ~/.resh/history.json ~/.resh_history.json 
 	# Adding resh shellrc to .bashrc ...
-	grep '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' ~/.bashrc ||\
+	@grep -q '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' ~/.bashrc ||\
 		echo -e '\n[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' >> ~/.bashrc
 	# Adding bash-preexec to .bashrc ...
-	grep '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' ~/.bashrc ||\
+	@grep -q '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' ~/.bashrc ||\
 		echo -e '\n[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' >> ~/.bashrc
 	# Adding resh shellrc to .zshrc ...
-	grep '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' ~/.zshrc ||\
+	@grep -q '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' ~/.zshrc ||\
 		echo -e '\n[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' >> ~/.zshrc
 	@# Deleting zsh completion cache - for future use
 	@# [ ! -e ~/.zcompdump ] || rm ~/.zcompdump
+
+	@# Final touch
+	@touch ~/.resh_history.json
+
 	# Restarting resh daemon ...
-	-if [ -f ~/.resh/resh.pid ]; then\
+	@-if [ -f ~/.resh/resh.pid ]; then\
 		kill -SIGTERM $$(cat ~/.resh/resh.pid);\
 		rm ~/.resh/resh.pid;\
 	 fi
-	nohup resh-daemon &>/dev/null & disown
-	# Reloading rc files
-	. ~/.resh/shellrc
-	# Generating resh-uuid
-	[ -e "$(HOME)/.resh/resh-uuid" ] \
+	@nohup resh-daemon &>/dev/null & disown
+	@# Generating resh-uuid ...
+	@[ -e "$(HOME)/.resh/resh-uuid" ] \
 		|| cat /proc/sys/kernel/random/uuid > "$(HOME)/.resh/resh-uuid" 2>/dev/null \
 		|| ./uuid.sh > "$(HOME)/.resh/resh-uuid" 2>/dev/null 
-	# Final touch
-	touch ~/.resh_history.json
+	# Reloading rc files ...
+	@. ~/.resh/shellrc
 	#
 	#
 	#
@@ -117,15 +122,16 @@ install: build submodules/bash-preexec/bash-preexec.sh scripts/shellrc.sh conf/c
 	#
 	#
 	# WHAT'S NEXT
-	# Please RESTART ALL OPEN TERMINAL WINDOWS (or reload your rc files)
+	# It's recommended to RESTART ALL OPEN TERMINAL WINDOWS (or reload your rc files)
 	# Your resh history is located in `~/.resh_history.json`
 	# You can look at it using e.g. `tail -f ~/.resh_history.json | jq`
+	# 
 	#
 	#
 	# ISSUES
 	# If anything looks broken create an issue: https://github.com/curusarn/resh/issues
 	# You can uninstall this at any time by running `rm -rf ~/.resh/`
-	# You won't lose any collected history by removing `~/.resh` directory
+	# You won't lose any collected history by removing `~/.resh/` directory
 	#
 	#
 	# Please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98
