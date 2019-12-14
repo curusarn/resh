@@ -3,4 +3,4 @@
 	url = https://github.com/rcaloras/bash-preexec.git
 [submodule "submodules/bash-zsh-compat-widgets"]
 	path = submodules/bash-zsh-compat-widgets
-	url = git@github.com:curusarn/bash-zsh-compat-widgets.git
+	url = https://github.com/curusarn/bash-zsh-compat-widgets.git

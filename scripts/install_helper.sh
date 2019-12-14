@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -o pipefail
+
 resh_git_dir=~/.resh_git
 
 if ! go version &>/dev/null; then
@@ -102,7 +104,13 @@ else
         read x
         
         curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-        [ $? -eq 0 ] && echo "Installed dep."
+        if [ $? -eq 0 ]; then
+            echo "Installed dep."
+        else
+            echo "Installing dep failed - exiting!"
+            exit
+        fi
+
     fi
 
     project_path=$GOPATH/src/github.com/curusarn/resh
