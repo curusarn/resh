@@ -173,9 +173,40 @@ func (s *sanitizer) sanitizeRecord(record *records.Record) error {
 		log.Fatal("Cmd:", record.CmdLine, "; sanitization error:", err)
 	}
 
+	if len(record.RecallActionsRaw) > 0 {
+		record.RecallActionsRaw, err = s.sanitizeRecallActions(record.RecallActionsRaw)
+		if err != nil {
+			log.Fatal("RecallActionsRaw:", record.RecallActionsRaw, "; sanitization error:", err)
+		}
+	}
 	// add a flag to signify that the record has been sanitized
 	record.Sanitized = true
 	return nil
+}
+
+// sanitizes the recall actions by replacing the recall prefix with it's length
+func (s *sanitizer) sanitizeRecallActions(str string) (string, error) {
+	sanStr := ""
+	for x, actionStr := range strings.Split(str, ";") {
+		if x == 0 {
+			continue
+		}
+		if len(actionStr) == 0 {
+			return str, errors.New("Action can't be empty; idx=" + strconv.Itoa(x))
+		}
+		fields := strings.Split(actionStr, ":")
+		if len(fields) != 2 {
+			return str, errors.New("Action should have exactly one ':' - encountered:" + actionStr)
+		}
+		action := fields[0]
+		if action != "arrow_up" && action != "arrow_down" {
+			return str, errors.New("Action (part 1) should be either 'arrow_up' or 'arrow_down' - encountered:" + action)
+		}
+		prefix := fields[1]
+		sanPrefix := strconv.Itoa(len(prefix))
+		sanStr += ";" + action + ":" + sanPrefix
+	}
+	return sanStr, nil
 }
 
 func (s *sanitizer) sanitizeCmdLine(cmdLine string) (string, error) {

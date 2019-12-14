@@ -41,7 +41,8 @@ sanitize:
 	#
 	#
 
-build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect bin/resh-daemon bin/resh-evaluate bin/resh-sanitize bin/resh-control 
+build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect bin/resh-daemon\
+ bin/resh-evaluate bin/resh-sanitize bin/resh-control bin/resh-config bin/resh-inspect
 
 test_go:
 	# Running tests
@@ -58,7 +59,7 @@ rebuild:
 	make build
 
 clean:
-	rm resh-*
+	rm bin/resh-*
 
 install: build submodules/bash-preexec/bash-preexec.sh scripts/shellrc.sh conf/config.toml scripts/uuid.sh \
 		 | $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config $(HOME)/.resh/bash_completion.d $(HOME)/.resh/zsh_completion.d
@@ -82,15 +83,20 @@ install: build submodules/bash-preexec/bash-preexec.sh scripts/shellrc.sh conf/c
 	[ ! -f ~/.resh/history.json ] || mv ~/.resh/history.json ~/.resh_history.json 
 	# Adding resh shellrc to .bashrc ...
 	grep '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' ~/.bashrc ||\
-		echo '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' >> ~/.bashrc
+		echo -e '\n[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' >> ~/.bashrc
 	# Adding bash-preexec to .bashrc ...
 	grep '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' ~/.bashrc ||\
-		echo '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' >> ~/.bashrc
+		echo -e '\n[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' >> ~/.bashrc
 	# Adding resh shellrc to .zshrc ...
 	grep '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' ~/.zshrc ||\
-		echo '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' >> ~/.zshrc
+		echo -e '\n[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' >> ~/.zshrc
+	@# Deleting zsh completion cache - for future use
+	@# [ ! -e ~/.zcompdump ] || rm ~/.zcompdump
 	# Restarting resh daemon ...
-	-[ ! -f ~/.resh/resh.pid ] || kill -SIGTERM $$(cat ~/.resh/resh.pid)
+	-if [ -f ~/.resh/resh.pid ]; then\
+		kill -SIGTERM $$(cat ~/.resh/resh.pid);\
+		rm ~/.resh/resh.pid;\
+	 fi
 	nohup resh-daemon &>/dev/null & disown
 	# Reloading rc files
 	. ~/.resh/shellrc
@@ -131,9 +137,7 @@ uninstall:
 	# Uninstalling ...
 	-rm -rf ~/.resh/
 
-bin/resh-control: cmd/control/cmd/*.go
-
-bin/resh-%: cmd/%/*.go pkg/*/*.go VERSION
+bin/resh-%: cmd/%/*.go pkg/*/*.go VERSION cmd/control/cmd/*.go cmd/control/status/status.go
 	go build ${GOFLAGS} -o $@ cmd/$*/*.go
 
 $(HOME)/.resh $(HOME)/.resh/bin $(HOME)/.config $(HOME)/.resh/bash_completion.d $(HOME)/.resh/zsh_completion.d:

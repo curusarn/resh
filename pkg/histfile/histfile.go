@@ -3,10 +3,12 @@ package histfile
 import (
 	"encoding/json"
 	"log"
+	"math"
 	"os"
 	"strconv"
 	"sync"
 
+	"github.com/curusarn/resh/pkg/histlist"
 	"github.com/curusarn/resh/pkg/records"
 )
 
@@ -16,29 +18,71 @@ type Histfile struct {
 	sessions      map[string]records.Record
 	historyPath   string
 
-	recentMutex       sync.Mutex
-	recentRecords     []records.Record
-	recentCmdLines    []string // deduplicated
-	cmdLinesLastIndex map[string]int
+	recentMutex   sync.Mutex
+	recentRecords []records.Record
+
+	// NOTE: we have separate histories which only differ if there was not enough resh_history
+	//			resh_history itself is common for both bash and zsh
+	bashCmdLines histlist.Histlist
+	zshCmdLines  histlist.Histlist
 }
 
-// New creates new histfile and runs two gorutines on it
-func New(input chan records.Record, historyPath string, initHistSize int, sessionsToDrop chan string) *Histfile {
+// New creates new histfile and runs its gorutines
+func New(input chan records.Record, sessionsToDrop chan string,
+	reshHistoryPath string, bashHistoryPath string, zshHistoryPath string,
+	maxInitHistSize int, minInitHistSizeKB int,
+	signals chan os.Signal, shutdownDone chan string) *Histfile {
+
 	hf := Histfile{
-		sessions:          map[string]records.Record{},
-		historyPath:       historyPath,
-		cmdLinesLastIndex: map[string]int{},
+		sessions:     map[string]records.Record{},
+		historyPath:  reshHistoryPath,
+		bashCmdLines: histlist.New(),
+		zshCmdLines:  histlist.New(),
 	}
-	go hf.loadHistory(initHistSize)
-	go hf.writer(input)
+	go hf.loadHistory(bashHistoryPath, zshHistoryPath, maxInitHistSize, minInitHistSizeKB)
+	go hf.writer(input, signals, shutdownDone)
 	go hf.sessionGC(sessionsToDrop)
 	return &hf
 }
 
-func (h *Histfile) loadHistory(initHistSize int) {
+// loadsHistory from resh_history and if there is not enough of it also load native shell histories
+func (h *Histfile) loadHistory(bashHistoryPath, zshHistoryPath string, maxInitHistSize, minInitHistSizeKB int) {
 	h.recentMutex.Lock()
 	defer h.recentMutex.Unlock()
-	h.recentCmdLines = records.LoadCmdLinesFromFile(h.historyPath, initHistSize)
+	log.Println("histfile: Checking if resh_history is large enough ...")
+	fi, err := os.Stat(h.historyPath)
+	var size int
+	if err != nil {
+		log.Println("histfile ERROR: failed to stat resh_history file:", err)
+	} else {
+		size = int(fi.Size())
+	}
+	useNativeHistories := false
+	if size/1024 < minInitHistSizeKB {
+		useNativeHistories = true
+		log.Println("histfile WARN: resh_history is too small - loading native bash and zsh history ...")
+		h.bashCmdLines = records.LoadCmdLinesFromBashFile(bashHistoryPath)
+		log.Println("histfile: bash history loaded - cmdLine count:", len(h.bashCmdLines.List))
+		h.zshCmdLines = records.LoadCmdLinesFromZshFile(zshHistoryPath)
+		log.Println("histfile: zsh history loaded - cmdLine count:", len(h.zshCmdLines.List))
+		// no maxInitHistSize when using native histories
+		maxInitHistSize = math.MaxInt32
+	}
+	log.Println("histfile: Loading resh history from file ...")
+	reshCmdLines := histlist.New()
+	// NOTE: keeping this weird interface for now because we might use it in the future
+	//			when we only load bash or zsh history
+	records.LoadCmdLinesFromFile(&reshCmdLines, h.historyPath, maxInitHistSize)
+	log.Println("histfile: resh history loaded - cmdLine count:", len(reshCmdLines.List))
+	if useNativeHistories == false {
+		h.bashCmdLines = reshCmdLines
+		h.zshCmdLines = histlist.Copy(reshCmdLines)
+		return
+	}
+	h.bashCmdLines.AddHistlist(reshCmdLines)
+	log.Println("histfile: bash history + resh history - cmdLine count:", len(h.bashCmdLines.List))
+	h.zshCmdLines.AddHistlist(reshCmdLines)
+	log.Println("histfile: zsh history + resh history - cmdLine count:", len(h.zshCmdLines.List))
 }
 
 // sessionGC reads sessionIDs from channel and deletes them from histfile struct
@@ -61,31 +105,50 @@ func (h *Histfile) sessionGC(sessionsToDrop chan string) {
 }
 
 // writer reads records from channel, merges them and writes them to file
-func (h *Histfile) writer(input chan records.Record) {
+func (h *Histfile) writer(input chan records.Record, signals chan os.Signal, shutdownDone chan string) {
 	for {
 		func() {
-			record := <-input
-			h.sessionsMutex.Lock()
-			defer h.sessionsMutex.Unlock()
+			select {
+			case record := <-input:
+				h.sessionsMutex.Lock()
+				defer h.sessionsMutex.Unlock()
 
-			// allows nested sessions to merge records properly
-			mergeID := record.SessionID + "_" + strconv.Itoa(record.Shlvl)
-			if record.PartOne {
-				if _, found := h.sessions[mergeID]; found {
-					log.Println("histfile WARN: Got another first part of the records before merging the previous one - overwriting! " +
-						"(this happens in bash because bash-preexec runs when it's not supposed to)")
-				}
-				h.sessions[mergeID] = record
-			} else {
-				if part1, found := h.sessions[mergeID]; found == false {
-					log.Println("histfile ERROR: Got second part of records and nothing to merge it with - ignoring! (mergeID:", mergeID, ")")
+				// allows nested sessions to merge records properly
+				mergeID := record.SessionID + "_" + strconv.Itoa(record.Shlvl)
+				if record.PartOne {
+					if _, found := h.sessions[mergeID]; found {
+						log.Println("histfile WARN: Got another first part of the records before merging the previous one - overwriting! " +
+							"(this happens in bash because bash-preexec runs when it's not supposed to)")
+					}
+					h.sessions[mergeID] = record
 				} else {
-					delete(h.sessions, mergeID)
-					go h.mergeAndWriteRecord(part1, record)
+					if part1, found := h.sessions[mergeID]; found == false {
+						log.Println("histfile ERROR: Got second part of records and nothing to merge it with - ignoring! (mergeID:", mergeID, ")")
+					} else {
+						delete(h.sessions, mergeID)
+						go h.mergeAndWriteRecord(part1, record)
+					}
 				}
+			case sig := <-signals:
+				log.Println("histfile: Got signal " + sig.String())
+				h.sessionsMutex.Lock()
+				defer h.sessionsMutex.Unlock()
+				log.Println("histfile DEBUG: Unlocked mutex")
+
+				for sessID, record := range h.sessions {
+					log.Panicln("histfile WARN: Writing incomplete record for session " + sessID)
+					h.writeRecord(record)
+				}
+				log.Println("histfile DEBUG: Shutdown success")
+				shutdownDone <- "histfile"
+				return
 			}
 		}()
 	}
+}
+
+func (h *Histfile) writeRecord(part1 records.Record) {
+	writeRecord(part1, h.historyPath)
 }
 
 func (h *Histfile) mergeAndWriteRecord(part1, part2 records.Record) {
@@ -100,12 +163,8 @@ func (h *Histfile) mergeAndWriteRecord(part1, part2 records.Record) {
 		defer h.recentMutex.Unlock()
 		h.recentRecords = append(h.recentRecords, part1)
 		cmdLine := part1.CmdLine
-		idx, found := h.cmdLinesLastIndex[cmdLine]
-		if found {
-			h.recentCmdLines = append(h.recentCmdLines[:idx], h.recentCmdLines[idx+1:]...)
-		}
-		h.cmdLinesLastIndex[cmdLine] = len(h.recentCmdLines)
-		h.recentCmdLines = append(h.recentCmdLines, cmdLine)
+		h.bashCmdLines.AddCmdLine(cmdLine)
+		h.zshCmdLines.AddCmdLine(cmdLine)
 	}()
 
 	writeRecord(part1, h.historyPath)
@@ -132,6 +191,21 @@ func writeRecord(rec records.Record, outputPath string) {
 }
 
 // GetRecentCmdLines returns recent cmdLines
-func (h *Histfile) GetRecentCmdLines(limit int) []string {
-	return h.recentCmdLines
+func (h *Histfile) GetRecentCmdLines(shell string, limit int) histlist.Histlist {
+	// NOTE: limit does nothing atm
+	h.recentMutex.Lock()
+	defer h.recentMutex.Unlock()
+	log.Println("histfile: History requested ...")
+	var hl histlist.Histlist
+	if shell == "bash" {
+		hl = histlist.Copy(h.bashCmdLines)
+		log.Println("histfile: history copied (bash) - cmdLine count:", len(hl.List))
+		return hl
+	}
+	if shell != "zsh" {
+		log.Println("histfile ERROR: Unknown shell: ", shell)
+	}
+	hl = histlist.Copy(h.zshCmdLines)
+	log.Println("histfile: history copied (zsh) - cmdLine count:", len(hl.List))
+	return hl
 }

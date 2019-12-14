@@ -63,8 +63,19 @@ __resh_bash_completion_init() {
 }
 
 __resh_zsh_completion_init() {
-    # shellcheck disable=SC2206
-    fpath=(~/.resh/zsh_completion.d $fpath)
+    # NOTE: this is hacky - each completion needs to be added individually 
+    # TODO: fix later
+    # fpath=(~/.resh/zsh_completion.d $fpath)
+    # we should be using fpath but that doesn't work well with oh-my-zsh
+    #   so we are just adding it manually 
+    # shellcheck disable=1090
+    source ~/.resh/zsh_completion.d/_reshctl && compdef _reshctl reshctl
+
+    # TODO: test and use this
+    # NOTE: this is not how globbing works
+    # for f in ~/.resh/zsh_completion.d/_*; do
+    #   source ~/.resh/zsh_completion.d/_$f && compdef _$f $f
+    # done
 }
 
 __resh_session_init() {

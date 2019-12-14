@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/curusarn/resh/pkg/histlist"
 	"github.com/mattn/go-shellwords"
 )
 
@@ -127,6 +128,21 @@ type FallbackRecord struct {
 
 	Cols  int `json:"cols"`  // notice the int type
 	Lines int `json:"lines"` // notice the int type
+}
+
+// SlimRecord used for recalling because unmarshalling record w/ 50+ fields is too slow
+type SlimRecord struct {
+	SessionID    string `json:"sessionId"`
+	RecallHistno int    `json:"recallHistno,omitempty"`
+	RecallPrefix string `json:"recallPrefix,omitempty"`
+
+	// extra recall - we might use these in the future
+	// Pwd string `json:"pwd"`
+	// RealPwd string `json:"realPwd"`
+	// GitDir          string `json:"gitDir"`
+	// GitRealDir      string `json:"gitRealDir"`
+	// GitOriginRemote string `json:"gitOriginRemote"`
+
 }
 
 // Convert from FallbackRecord to Record
@@ -439,9 +455,10 @@ func (r *EnrichedRecord) DistanceTo(r2 EnrichedRecord, p DistParams) float64 {
 	return dist
 }
 
-// LoadCmdLinesFromFile loads limit cmdlines from file
-func LoadCmdLinesFromFile(fname string, limit int) []string {
+// LoadCmdLinesFromFile loads cmdlines from file
+func LoadCmdLinesFromFile(hl *histlist.Histlist, fname string, limit int) {
 	recs := LoadFromFile(fname, limit*3) // assume that at least 1/3 of commands is unique
+	// go from bottom and deduplicate
 	var cmdLines []string
 	cmdLinesSet := map[string]bool{}
 	for i := len(recs) - 1; i >= 0; i-- {
@@ -455,18 +472,24 @@ func LoadCmdLinesFromFile(fname string, limit int) []string {
 			break
 		}
 	}
-	return cmdLines
+	// add everything to histlist
+	for _, cmdLine := range cmdLines {
+		hl.AddCmdLine(cmdLine)
+	}
 }
 
-// LoadFromFile loads at most 'limit' records from 'fname' file
+// LoadFromFile loads records from 'fname' file
 func LoadFromFile(fname string, limit int) []Record {
+	// NOTE: limit does nothing atm
+	var recs []Record
 	file, err := os.Open(fname)
 	if err != nil {
-		log.Fatal("Open() resh history file error:", err)
+		log.Println("Open() resh history file error:", err)
+		log.Println("WARN: Skipping reading resh history!")
+		return recs
 	}
 	defer file.Close()
 
-	var recs []Record
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		record := Record{}
@@ -484,4 +507,71 @@ func LoadFromFile(fname string, limit int) []Record {
 		recs = append(recs, record)
 	}
 	return recs
+}
+
+// LoadCmdLinesFromZshFile loads cmdlines from zsh history file
+func LoadCmdLinesFromZshFile(fname string) histlist.Histlist {
+	file, err := os.Open(fname)
+	if err != nil {
+		log.Fatal("Open() resh history file error:", err)
+	}
+	defer file.Close()
+
+	hl := histlist.New()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		// trim newline
+		line = strings.TrimRight(line, "\n")
+		var cmd string
+		// zsh format EXTENDED_HISTORY
+		// : 1576270617:0;make install
+		// zsh format no EXTENDED_HISTORY
+		// make install
+		if len(line) == 0 {
+			// skip empty
+			continue
+		}
+		if strings.Contains(line, ":") && strings.Contains(line, ";") &&
+			len(strings.Split(line, ":")) >= 3 && len(strings.Split(line, ";")) >= 2 {
+			// contains at least 2x ':' and 1x ';' => assume EXTENDED_HISTORY
+			cmd = strings.Split(line, ";")[1]
+		} else {
+			cmd = line
+		}
+		hl.AddCmdLine(cmd)
+	}
+	return hl
+}
+
+// LoadCmdLinesFromBashFile loads cmdlines from bash history file
+func LoadCmdLinesFromBashFile(fname string) histlist.Histlist {
+	file, err := os.Open(fname)
+	if err != nil {
+		log.Fatal("Open() resh history file error:", err)
+	}
+	defer file.Close()
+
+	hl := histlist.New()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		// trim newline
+		line = strings.TrimRight(line, "\n")
+		// trim spaces from left
+		line = strings.TrimLeft(line, " ")
+		// bash format (two lines)
+		// #1576199174
+		// make install
+		if strings.HasPrefix(line, "#") {
+			// is either timestamp or comment => skip
+			continue
+		}
+		if len(line) == 0 {
+			// skip empty
+			continue
+		}
+		hl.AddCmdLine(line)
+	}
+	return hl
 }

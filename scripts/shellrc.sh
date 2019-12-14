@@ -23,13 +23,13 @@ else
     echo "resh PANIC unrecognized OS"
 fi
 
-if [ -n "$ZSH_VERSION" ]; then
+if [ -n "${ZSH_VERSION-}" ]; then
     # shellcheck disable=SC1009
     __RESH_SHELL="zsh"
     __RESH_HOST="$HOST"
     __RESH_HOSTTYPE="$CPUTYPE"
     __resh_zsh_completion_init
-elif [ -n "$BASH_VERSION" ]; then
+elif [ -n "${BASH_VERSION-}" ]; then
     __RESH_SHELL="bash"
     __RESH_HOST="$HOSTNAME"
     __RESH_HOSTTYPE="$HOSTTYPE"
@@ -85,6 +85,15 @@ if [ -z "${__RESH_INIT_DONE+x}" ]; then
     precmd_functions+=(__resh_precmd)
 
     __resh_reset_variables
+
+    if [ "$__RESH_SHELL" = bash ] ; then
+        [ "$(resh-config --key BindArrowKeysBash)" = true ] && reshctl enable arrow_key_bindings
+    elif [ "$__RESH_SHELL" = zsh ] ; then
+        [ "$(resh-config --key BindArrowKeysZsh)" = true ] && reshctl enable arrow_key_bindings
+    else
+        echo "RESH error: unknown shell (init)"
+        echo "$__RESH_SHELL"
+    fi
 
     __RESH_INIT_DONE=1
 fi

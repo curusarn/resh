@@ -11,17 +11,18 @@ var exitCode status.Code
 
 var rootCmd = &cobra.Command{
 	Use:   "reshctl",
-	Short: "Reshctl (RESH control) - enables you to enable/disable features and more.",
-	Long:  `Enables you to enable/disable RESH bindings for arrows and C-R.`,
+	Short: "Reshctl (RESH control) - enable/disable RESH features and more.",
 }
 
 // Execute reshctl
 func Execute() status.Code {
 	rootCmd.AddCommand(disableCmd)
-	// disableCmd.AddCommand(disableRecallingCmd)
+	disableCmd.AddCommand(disableArrowKeyBindingsCmd)
+	disableCmd.AddCommand(disableArrowKeyBindingsGlobalCmd)
 
 	rootCmd.AddCommand(enableCmd)
-	// enableCmd.AddCommand(enableRecallingCmd)
+	enableCmd.AddCommand(enableArrowKeyBindingsCmd)
+	enableCmd.AddCommand(enableArrowKeyBindingsGlobalCmd)
 
 	rootCmd.AddCommand(completionCmd)
 	completionCmd.AddCommand(completionBashCmd)
@@ -29,6 +30,7 @@ func Execute() status.Code {
 
 	rootCmd.AddCommand(debugCmd)
 	debugCmd.AddCommand(debugReloadCmd)
+	debugCmd.AddCommand(debugInspectCmd)
 	debugCmd.AddCommand(debugOutputCmd)
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

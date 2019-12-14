@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/curusarn/resh/pkg/cfg"
@@ -9,12 +10,16 @@ import (
 	"github.com/curusarn/resh/pkg/records"
 	"github.com/curusarn/resh/pkg/sesshist"
 	"github.com/curusarn/resh/pkg/sesswatch"
+	"github.com/curusarn/resh/pkg/signalhandler"
 )
 
-func runServer(config cfg.Config, historyPath string) {
+func runServer(config cfg.Config, reshHistoryPath, bashHistoryPath, zshHistoryPath string) {
 	var recordSubscribers []chan records.Record
 	var sessionInitSubscribers []chan records.Record
 	var sessionDropSubscribers []chan string
+	var signalSubscribers []chan os.Signal
+
+	shutdown := make(chan string)
 
 	// sessshist
 	sesshistSessionsToInit := make(chan records.Record)
@@ -29,10 +34,19 @@ func runServer(config cfg.Config, historyPath string) {
 	recordSubscribers = append(recordSubscribers, histfileRecords)
 	histfileSessionsToDrop := make(chan string)
 	sessionDropSubscribers = append(sessionDropSubscribers, histfileSessionsToDrop)
-	histfileBox := histfile.New(histfileRecords, historyPath, 10000, histfileSessionsToDrop)
+	histfileSignals := make(chan os.Signal)
+	signalSubscribers = append(signalSubscribers, histfileSignals)
+	maxHistSize := 10000  // lines
+	minHistSizeKB := 2000 // roughly lines
+	histfileBox := histfile.New(histfileRecords, histfileSessionsToDrop,
+		reshHistoryPath, bashHistoryPath, zshHistoryPath,
+		maxHistSize, minHistSizeKB,
+		histfileSignals, shutdown)
 
 	// sesshist New
-	sesshistDispatch := sesshist.NewDispatch(sesshistSessionsToInit, sesshistSessionsToDrop, sesshistRecords, histfileBox, config.SesshistInitHistorySize)
+	sesshistDispatch := sesshist.NewDispatch(sesshistSessionsToInit, sesshistSessionsToDrop,
+		sesshistRecords, histfileBox,
+		config.SesshistInitHistorySize)
 
 	// sesswatch
 	sesswatchSessionsToWatch := make(chan records.Record)
@@ -40,9 +54,16 @@ func runServer(config cfg.Config, historyPath string) {
 	sesswatch.Go(sesswatchSessionsToWatch, sessionDropSubscribers, config.SesswatchPeriodSeconds)
 
 	// handlers
-	http.HandleFunc("/status", statusHandler)
-	http.Handle("/record", &recordHandler{subscribers: recordSubscribers})
-	http.Handle("/session_init", &sessionInitHandler{subscribers: sessionInitSubscribers})
-	http.Handle("/recall", &recallHandler{sesshistDispatch: sesshistDispatch})
-	http.ListenAndServe(":"+strconv.Itoa(config.Port), nil)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/status", statusHandler)
+	mux.Handle("/record", &recordHandler{subscribers: recordSubscribers})
+	mux.Handle("/session_init", &sessionInitHandler{subscribers: sessionInitSubscribers})
+	mux.Handle("/recall", &recallHandler{sesshistDispatch: sesshistDispatch})
+	mux.Handle("/inspect", &inspectHandler{sesshistDispatch: sesshistDispatch})
+
+	server := &http.Server{Addr: ":" + strconv.Itoa(config.Port), Handler: mux}
+	go server.ListenAndServe()
+
+	// signalhandler - takes over the main goroutine so when signal handler exists the whole program exits
+	signalhandler.Run(signalSubscribers, shutdown, server)
 }

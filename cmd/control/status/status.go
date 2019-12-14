@@ -8,10 +8,12 @@ const (
 	Success Code = 0
 	// Fail exit code
 	Fail = 1
-	// EnableAll exit code - tells reshctl() wrapper to enable_all
-	EnableAll = 100
-	// DisableAll exit code - tells reshctl() wrapper to disable_all
-	DisableAll = 110
+	// EnableArrowKeyBindings exit code - tells reshctl() wrapper to enable arrow key bindings
+	EnableArrowKeyBindings = 101
+	// DisableArrowKeyBindings exit code - tells reshctl() wrapper to disable arrow key bindings
+	DisableArrowKeyBindings = 111
 	// ReloadRcFiles exit code - tells reshctl() wrapper to reload shellrc resh file
 	ReloadRcFiles = 200
+	// InspectSessionHistory exit code - tells reshctl() wrapper to take current sessionID and send /inspect request to daemon
+	InspectSessionHistory = 201
 )

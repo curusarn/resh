@@ -31,7 +31,9 @@ func main() {
 	dir := usr.HomeDir
 	pidfilePath := filepath.Join(dir, ".resh/resh.pid")
 	configPath := filepath.Join(dir, ".config/resh.toml")
-	historyPath := filepath.Join(dir, ".resh_history.json")
+	reshHistoryPath := filepath.Join(dir, ".resh_history.json")
+	bashHistoryPath := filepath.Join(dir, ".bash_history")
+	zshHistoryPath := filepath.Join(dir, ".zsh_history")
 	logPath := filepath.Join(dir, ".resh/daemon.log")
 
 	f, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
@@ -48,6 +50,10 @@ func main() {
 		log.Println("Error reading config", err)
 		return
 	}
+	if config.Debug {
+		log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+	}
+
 	res, err := isDaemonRunning(config.Port)
 	if err != nil {
 		log.Println("Error while checking if the daemon is runnnig", err)
@@ -69,11 +75,13 @@ func main() {
 	if err != nil {
 		log.Fatal("Could not create pidfile", err)
 	}
-	runServer(config, historyPath)
+	runServer(config, reshHistoryPath, bashHistoryPath, zshHistoryPath)
+	log.Println("main: Removing pidfile ...")
 	err = os.Remove(pidfilePath)
 	if err != nil {
 		log.Println("Could not delete pidfile", err)
 	}
+	log.Println("main: Shutdown - bye")
 }
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
@@ -92,7 +100,7 @@ func killDaemon(pidfile string) error {
 	if err != nil {
 		log.Fatal("Pidfile contents are malformed", err)
 	}
-	cmd := exec.Command("kill", strconv.Itoa(pid))
+	cmd := exec.Command("kill", "-s", "sigint", strconv.Itoa(pid))
 	err = cmd.Run()
 	if err != nil {
 		log.Printf("Command finished with error: %v", err)

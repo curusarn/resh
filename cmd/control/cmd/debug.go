@@ -12,22 +12,30 @@ import (
 
 var debugCmd = &cobra.Command{
 	Use:   "debug",
-	Short: "Debug utils for resh",
+	Short: "debug utils for resh",
 	Long:  "Reloads resh rc files. Shows logs and output from last runs of resh",
 }
 
 var debugReloadCmd = &cobra.Command{
 	Use:   "reload",
-	Short: "Reload resh rc files",
+	Short: "reload resh rc files",
 	Long:  "Reload resh rc files",
 	Run: func(cmd *cobra.Command, args []string) {
 		exitCode = status.ReloadRcFiles
 	},
 }
 
+var debugInspectCmd = &cobra.Command{
+	Use:   "inspect",
+	Short: "inspect session history",
+	Run: func(cmd *cobra.Command, args []string) {
+		exitCode = status.InspectSessionHistory
+	},
+}
+
 var debugOutputCmd = &cobra.Command{
 	Use:   "output",
-	Short: "Shows output from last runs of resh",
+	Short: "shows output from last runs of resh",
 	Long:  "Shows output from last runs of resh",
 	Run: func(cmd *cobra.Command, args []string) {
 		files := []string{

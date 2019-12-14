@@ -1,6 +1,7 @@
 
 __resh_reset_variables() {
     __RESH_HISTNO=0
+    __RESH_HISTNO_MAX=""
     __RESH_HISTNO_ZERO_LINE=""
     __RESH_HIST_PREV_LINE=""
     __RESH_HIST_RECALL_ACTIONS=""
