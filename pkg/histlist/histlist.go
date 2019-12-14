@@ -30,7 +30,7 @@ func Copy(hl Histlist) Histlist {
 
 // AddCmdLine to the histlist
 func (h *Histlist) AddCmdLine(cmdLine string) {
-	lenBefore := len(h.List)
+	// lenBefore := len(h.List)
 	// lookup
 	idx, found := h.LastIndex[cmdLine]
 	if found {
@@ -53,7 +53,7 @@ func (h *Histlist) AddCmdLine(cmdLine string) {
 	h.LastIndex[cmdLine] = len(h.List)
 	// append new cmdline
 	h.List = append(h.List, cmdLine)
-	log.Println("histlist: Added cmdLine:", cmdLine, "; history length:", lenBefore, "->", len(h.List))
+	// log.Println("histlist: Added cmdLine:", cmdLine, "; history length:", lenBefore, "->", len(h.List))
 }
 
 // AddHistlist contents of another histlist to this histlist

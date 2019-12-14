@@ -36,8 +36,8 @@ func runServer(config cfg.Config, reshHistoryPath, bashHistoryPath, zshHistoryPa
 	sessionDropSubscribers = append(sessionDropSubscribers, histfileSessionsToDrop)
 	histfileSignals := make(chan os.Signal)
 	signalSubscribers = append(signalSubscribers, histfileSignals)
-	maxHistSize := 10000 // lines
-	minHistSizeKB := 100 // roughly lines
+	maxHistSize := 10000  // lines
+	minHistSizeKB := 2000 // roughly lines
 	histfileBox := histfile.New(histfileRecords, histfileSessionsToDrop,
 		reshHistoryPath, bashHistoryPath, zshHistoryPath,
 		maxHistSize, minHistSizeKB,

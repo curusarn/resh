@@ -58,13 +58,28 @@ func (s *Dispatch) recordAdder(recordsToAdd chan records.Record) {
 		if record.PartOne {
 			log.Println("sesshist: got record to add - " + record.CmdLine)
 			s.addRecentRecord(record.SessionID, record)
+		} else {
+			// this inits session on RESH update
+			s.checkSession(record.SessionID, record.Shell)
 		}
 		// TODO: we will need to handle part2 as well eventually
 	}
 }
 
+func (s *Dispatch) checkSession(sessionID, shell string) {
+	s.mutex.RLock()
+	_, found := s.sessions[sessionID]
+	s.mutex.RUnlock()
+	if found == false {
+		err := s.initSession(sessionID, shell)
+		if err != nil {
+			log.Println("sesshist: Error while checking session:", err)
+		}
+	}
+}
+
 // InitSession struct
-func (s *Dispatch) initSession(sessionID string, shell string) error {
+func (s *Dispatch) initSession(sessionID, shell string) error {
 	log.Println("sesshist: initializing session - " + sessionID)
 	s.mutex.RLock()
 	_, found := s.sessions[sessionID]
