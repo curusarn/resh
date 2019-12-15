@@ -17,16 +17,16 @@ import (
 	"github.com/curusarn/resh/pkg/cfg"
 )
 
-// Version from git set during build
-var Version string
+// version from git set during build
+var version string
 
-// Revision from git set during build
-var Revision string
+// commit from git set during build
+var commit string
 
 func main() {
 	log.Println("Daemon starting... \n" +
-		"version: " + Version +
-		" revision: " + Revision)
+		"version: " + version +
+		" commit: " + commit)
 	usr, _ := user.Current()
 	dir := usr.HomeDir
 	pidfilePath := filepath.Join(dir, ".resh/resh.pid")
@@ -85,8 +85,8 @@ func main() {
 }
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("OK; version: " + Version +
-		"; revision: " + Revision + "\n"))
+	w.Write([]byte("OK; version: " + version +
+		"; commit: " + commit + "\n"))
 	log.Println("Status OK")
 }
 

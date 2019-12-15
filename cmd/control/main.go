@@ -6,11 +6,11 @@ import (
 	"github.com/curusarn/resh/cmd/control/cmd"
 )
 
-// Version from git set during build
-var Version string
+// version from git set during build
+var version string
 
-// Revision from git set during build
-var Revision string
+// commit from git set during build
+var commit string
 
 func main() {
 	os.Exit(int(cmd.Execute()))

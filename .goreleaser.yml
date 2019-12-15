@@ -1,0 +1,45 @@
+# .goreleaser.yml
+project_name: resh
+
+# resh_template: '{{ ProjectName }}_{{ .Version }}'
+env:
+  - GO111MODULE=on
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  # You can have multiple builds defined as a yaml list
+  -
+    # ID of the build.
+    # Defaults to the project name.
+    id: "daemon"
+
+    # Path to main.go file or main package.
+    # Default is `.`.
+    main: ./cmd/daemon/main.go
+
+    # Binary name.
+    # Can be a path (e.g. `bin/app`) to wrap the binary in a directory.
+    # Default is the name of the project directory.
+    binary: resh-daemon
+
+    # Hooks can be used to customize the final binary,
+    # for example, to run generators.
+    # Those fields allow templates.
+    # Default is both hooks empty.
+    # hooks:
+    #   pre: rice embed-go
+    #   post: ./script.sh
+
+signs:
+  - artifacts: checksum
+
+release:
+  draft: true
+  # If set to auto, will mark the release as not ready for production
+  # in case there is an indicator for this in the tag e.g. v1.0.0-rc1
+  # If set to true, will mark the release as not ready for production.
+  # Default is false.
+  prerelease: auto
+  # disable: true

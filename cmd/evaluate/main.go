@@ -13,11 +13,11 @@ import (
 	"github.com/curusarn/resh/pkg/strat"
 )
 
-// Version from git set during build
-var Version string
+// version from git set during build
+var version string
 
-// Revision from git set during build
-var Revision string
+// commit from git set during build
+var commit string
 
 func main() {
 	const maxCandidates = 50
@@ -50,11 +50,11 @@ func main() {
 
 	// handle show{Version,Revision} options
 	if *showVersion == true {
-		fmt.Println(Version)
+		fmt.Println(version)
 		os.Exit(0)
 	}
 	if *showRevision == true {
-		fmt.Println(Revision)
+		fmt.Println(commit)
 		os.Exit(0)
 	}
 

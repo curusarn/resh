@@ -17,11 +17,11 @@ import (
 	"strconv"
 )
 
-// Version from git set during build
-var Version string
+// version tag from git set during build
+var version string
 
-// Revision from git set during build
-var Revision string
+// Commit hash from git set during build
+var commit string
 
 func main() {
 	usr, _ := user.Current()
@@ -104,23 +104,23 @@ func main() {
 	flag.Parse()
 
 	if *showVersion == true {
-		fmt.Println(Version)
+		fmt.Println(version)
 		os.Exit(0)
 	}
 	if *showRevision == true {
-		fmt.Println(Revision)
+		fmt.Println(commit)
 		os.Exit(0)
 	}
-	if *requireVersion != "" && *requireVersion != Version {
+	if *requireVersion != "" && *requireVersion != version {
 		fmt.Println("Please restart/reload this terminal session " +
-			"(resh version: " + Version +
+			"(resh version: " + version +
 			"; resh version of this terminal session: " + *requireVersion +
 			")")
 		os.Exit(3)
 	}
-	if *requireRevision != "" && *requireRevision != Revision {
+	if *requireRevision != "" && *requireRevision != commit {
 		fmt.Println("Please restart/reload this terminal session " +
-			"(resh revision: " + Revision +
+			"(resh revision: " + commit +
 			"; resh revision of this terminal session: " + *requireRevision +
 			")")
 		os.Exit(3)
@@ -234,8 +234,8 @@ func main() {
 				PartOne: true,
 
 				ReshUUID:     collect.ReadFileContent(reshUUIDPath),
-				ReshVersion:  Version,
-				ReshRevision: Revision,
+				ReshVersion:  version,
+				ReshRevision: commit,
 
 				RecallActionsRaw: *recallActions,
 				RecallPrefix:     *recallPrefix,

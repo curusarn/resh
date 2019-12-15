@@ -23,11 +23,11 @@ import (
 	giturls "github.com/whilp/git-urls"
 )
 
-// Version from git set during build
-var Version string
+// version from git set during build
+var version string
 
-// Revision from git set during build
-var Revision string
+// commit from git set during build
+var commit string
 
 func main() {
 	usr, _ := user.Current()
@@ -45,11 +45,11 @@ func main() {
 	flag.Parse()
 
 	if *showVersion == true {
-		fmt.Println(Version)
+		fmt.Println(version)
 		os.Exit(0)
 	}
 	if *showRevision == true {
-		fmt.Println(Revision)
+		fmt.Println(commit)
 		os.Exit(0)
 	}
 	sanitizer := sanitizer{hashLength: *trimHashes}
