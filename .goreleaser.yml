@@ -32,8 +32,8 @@ builds:
     #   pre: rice embed-go
     #   post: ./script.sh
 
-signs:
-  - artifacts: checksum
+# signs:
+#   - artifacts: checksum
 
 release:
   draft: true
