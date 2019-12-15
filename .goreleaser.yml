@@ -2,8 +2,8 @@
 project_name: resh
 
 # resh_template: '{{ ProjectName }}_{{ .Version }}'
-env:
-  - GO111MODULE=on
+# env:
+#   - GO111MODULE=on
 # before:
 #   hooks:
 #     - go mod tidy
