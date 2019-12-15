@@ -21,7 +21,7 @@ builds:
     # Binary name.
     # Can be a path (e.g. `bin/app`) to wrap the binary in a directory.
     # Default is the name of the project directory.
-    # binary: resh-daemon
+    # binary: resh-collect
 
     # Hooks can be used to customize the final binary,
     # for example, to run generators.
@@ -33,43 +33,43 @@ builds:
   -
     id: "collect"
     main: ./cmd/collect
-    binary: resh-collect
+    binary: bin/resh-collect
   -
     id: "config"
     main: ./cmd/config
-    binary: resh-config
+    binary: bin/resh-config
   -
     id: "control"
     main: ./cmd/control
-    binary: resh-control
+    binary: bin/resh-control
   -
     id: "daemon"
     main: ./cmd/daemon
-    binary: resh-daemon
+    binary: bin/resh-daemon
   -
     id: "evaluate"
     main: ./cmd/evaluate
-    binary: resh-evaluate
+    binary: bin/resh-evaluate
   -
     id: "event"
     main: ./cmd/event
-    binary: resh-event
+    binary: bin/resh-event
   -
     id: "inspect"
     main: ./cmd/inspect
-    binary: resh-inspect
+    binary: bin/resh-inspect
   -
     id: "postcollect"
     main: ./cmd/postcollect
-    binary: resh-postcollect
+    binary: bin/resh-postcollect
   -
     id: "sanitize"
     main: ./cmd/sanitize
-    binary: resh-sanitize
+    binary: bin/resh-sanitize
   -
     id: "session-init"
     main: ./cmd/session-init
-    binary: resh-session-init
+    binary: bin/resh-session-init
 
 # signs:
 #   - artifacts: checksum
