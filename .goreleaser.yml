@@ -10,19 +10,18 @@ project_name: resh
 
 builds:
   # You can have multiple builds defined as a yaml list
-  -
     # ID of the build.
     # Defaults to the project name.
-    id: "daemon"
+    # id: "daemon"
 
     # Path to main.go file or main package.
     # Default is `.`.
-    main: ./cmd/daemon/
+    # id: ./cmd/daemon 
 
     # Binary name.
     # Can be a path (e.g. `bin/app`) to wrap the binary in a directory.
     # Default is the name of the project directory.
-    binary: resh-daemon
+    # binary: resh-daemon
 
     # Hooks can be used to customize the final binary,
     # for example, to run generators.
@@ -31,6 +30,46 @@ builds:
     # hooks:
     #   pre: rice embed-go
     #   post: ./script.sh
+  -
+    id: "collect"
+    main: ./cmd/collect
+    binary: resh-collect
+  -
+    id: "config"
+    main: ./cmd/config
+    binary: resh-config
+  -
+    id: "control"
+    main: ./cmd/control
+    binary: resh-control
+  -
+    id: "daemon"
+    main: ./cmd/daemon
+    binary: resh-daemon
+  -
+    id: "evaluate"
+    main: ./cmd/evaluate
+    binary: resh-evaluate
+  -
+    id: "event"
+    main: ./cmd/event
+    binary: resh-event
+  -
+    id: "inspect"
+    main: ./cmd/inspect
+    binary: resh-inspect
+  -
+    id: "postcollect"
+    main: ./cmd/postcollect
+    binary: resh-postcollect
+  -
+    id: "sanitize"
+    main: ./cmd/sanitize
+    binary: resh-sanitize
+  -
+    id: "session-init"
+    main: ./cmd/session-init
+    binary: resh-session-init
 
 # signs:
 #   - artifacts: checksum
