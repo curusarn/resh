@@ -13,5 +13,5 @@ var version string
 var commit string
 
 func main() {
-	os.Exit(int(cmd.Execute()))
+	os.Exit(int(cmd.Execute(version, commit)))
 }

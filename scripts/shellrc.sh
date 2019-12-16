@@ -64,8 +64,10 @@ elif [ $__RESH_MACOS -eq 1 ]; then
     __RESH_RT_SESS_SINCE_BOOT=$(sysctl -n kern.boottime | awk '{print $4}' | sed 's/,//g')
 fi
 
-__RESH_VERSION=$(resh-collect -version)
-__RESH_REVISION=$(resh-collect -revision)
+# shellcheck disable=2155
+export __RESH_VERSION=$(resh-collect -version)
+# shellcheck disable=2155
+export __RESH_REVISION=$(resh-collect -revision)
 
 __resh_run_daemon
 

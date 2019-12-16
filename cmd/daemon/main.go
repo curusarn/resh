@@ -3,6 +3,7 @@ package main
 import (
 
 	//"flag"
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/curusarn/resh/pkg/cfg"
+	"github.com/curusarn/resh/pkg/msg"
 )
 
 // version from git set during build
@@ -89,9 +91,20 @@ func main() {
 }
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("OK; version: " + version +
-		"; commit: " + commit + "\n"))
-	log.Println("Status OK")
+	log.Println("/status START")
+	resp := msg.StatusResponse{
+		Status:  true,
+		Version: version,
+		Commit:  commit,
+	}
+	jsn, err := json.Marshal(&resp)
+	if err != nil {
+		log.Println("Encoding error:", err)
+		log.Println("Response:", resp)
+		return
+	}
+	w.Write(jsn)
+	log.Println("/status END")
 }
 
 func killDaemon(pidfile string) error {

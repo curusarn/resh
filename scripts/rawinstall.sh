@@ -24,6 +24,12 @@ version="${tag:1}"
 # TODO: check if version is numeric
 
 echo " * Latest version: $version (git tag: $tag)"
+
+if [ "${__RESH_VERSION-}" == "$version" ]; then
+    echo " * Resh is up to date - nothing to do - exiting."
+    exit 0
+fi
+
 echo
 
 if [ "$(uname)" = "Darwin" ]; then

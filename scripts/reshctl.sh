@@ -38,7 +38,7 @@ __resh_unbind_arrows() {
     else
         eval "$__RESH_bindfunc_revert_arrow_up_bind"
         [ -z "${__RESH_bindfunc_revert_arrow_up_bind_vim+x}" ] || eval "$__RESH_bindfunc_revert_arrow_up_bind_vim"
-        echo "RESH arrow up binding successfully disabled ✓"
+        echo "RESH arrow up binding successfully disabled"
         __RESH_arrow_keys_bind_enabled=0
     fi
 
@@ -47,7 +47,7 @@ __resh_unbind_arrows() {
     else
         eval "$__RESH_bindfunc_revert_arrow_down_bind"
         [ -z "${__RESH_bindfunc_revert_arrow_down_bind_vim+x}" ] || eval "$__RESH_bindfunc_revert_arrow_down_bind_vim"
-        echo "RESH arrow down binding successfully disabled ✓"
+        echo "RESH arrow down binding successfully disabled"
         __RESH_arrow_keys_bind_enabled=0
     fi
     return 0
@@ -119,8 +119,20 @@ reshctl() {
         resh-inspect --sessionID "$__RESH_SESSION_ID" --count "${3-10}"
         return 0
         ;;
+    202)
+        # show status 
+        if [ "${__RESH_arrow_keys_bind_enabled-0}" != 0 ]; then
+            echo " * this session: ENABLED"
+        else
+            echo " * this session: DISABLED"
+        fi
+        return 0
+        ;;
     *)
-        echo "reshctl() FATAL ERROR: unknown status" >&2
+        echo "reshctl() FATAL ERROR: unknown status ($_status)" >&2
+        echo "Possibly caused by version mismatch between installed resh and resh in this session." >&2
+        echo "Please REPORT this issue here: https://github.com/curusarn/resh/issues" >&2
+        echo "Please RESTART your terminal window." >&2
         return "$_status"
         ;;
     esac

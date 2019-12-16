@@ -2,12 +2,22 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"os/user"
+	"path/filepath"
 
+	"github.com/BurntSushi/toml"
 	"github.com/curusarn/resh/cmd/control/status"
+	"github.com/curusarn/resh/pkg/cfg"
 	"github.com/spf13/cobra"
 )
 
+// globals
 var exitCode status.Code
+var version string
+var commit string
+var debug = false
+var config cfg.Config
 
 var rootCmd = &cobra.Command{
 	Use:   "reshctl",
@@ -15,7 +25,22 @@ var rootCmd = &cobra.Command{
 }
 
 // Execute reshctl
-func Execute() status.Code {
+func Execute(ver, com string) status.Code {
+	version = ver
+	commit = com
+
+	usr, _ := user.Current()
+	dir := usr.HomeDir
+	configPath := filepath.Join(dir, ".config/resh.toml")
+	if _, err := toml.DecodeFile(configPath, &config); err != nil {
+		log.Println("Error reading config", err)
+		return status.Fail
+	}
+	if config.Debug {
+		debug = true
+		// log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+	}
+
 	rootCmd.AddCommand(disableCmd)
 	disableCmd.AddCommand(disableArrowKeyBindingsCmd)
 	disableCmd.AddCommand(disableArrowKeyBindingsGlobalCmd)
@@ -32,6 +57,11 @@ func Execute() status.Code {
 	debugCmd.AddCommand(debugReloadCmd)
 	debugCmd.AddCommand(debugInspectCmd)
 	debugCmd.AddCommand(debugOutputCmd)
+
+	rootCmd.AddCommand(statusCmd)
+
+	rootCmd.AddCommand(updateCmd)
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		return status.Fail
