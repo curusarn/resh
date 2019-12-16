@@ -36,7 +36,7 @@ fi
 
 if [ "$(uname -m)" = "x86_64" ]; then
     ARCH=amd64
-elif [ "$(uname -m)" = "i386" ]; then
+elif [ "$(uname -m)" = "x86" ] || [ "$(uname -m)" = "i386" ] || [ "$(uname -m)" = "i686" ]; then
     ARCH=386
 else
     ARCH=unknown
@@ -46,6 +46,8 @@ fi
 if [ "$OS" = unknown ] || [ "$ARCH" = unknown ]; then
     echo "Couldn't detect your OS and architecture - exiting!"
     echo "Expected Linux or macOS on x86_64 or i386"
+    echo "Got OS: $(uname) (uname)"
+    echo "Got ARCH: $(uname -m) (uname -m)"
     exit 1
 fi
 
