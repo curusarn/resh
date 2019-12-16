@@ -14,10 +14,9 @@ __resh_helper_arrow_pre() {
     __RESH_PREFIX=${BUFFER:0:$CURSOR}
     # cursor not at the end of the line => end "NO_PREFIX_MODE"
     [ "$CURSOR" -ne "${#BUFFER}" ] && __RESH_HIST_NO_PREFIX_MODE=0
-    # if user made any edits from last recall action => restart histno AND deactivate "NO_PREFIX_MODE" AND clear end of recall list histno
-    [ "$BUFFER" != "$__RESH_HIST_PREV_LINE" ] && __RESH_HISTNO=0 && __RESH_HIST_NO_PREFIX_MODE=0 && __RESH_HISTNO_MAX=""
-    # if user moved the cursor (~= changed the prefix) => clear end of recall list histno
-    [ "$CURSOR" != "$__RESH_HIST_PREV_CURSOR" ] && __RESH_HISTNO_MAX=""
+    # if user moved the cursor or made edits (to prefix) from last recall action
+    # => restart histno AND deactivate "NO_PREFIX_MODE" AND clear end of recall list histno
+    [ "$__RESH_PREFIX" != "$__RESH_HIST_PREV_PREFIX" ] && __RESH_HISTNO=0 && __RESH_HIST_NO_PREFIX_MODE=0 && __RESH_HISTNO_MAX=""
     # "NO_PREFIX_MODE" => set prefix to empty string
     [ "$__RESH_HIST_NO_PREFIX_MODE" -eq 1 ] && __RESH_PREFIX=""
     # histno == 0 => save current line
@@ -28,10 +27,8 @@ __resh_helper_arrow_post() {
     [ "$CURSOR" -eq 0 ] && __RESH_HIST_NO_PREFIX_MODE=1
     # "NO_PREFIX_MODE" => move cursor to the end of the line
     [ "$__RESH_HIST_NO_PREFIX_MODE" -eq 1 ] && CURSOR=${#BUFFER}
-    # save current line so we can spot user edits next time
-    __RESH_HIST_PREV_LINE=$BUFFER
-    # save current cursor position so we can spot user cursor movements next time
-    __RESH_HIST_PREV_CURSOR=$CURSOR
+    # save current prefix so we can spot when user moves cursor or edits (the prefix part of) the line
+    __RESH_HIST_PREV_PREFIX=${BUFFER:0:$CURSOR}
 }
 
 __resh_widget_arrow_up() {
