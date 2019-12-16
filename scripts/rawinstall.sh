@@ -23,8 +23,8 @@ fi
 version="${tag:1}"
 # TODO: check if version is numeric
 
+echo " * Latest version: $version (git tag: $tag)"
 echo
-echo "Latest version: $version (git tag: $tag)"
 
 if [ "$(uname)" = "Darwin" ]; then
     OS=darwin
@@ -59,7 +59,8 @@ dl_binaries="$dl_base/$fname_binaries"
 
 
 tmpdir="$(mktemp -d /tmp/resh-rawinstall-XXX)"
-echo "Changing to $tmpdir ..."
+# echo
+# echo "Changing to $tmpdir ..."
 cd "$tmpdir"
 
 echo "Downloading files ..."
@@ -83,11 +84,12 @@ if [ "$(sha256sum "$fname_binaries")" != "$(grep "$fname_binaries" "$fname_check
     echo "ERROR: integrity check failed - exiting!"
     exit 1
 fi
+echo " * OK"
 
 echo
 echo "Extracting downloaded files ..."
-
 tar -xzf "$fname_binaries"
+echo " * OK"
 
 if ! scripts/install.sh; then
     if [ $? != 130 ]; then

@@ -78,9 +78,12 @@ else
 fi
 
 
+# echo 
+# echo "Continue with installation? (Any key to CONTINUE / Ctrl+C to ABORT)"
+# # shellcheck disable=2034
+# read -r x
+
 echo 
-echo "Continue with installation? (Any key to CONTINUE / Ctrl+C to ABORT)"
-echo
 echo "Creating directories ..."
 
 mkdir_if_not_exists() {
@@ -104,7 +107,7 @@ cp -f conf/config.toml ~/.config/resh.toml
 cp -f scripts/shellrc.sh ~/.resh/shellrc
 cp -f scripts/reshctl.sh scripts/widgets.sh scripts/hooks.sh scripts/util.sh ~/.resh/
 
-echo "Generating completions for reshctl ..."
+echo "Generating completions ..."
 bin/resh-control completion bash > ~/.resh/bash_completion.d/_reshctl
 bin/resh-control completion zsh > ~/.resh/zsh_completion.d/_reshctl
 
@@ -119,14 +122,19 @@ cp -fr data/sanitizer ~/.resh/sanitizer_data
 
 echo "Finishing up ..."
 # Adding resh shellrc to .bashrc ...
+if [ ! -f ~/.bashrc ]; then
+    touch ~/.bashrc
+fi
 grep -q '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' ~/.bashrc ||\
 	echo -e '\n[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' >> ~/.bashrc
 # Adding bash-preexec to .bashrc ...
 grep -q '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' ~/.bashrc ||\
 	echo -e '\n[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' >> ~/.bashrc
 # Adding resh shellrc to .zshrc ...
-grep -q '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' ~/.zshrc ||\
-	echo -e '\n[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' >> ~/.zshrc
+if [ -f ~/.zshrc ]; then
+    grep -q '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' ~/.zshrc ||\
+        echo -e '\n[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' >> ~/.zshrc
+fi
 
 # Deleting zsh completion cache - for future use
 # [ ! -e ~/.zcompdump ] || rm ~/.zcompdump
@@ -148,8 +156,7 @@ nohup resh-daemon &>/dev/null & disown
 	|| cat /proc/sys/kernel/random/uuid > ~/.resh/resh-uuid 2>/dev/null \
 	|| scripts/uuid.sh > ~/.resh/resh-uuid 2>/dev/null 
 
-echo "\ 
-
+echo " 
 ##########################################################
 #                                                        #
 #    SUCCESS - thank you for trying out this project!    #
@@ -157,26 +164,26 @@ echo "\
 ##########################################################
 
  WARNING 
- It's recommended to RESTART ALL OPEN TERMINAL WINDOWS (or reload your rc files)
-
+    It's recommended to RESTART ALL OPEN TERMINAL WINDOWS (or reload your rc files)
+ 
  HISTORY
- Your resh history will be recorded to '~/.resh_history.json'
- You can look at it using e.g. 'tail -f ~/.resh_history.json | jq' (you might need to install jq)
-
+    Your resh history will be recorded to '~/.resh_history.json'
+    You can look at it using e.g. 'tail -f ~/.resh_history.json | jq' (you might need to install jq)
+ 
  SANITIZATION
- History can be sanitized by running '... to be included'
- This will create sanitized version of your history
+    History can be sanitized by running '... to be included'
+    This will create sanitized version of your history
 
  GRAPHS
- You can get some graphs of your history by running '... to be included'
-
+    You can get some graphs of your history by running '... to be included'
+ 
  ISSUES
- Please report issues to: https://github.com/curusarn/resh/issues
-
+    Please report issues to: https://github.com/curusarn/resh/issues
+ 
  UNINSTALL
- You can uninstall this at any time by running 'rm -rf ~/.resh/'
- You won't lose any collected history by removing '~/.resh/' directory
-
- Please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98
+     You can uninstall this at any time by running 'rm -rf ~/.resh/'
+     You won't lose any collected history by removing '~/.resh/' directory
 
 "
+#    CONTACT
+#        Please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98
