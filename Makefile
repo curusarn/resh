@@ -3,9 +3,6 @@ VERSION=$(shell cat VERSION)
 REVISION=$(shell [ -z "$(git status --untracked-files=no --porcelain)" ] && git rev-parse --short=12 HEAD || echo "no_revision")
 GOFLAGS=-ldflags "-X main.Version=${VERSION} -X main.Revision=${REVISION}"
 
-autoinstall: 
-	scripts/install_helper.sh
-
 sanitize:
 	#
 	#
@@ -109,8 +106,6 @@ install: build submodules/bash-preexec/bash-preexec.sh scripts/shellrc.sh conf/c
 	@[ -e "$(HOME)/.resh/resh-uuid" ] \
 		|| cat /proc/sys/kernel/random/uuid > "$(HOME)/.resh/resh-uuid" 2>/dev/null \
 		|| ./uuid.sh > "$(HOME)/.resh/resh-uuid" 2>/dev/null 
-	# Reloading rc files ...
-	@. ~/.resh/shellrc
 	#
 	#
 	#
