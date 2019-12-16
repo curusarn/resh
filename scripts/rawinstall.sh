@@ -109,5 +109,6 @@ if ! scripts/install.sh; then
     echo "You can rerun the installation by executing: (this will skip downloading)"
     echo
     echo "cd $PWD && scripts/install.sh"
+    echo
     exit 1
 fi

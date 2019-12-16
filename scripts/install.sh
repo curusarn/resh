@@ -130,7 +130,7 @@ touch ~/.resh_history.json
 
 # Restarting resh daemon ...
 if [ -f ~/.resh/resh.pid ]; then
-    kill -SIGTERM "$(cat ~/.resh/resh.pid)"
+    kill -SIGTERM "$(cat ~/.resh/resh.pid)" || true
     rm ~/.resh/resh.pid
 else
     pkill -SIGTERM "resh-daemon" || true
