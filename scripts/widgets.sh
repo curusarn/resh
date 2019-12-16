@@ -14,8 +14,10 @@ __resh_helper_arrow_pre() {
     __RESH_PREFIX=${BUFFER:0:$CURSOR}
     # cursor not at the end of the line => end "NO_PREFIX_MODE"
     [ "$CURSOR" -ne "${#BUFFER}" ] && __RESH_HIST_NO_PREFIX_MODE=0
-    # if user made any edits from last recall action => restart histno AND deactivate "NO_PREFIX_MODE"
-    [ "$BUFFER" != "$__RESH_HIST_PREV_LINE" ] && __RESH_HISTNO=0 && __RESH_HIST_NO_PREFIX_MODE=0
+    # if user made any edits from last recall action => restart histno AND deactivate "NO_PREFIX_MODE" AND clear end of recall list histno
+    [ "$BUFFER" != "$__RESH_HIST_PREV_LINE" ] && __RESH_HISTNO=0 && __RESH_HIST_NO_PREFIX_MODE=0 && __RESH_HISTNO_MAX=""
+    # if user moved the cursor (~= changed the prefix) => clear end of recall list histno
+    [ "$CURSOR" != "$__RESH_HIST_PREV_CURSOR" ] && __RESH_HISTNO_MAX=""
     # "NO_PREFIX_MODE" => set prefix to empty string
     [ "$__RESH_HIST_NO_PREFIX_MODE" -eq 1 ] && __RESH_PREFIX=""
     # histno == 0 => save current line
@@ -28,6 +30,8 @@ __resh_helper_arrow_post() {
     [ "$__RESH_HIST_NO_PREFIX_MODE" -eq 1 ] && CURSOR=${#BUFFER}
     # save current line so we can spot user edits next time
     __RESH_HIST_PREV_LINE=$BUFFER
+    # save current cursor position so we can spot user cursor movements next time
+    __RESH_HIST_PREV_CURSOR=$CURSOR
 }
 
 __resh_widget_arrow_up() {
@@ -38,7 +42,7 @@ __resh_widget_arrow_up() {
     # increment histno
     __RESH_HISTNO=$((__RESH_HISTNO+1))
     if [ "${#__RESH_HISTNO_MAX}" -gt 0 ] && [ "${__RESH_HISTNO}" -gt "${__RESH_HISTNO_MAX}" ]; then
-        # end of the session -> don't recall, do nothing
+        # end of the recall list -> don't recall, do nothing
         # fix histno
         __RESH_HISTNO=$((__RESH_HISTNO-1))
     elif [ "$__RESH_HISTNO" -eq 0 ]; then
