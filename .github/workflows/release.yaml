@@ -1,4 +1,4 @@
-name: release
+name: goreleaser
 
 on:
   create:
@@ -6,35 +6,15 @@ on:
       - v*
 
 jobs:
-  extras:
-    runs-on: ubuntu-latest
-    steps:
-      - 
-        name: Checkout submodules
-        uses: textbook/git-checkout-submodule-action@2.0.0
-      - 
-        name: Archive using tar
-        run: tar -czvf resh_extra_files.tar.gz *
-      - 
-        name: GH Release
-        uses: softprops/action-gh-release@v0.1.0
-        with:
-          # Note-worthy description of changes in release
-          #body: # optional, default is empty
-          # Path to load note-worthy description of changes in release from
-          #body-path: # optional, default is empty
-          # Gives the release a custom name
-          #name: # optional, default is Name of tag
-          # Creates a draft release
-          draft: true # optional, default is false
-          # Comma-delimited list of path globs for asset files to upload
-          files: resh_extra_files.tar.gz # optional, default is empty
   goreleaser:
     runs-on: ubuntu-latest
     steps:
       -
         name: Checkout
         uses: actions/checkout@v1
+      - 
+        name: Checkout submodules
+        run: git submodule update --init --recursive 
       -
         name: Set up Go
         uses: actions/setup-go@v1

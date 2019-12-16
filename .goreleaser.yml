@@ -74,6 +74,11 @@ builds:
 # signs:
 #   - artifacts: checksum
 
+# include everything in the package
+archives:
+- files:
+  - *
+
 release:
   draft: true
 
