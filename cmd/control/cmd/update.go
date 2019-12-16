@@ -10,7 +10,7 @@ import (
 
 var updateCmd = &cobra.Command{
 	Use:   "update",
-	Short: "checks for updates and updates RESH",
+	Short: "check for updates and update RESH",
 	Run: func(cmd *cobra.Command, args []string) {
 		url := "https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawinstall.sh"
 		execCmd := exec.Command("bash", "-c", "curl -fsSL "+url+" | bash")
