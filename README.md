@@ -47,7 +47,10 @@ If you install RESH, please give me some contact info using this form: https://f
 
 ### Simplest
 
-Just run `bash -c "$(wget -qO - https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawinstall.sh)"` from anywhere.
+Run this command.
+```
+bash -c "$(wget -qO - https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawinstall.sh)"
+``` 
 
 ### Simple
 
