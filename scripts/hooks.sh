@@ -3,7 +3,9 @@ __resh_reset_variables() {
     __RESH_HISTNO=0
     __RESH_HISTNO_MAX=""
     __RESH_HISTNO_ZERO_LINE=""
-    __RESH_HIST_PREV_LINE=""
+    __RESH_HIST_PREV_LINE="" # deprecated
+    __RESH_HIST_PREV_CURSOR="" # deprecated
+    __RESH_HIST_PREV_PREFIX=""
     __RESH_HIST_RECALL_ACTIONS=""
     __RESH_HIST_NO_PREFIX_MODE=0
     __RESH_HIST_RECALL_STRATEGY=""
@@ -148,6 +150,7 @@ __resh_precmd() {
                         -realtimeBefore "$__RESH_RT_BEFORE" \
                         -exitCode "$__RESH_EXIT_CODE" \
                         -sessionId "$__RESH_SESSION_ID" \
+                        -shell "$__RESH_SHELL" \
                         -shlvl "$__RESH_SHLVL" \
                         -pwdAfter "$__RESH_PWD_AFTER" \
                         -gitCdupAfter "$__RESH_GIT_CDUP_AFTER" \

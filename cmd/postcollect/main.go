@@ -45,6 +45,7 @@ func main() {
 	exitCode := flag.Int("exitCode", -1, "exit code")
 	sessionID := flag.String("sessionId", "", "resh generated session id")
 	shlvl := flag.Int("shlvl", -1, "$SHLVL")
+	shell := flag.String("shell", "", "actual shell")
 
 	// posix variables
 	pwdAfter := flag.String("pwdAfter", "", "$PWD after command")
@@ -118,6 +119,7 @@ func main() {
 			ExitCode:  *exitCode,
 			SessionID: *sessionID,
 			Shlvl:     *shlvl,
+			Shell:     *shell,
 
 			PwdAfter: *pwdAfter,
 

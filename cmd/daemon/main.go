@@ -23,6 +23,9 @@ var version string
 // commit from git set during build
 var commit string
 
+// Debug switch
+var Debug = false
+
 func main() {
 	log.Println("Daemon starting... \n" +
 		"version: " + version +
@@ -51,6 +54,7 @@ func main() {
 		return
 	}
 	if config.Debug {
+		Debug = true
 		log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	}
 

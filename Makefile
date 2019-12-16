@@ -42,8 +42,10 @@ sanitize:
 build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect bin/resh-daemon\
  bin/resh-evaluate bin/resh-sanitize bin/resh-control bin/resh-config bin/resh-inspect
 
-install: build
+install: build conf/config-dev.toml
 	scripts/install.sh
+	# Dev config
+	cp -f conf/config-dev.toml ~/.config/
 
 test_go:
 	# Running tests

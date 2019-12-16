@@ -17,8 +17,10 @@ type recallHandler struct {
 }
 
 func (h *recallHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println("/recall START")
-	log.Println("/recall reading body ...")
+	if Debug {
+		log.Println("/recall START")
+		log.Println("/recall reading body ...")
+	}
 	jsn, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Println("Error reading the body", err)
@@ -26,14 +28,18 @@ func (h *recallHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rec := records.SlimRecord{}
-	log.Println("/recall unmarshaling record ...")
+	if Debug {
+		log.Println("/recall unmarshaling record ...")
+	}
 	err = json.Unmarshal(jsn, &rec)
 	if err != nil {
 		log.Println("Decoding error:", err)
 		log.Println("Payload:", jsn)
 		return
 	}
-	log.Println("/recall recalling ...")
+	if Debug {
+		log.Println("/recall recalling ...")
+	}
 	found := true
 	cmd, err := h.sesshistDispatch.Recall(rec.SessionID, rec.RecallHistno, rec.RecallPrefix)
 	if err != nil {
@@ -43,15 +49,19 @@ func (h *recallHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		cmd = ""
 	}
 	resp := collect.SingleResponse{CmdLine: cmd, Found: found}
-	log.Println("/recall marshaling response ...")
+	if Debug {
+		log.Println("/recall marshaling response ...")
+	}
 	jsn, err = json.Marshal(&resp)
 	if err != nil {
 		log.Println("Encoding error:", err)
 		log.Println("Response:", resp)
 		return
 	}
-	log.Println(string(jsn))
-	log.Println("/recall writing response ...")
+	if Debug {
+		log.Println(string(jsn))
+		log.Println("/recall writing response ...")
+	}
 	w.Write(jsn)
 	log.Println("/recall END - sess id:", rec.SessionID, " - histno:", rec.RecallHistno, " -> ", cmd, " (found:", found, ")")
 }
