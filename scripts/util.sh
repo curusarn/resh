@@ -43,7 +43,12 @@ __resh_run_daemon() {
     if [ -n "$ZSH_VERSION" ]; then
         setopt LOCAL_OPTIONS NO_NOTIFY NO_MONITOR
     fi
-    nohup resh-daemon >~/.resh/daemon_last_run_out.txt 2>&1 & disown
+    if [ "$__RESH_MACOS" = 1 ]; then
+        # needs testing
+        nohup script -q -c 'resh-daemon' ~/.resh/daemon_last_run_out.txt &
+    else
+        setsid resh-daemon > ~/.resh/daemon_last_run_out.txt 2>&1 & disown
+    fi
 }
 
 __resh_bash_completion_init() {
@@ -69,7 +74,13 @@ __resh_zsh_completion_init() {
     # we should be using fpath but that doesn't work well with oh-my-zsh
     #   so we are just adding it manually 
     # shellcheck disable=1090
-    source ~/.resh/zsh_completion.d/_reshctl && compdef _reshctl reshctl
+    if typeset -f compdef >/dev/null 2>&1; then
+        source ~/.resh/zsh_completion.d/_reshctl && compdef _reshctl reshctl
+    else
+        # fallback I guess
+        fpath=(~/.resh/zsh_completion.d $fpath)
+        __RESH_zsh_no_compdef=1
+    fi
 
     # TODO: test and use this
     # NOTE: this is not how globbing works
