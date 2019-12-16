@@ -40,7 +40,8 @@ If you install RESH, please give me some contact info using this form: https://f
 
 ## Prereqisities
 
-`bash`, `curl` and `tar`
+Standard stuff: `bash`, `curl`, `tar`, ...
+
 
 ## Installation
 
