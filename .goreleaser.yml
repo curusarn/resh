@@ -79,8 +79,13 @@ builds:
 archives:
 - files:
   - ./*
-  - ./*/*
-  - ./*/*/*
+  - conf/*
+  - conf/**/*
+  - data/*
+  - data/**/*
+  - scripts/*
+  - scripts/**/*
+  - submodules/**/*
 
 release:
   draft: true
