@@ -67,13 +67,13 @@ echo "Downloading files ..."
 
 curl_opt="--location --remote-name --progress-bar"
 
-echo "$dl_checksums"
+echo " * $fname_checksums"
 # shellcheck disable=2086
-curl $curl_opt "$dl_checksums"
+COLUMNS=80 curl $curl_opt "$dl_checksums"
 
-echo "$dl_binaries"
+echo " * $fname_binaries"
 # shellcheck disable=2086
-curl $curl_opt "$dl_binaries"
+COLUMNS=80 curl $curl_opt "$dl_binaries"
 
 # TODO: check if we downloaded anything
 # Github serves you a "Not found" page so the curl doesn't error out
