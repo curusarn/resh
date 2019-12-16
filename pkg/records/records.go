@@ -511,13 +511,15 @@ func LoadFromFile(fname string, limit int) []Record {
 
 // LoadCmdLinesFromZshFile loads cmdlines from zsh history file
 func LoadCmdLinesFromZshFile(fname string) histlist.Histlist {
+	hl := histlist.New()
 	file, err := os.Open(fname)
 	if err != nil {
-		log.Fatal("Open() resh history file error:", err)
+		log.Println("Open() zsh history file error:", err)
+		log.Println("WARN: Skipping reading zsh history!")
+		return hl
 	}
 	defer file.Close()
 
-	hl := histlist.New()
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -546,13 +548,15 @@ func LoadCmdLinesFromZshFile(fname string) histlist.Histlist {
 
 // LoadCmdLinesFromBashFile loads cmdlines from bash history file
 func LoadCmdLinesFromBashFile(fname string) histlist.Histlist {
+	hl := histlist.New()
 	file, err := os.Open(fname)
 	if err != nil {
-		log.Fatal("Open() resh history file error:", err)
+		log.Println("Open() bash history file error:", err)
+		log.Println("WARN: Skipping reading bash history!")
+		return hl
 	}
 	defer file.Close()
 
-	hl := histlist.New()
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
