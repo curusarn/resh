@@ -150,26 +150,55 @@ echo "
 ##########################################################
 
  WARNING 
-    It's recommended to RESTART ALL OPEN TERMINAL WINDOWS (or reload your rc files)
+    It's recommended to RESTART all open terminal windows
  
  HISTORY
     Your resh history will be recorded to '~/.resh_history.json'
-    You can look at it using e.g. 'tail -f ~/.resh_history.json | jq' (you might need to install jq)
- 
+    Look at it using e.g. following command (you might need to install jq)
+     $ tail -f ~/.resh_history.json | jq
+
+    Your default shell history will stay intact.
+
  SANITIZATION
-    History can be sanitized by running '... to be included'
-    This will create sanitized version of your history
+    In sanitized history, all sensitive information is replaced with its SHA1 hashes
+     $ reshctl sanitize
+
+    If you would consider supporting my research/thesis by giving me a sanitized version of your history then
+    please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98
+
+ ARROW KEY BINDINGS
+    Resh arrow key bindings replicate the default behaviour (for now).
+    That means stepping through history and prefix search.
+    They also provide very precious usage metadata.
+    
+     * Enabled by default in zsh
+     * Disabled by default in bash
+
+    Enable/disable for THIS shell session
+     $ reshctl enable arrow_key_bindings
+     $ reshctl disable arrow_key_bindings
+
+    Enable/disable for FUTURE shell sessions
+     $ reshctl enable arrow_key_bindings_global
+     $ reshctl disable arrow_key_bindings_global
+
+    See what your current setting is
+     $ reshctl status
+
+ COMPLETIONS
+    Zsh and bash completions for 'reshctl' command were installed and should be working.
+
+ CHECK FOR UPDATES
+     $ reshctl update
 
  GRAPHS
-    You can get some graphs of your history by running '... to be included'
+    You can get some graphs of your history by running 
+     $ <coming soon> 
  
  ISSUES
     Please report issues to: https://github.com/curusarn/resh/issues
- 
- UNINSTALL
-     You can uninstall this at any time by running 'rm -rf ~/.resh/'
-     You won't lose any collected history by removing '~/.resh/' directory
 
+ UNINSTALL
+    You can uninstall resh at any time by running 
+     $ rm -rf ~/.resh/
 "
-#    CONTACT
-#        Please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98
