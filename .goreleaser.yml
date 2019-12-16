@@ -77,7 +77,7 @@ builds:
 # include everything in the package
 archives:
 - files:
-  - *
+  - ./*
 
 release:
   draft: true
