@@ -40,23 +40,23 @@ If you install RESH, please give me some contact info using this form: https://f
 
 ## Prereqisities
 
-- `git`
-- `golang` >1.6 (preferably >1.11)
+- `curl`
+- `bash`
 
 ## Installation
 
 ### Simplest
 
 Run this command.
+
+```sh
+curl -s https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawinstall.sh | bash
 ```
-bash -c "$(wget -qO - https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawinstall.sh)"
-``` 
 
 ### Simple
 
 1. Run `git clone https://github.com/curusarn/resh.git && cd resh`
-2. Run `make autoinstall` for assisted build & instalation.
-    - OR Run `make install` if you know how to build Golang projects.
+2. Run `scripts/rawinstall.sh`
 
 If you install RESH, please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98 
 
@@ -64,13 +64,7 @@ If you install RESH, please give me some contact info using this form: https://f
 
 Works in `bash` and `zsh`.
 
-Tested on:
-
-- Arch
-- Manjaro
-- MacOS
-- Ubuntu (18.04)
-- really old Ubuntu (16.04)
+Works on Linux and macOS.
 
 ## Examples
 
