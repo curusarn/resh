@@ -78,8 +78,9 @@ fi
 
 
 echo 
+echo "Continue with installation? (Any key to CONTINUE / Ctrl+C to ABORT)"
+echo
 echo "Creating directories ..."
-# INSTALLATION
 
 mkdir_if_not_exists() {
     if [ ! -d "$1" ]; then

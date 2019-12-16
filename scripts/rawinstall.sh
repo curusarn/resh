@@ -94,13 +94,15 @@ echo "DONE"
 echo
 
 if ! scripts/install.sh; then
+    if [ $? != 130 ]; then
+        echo
+        echo "INSTALLATION FAILED!"
+        echo "I'm sorry for the inconvenience."
+        echo
+        echo "Please create an issue: https://github.com/curusarn/resh/issues"
+    fi
     echo
-    echo "INSTALLATION FAILED!"
-    echo "I'm sorry for the inconvenience."
-    echo
-    echo "Please create an issue: https://github.com/curusarn/resh/issues"
-    echo
-    echo "You can rerun the installation by executing: (this will skip downloading the files)"
+    echo "You can rerun the installation by executing: (this will skip downloading)"
     echo
     echo "cd $PWD && scripts/install.sh"
     exit 1
