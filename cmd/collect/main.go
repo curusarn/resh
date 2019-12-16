@@ -57,6 +57,7 @@ func main() {
 	// recall metadata
 	recallActions := flag.String("recall-actions", "", "recall actions that took place before executing the command")
 	recallStrategy := flag.String("recall-strategy", "", "recall strategy used during recall actions")
+	recallLastCmdLine := flag.String("recall-last-cmdline", "", "last recalled cmdline")
 
 	// posix variables
 	cols := flag.String("cols", "-1", "$COLUMNS")
@@ -241,9 +242,10 @@ func main() {
 				ReshVersion:  version,
 				ReshRevision: commit,
 
-				RecallActionsRaw: *recallActions,
-				RecallPrefix:     *recallPrefix,
-				RecallStrategy:   *recallStrategy,
+				RecallActionsRaw:  *recallActions,
+				RecallPrefix:      *recallPrefix,
+				RecallStrategy:    *recallStrategy,
+				RecallLastCmdLine: *recallLastCmdLine,
 			},
 		}
 		collect.SendRecord(rec, strconv.Itoa(config.Port), "/record")

@@ -29,13 +29,15 @@ __resh_helper_arrow_post() {
     [ "$__RESH_HIST_NO_PREFIX_MODE" -eq 1 ] && CURSOR=${#BUFFER}
     # save current prefix so we can spot when user moves cursor or edits (the prefix part of) the line
     __RESH_HIST_PREV_PREFIX=${BUFFER:0:$CURSOR}
+    # recorded to history
+    __RESH_HIST_PREV_LINE=${BUFFER}
 }
 
 __resh_widget_arrow_up() {
     # run helper function
     __resh_helper_arrow_pre
     # append curent recall action
-    __RESH_HIST_RECALL_ACTIONS="$__RESH_HIST_RECALL_ACTIONS;arrow_up:$__RESH_PREFIX"
+    __RESH_HIST_RECALL_ACTIONS="$__RESH_HIST_RECALL_ACTIONS|||arrow_up:$__RESH_PREFIX"
     # increment histno
     __RESH_HISTNO=$((__RESH_HISTNO+1))
     if [ "${#__RESH_HISTNO_MAX}" -gt 0 ] && [ "${__RESH_HISTNO}" -gt "${__RESH_HISTNO_MAX}" ]; then
@@ -67,7 +69,7 @@ __resh_widget_arrow_down() {
     # run helper function
     __resh_helper_arrow_pre
     # append curent recall action
-    __RESH_HIST_RECALL_ACTIONS="$__RESH_HIST_RECALL_ACTIONS;arrow_down:$__RESH_PREFIX"
+    __RESH_HIST_RECALL_ACTIONS="$__RESH_HIST_RECALL_ACTIONS|||arrow_down:$__RESH_PREFIX"
     # increment histno
     __RESH_HISTNO=$((__RESH_HISTNO-1))
     # prevent HISTNO from getting negative (for now)

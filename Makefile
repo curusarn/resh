@@ -4,40 +4,6 @@ REVISION=$(shell [ -z "$(git status --untracked-files=no --porcelain)" ] && git 
 VERSION="${LATEST_TAG}-DEV"
 GOFLAGS=-ldflags "-X main.version=${VERSION} -X main.commit=${REVISION}"
 
-sanitize:
-	#
-	#
-	# I'm going to create a sanitized version of your resh history.
-	# Everything is done locally - your history won't leave this machine.
-	# The way this works is that any sensitive information in your history is going to be replaced with its SHA1 hash.
-	# There is also going to be a second version with hashes trimed to 12 characters for readability
-	#
-	#
-	# > full hashes: ~/resh_history_sanitized.json
-	# > 12 char hashes: ~/resh_history_sanitized_trim12.json
-	#
-	#
-	# Encountered any issues? Got questions? -> Hit me up at https://github.com/curusarn/resh/issues
-	#
-	#
-	# Running history sanitization ...
-	resh-sanitize -trim-hashes 0 --output ~/resh_history_sanitized.json
-	resh-sanitize -trim-hashes 12 --output ~/resh_history_sanitized_trim12.json
-	# 
-	# 
-	# SUCCESS - ALL DONE!
-	#
-	# 
-	# PLEASE HAVE A LOOK AT THE RESULT USING THESE COMMANDS:
-	#
-	# > pretty print JSON:
-	@echo 'cat ~/resh_history_sanitized_trim12.json | jq'
-	#
-	# > only show executed commands, don't show metadata:
-	@echo "cat ~/resh_history_sanitized_trim12.json | jq '.[\"cmdLine\"]'"
-	#
-	#
-	#
 
 build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect bin/resh-daemon\
  bin/resh-evaluate bin/resh-sanitize bin/resh-control bin/resh-config bin/resh-inspect

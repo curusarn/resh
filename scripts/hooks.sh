@@ -3,7 +3,7 @@ __resh_reset_variables() {
     __RESH_HISTNO=0
     __RESH_HISTNO_MAX=""
     __RESH_HISTNO_ZERO_LINE=""
-    __RESH_HIST_PREV_LINE="" # deprecated
+    __RESH_HIST_PREV_LINE="" 
     __RESH_HIST_PREV_CURSOR="" # deprecated
     __RESH_HIST_PREV_PREFIX=""
     __RESH_HIST_RECALL_ACTIONS=""
@@ -18,6 +18,7 @@ __resh_preexec() {
     __resh_collect --cmdLine "$__RESH_CMDLINE" \
         --recall-actions "$__RESH_HIST_RECALL_ACTIONS" \
         --recall-strategy "$__RESH_HIST_RECALL_STRATEGY" \
+        --recall-last-cmdline "$__RESH_HIST_PREV_LINE" \
         > ~/.resh/collect_last_run_out.txt 2>&1 || echo "resh-collect ERROR: $(head -n 1 ~/.resh/collect_last_run_out.txt)"
 }
 

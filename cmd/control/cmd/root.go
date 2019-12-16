@@ -62,6 +62,8 @@ func Execute(ver, com string) status.Code {
 
 	rootCmd.AddCommand(updateCmd)
 
+	rootCmd.AddCommand(sanitizeCmd)
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		return status.Fail

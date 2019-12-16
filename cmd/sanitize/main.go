@@ -172,6 +172,10 @@ func (s *sanitizer) sanitizeRecord(record *records.Record) error {
 	if err != nil {
 		log.Fatal("Cmd:", record.CmdLine, "; sanitization error:", err)
 	}
+	record.RecallLastCmdLine, err = s.sanitizeCmdLine(record.RecallLastCmdLine)
+	if err != nil {
+		log.Fatal("RecallLastCmdLine:", record.RecallLastCmdLine, "; sanitization error:", err)
+	}
 
 	if len(record.RecallActionsRaw) > 0 {
 		record.RecallActionsRaw, err = s.sanitizeRecallActions(record.RecallActionsRaw)
@@ -187,24 +191,41 @@ func (s *sanitizer) sanitizeRecord(record *records.Record) error {
 // sanitizes the recall actions by replacing the recall prefix with it's length
 func (s *sanitizer) sanitizeRecallActions(str string) (string, error) {
 	sanStr := ""
-	for x, actionStr := range strings.Split(str, ";") {
+	divider := ";"
+	if strings.Contains(str, "|||") {
+		divider = "|||"
+		// normal mode
+	}
+	for x, actionStr := range strings.Split(str, divider+"arrow_") {
 		if x == 0 {
 			continue
 		}
 		if len(actionStr) == 0 {
 			return str, errors.New("Action can't be empty; idx=" + strconv.Itoa(x))
 		}
-		fields := strings.Split(actionStr, ":")
-		if len(fields) != 2 {
-			return str, errors.New("Action should have exactly one ':' - encountered:" + actionStr)
+		var action string
+		var prefix string
+		if strings.HasPrefix(actionStr, "up:") {
+			action = "arrow_up"
+			if len(actionStr) < 3 {
+				return str, errors.New("Action is too short:" + actionStr)
+			}
+			if len(actionStr) != 3 {
+				prefix = actionStr[4:]
+			}
+		} else if strings.HasPrefix(actionStr, "down:") {
+			action = "arrow_down"
+			if len(actionStr) < 5 {
+				return str, errors.New("Action is too short:" + actionStr)
+			}
+			if len(actionStr) != 5 {
+				prefix = actionStr[6:]
+			}
+		} else {
+			return str, errors.New("Action should start with one of (arrow_up, arrow_down); got: arrow_" + actionStr)
 		}
-		action := fields[0]
-		if action != "arrow_up" && action != "arrow_down" {
-			return str, errors.New("Action (part 1) should be either 'arrow_up' or 'arrow_down' - encountered:" + action)
-		}
-		prefix := fields[1]
 		sanPrefix := strconv.Itoa(len(prefix))
-		sanStr += ";" + action + ":" + sanPrefix
+		sanStr += "|||" + action + ":" + sanPrefix
 	}
 	return sanStr, nil
 }

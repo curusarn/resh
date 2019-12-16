@@ -84,11 +84,12 @@ type BaseRecord struct {
 	SessionExit bool `json:"sessionExit,omitempty"`
 
 	// recall metadata
-	Recalled         bool     `json:"recalled"`
-	RecallHistno     int      `json:"recallHistno,omitempty"`
-	RecallStrategy   string   `json:"recallStrategy,omitempty"`
-	RecallActionsRaw string   `json:"recallActionsRaw,omitempty"`
-	RecallActions    []string `json:"recallActions,omitempty"`
+	Recalled          bool     `json:"recalled"`
+	RecallHistno      int      `json:"recallHistno,omitempty"`
+	RecallStrategy    string   `json:"recallStrategy,omitempty"`
+	RecallActionsRaw  string   `json:"recallActionsRaw,omitempty"`
+	RecallActions     []string `json:"recallActions,omitempty"`
+	RecallLastCmdLine string   `json:"recallLastCmdLine"`
 
 	// recall command
 	RecallPrefix string `json:"recallPrefix,omitempty"`
