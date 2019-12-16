@@ -16,7 +16,7 @@ __resh_preexec() {
     __resh_collect --cmdLine "$__RESH_CMDLINE" \
         --recall-actions "$__RESH_HIST_RECALL_ACTIONS" \
         --recall-strategy "$__RESH_HIST_RECALL_STRATEGY" \
-        &>~/.resh/collect_last_run_out.txt || echo "resh-collect ERROR: $(head -n 1 ~/.resh/collect_last_run_out.txt)"
+        > ~/.resh/collect_last_run_out.txt 2>&1 || echo "resh-collect ERROR: $(head -n 1 ~/.resh/collect_last_run_out.txt)"
 }
 
 # used for collect and collect --recall
@@ -156,7 +156,7 @@ __resh_precmd() {
                         -gitRemoteExitCodeAfter "$__RESH_GIT_REMOTE_EXIT_CODE_AFTER" \
                         -realtimeAfter "$__RESH_RT_AFTER" \
                         -timezoneAfter "$__RESH_TZ_AFTER" \
-                        &>~/.resh/postcollect_last_run_out.txt || echo "resh-postcollect ERROR: $(head -n 1 ~/.resh/postcollect_last_run_out.txt)"
+                        > ~/.resh/postcollect_last_run_out.txt 2>&1 || echo "resh-postcollect ERROR: $(head -n 1 ~/.resh/postcollect_last_run_out.txt)"
         fi
         __resh_reset_variables
     fi

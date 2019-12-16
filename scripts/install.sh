@@ -42,7 +42,7 @@ else
 fi
 
 
-if ! zsh --version &>/dev/null; then
+if ! zsh --version >/dev/null 2>&1; then
     echo " * Zsh version: ? - not installed!"
 else
     zsh_version=$(zsh -c 'echo ${ZSH_VERSION}')
@@ -135,7 +135,7 @@ if [ -f ~/.resh/resh.pid ]; then
 else
     pkill -SIGTERM "resh-daemon" || true
 fi
-nohup resh-daemon &>/dev/null & disown
+nohup resh-daemon >/dev/null 2>&1 & disown
 
 # Generating resh-uuid ...
 [ -e ~/.resh/resh-uuid ] \

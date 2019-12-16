@@ -43,7 +43,7 @@ __resh_run_daemon() {
     if [ -n "$ZSH_VERSION" ]; then
         setopt LOCAL_OPTIONS NO_NOTIFY NO_MONITOR
     fi
-    nohup resh-daemon &>~/.resh/daemon_last_run_out.txt & disown
+    nohup resh-daemon >~/.resh/daemon_last_run_out.txt 2>&1 & disown
 }
 
 __resh_bash_completion_init() {
@@ -142,6 +142,6 @@ __resh_session_init() {
                     -osReleaseIdLike "$__RESH_OS_RELEASE_ID_LIKE" \
                     -osReleaseName "$__RESH_OS_RELEASE_NAME" \
                     -osReleasePrettyName "$__RESH_OS_RELEASE_PRETTY_NAME" \
-                    &>~/.resh/session_init_last_run_out.txt || echo "resh-session-init ERROR: $(head -n 1 ~/.resh/session_init_last_run_out.txt)"
+                    > ~/.resh/session_init_last_run_out.txt 2>&1 || echo "resh-session-init ERROR: $(head -n 1 ~/.resh/session_init_last_run_out.txt)"
         fi
 }
