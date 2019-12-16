@@ -34,13 +34,15 @@ func (h *recallHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Println("/recall recalling ...")
+	found := true
 	cmd, err := h.sesshistDispatch.Recall(rec.SessionID, rec.RecallHistno, rec.RecallPrefix)
 	if err != nil {
 		log.Println("/recall - sess id:", rec.SessionID, " - histno:", rec.RecallHistno, " -> ERROR")
 		log.Println("Recall error:", err)
-		return
+		found = false
+		cmd = ""
 	}
-	resp := collect.SingleResponse{CmdLine: cmd}
+	resp := collect.SingleResponse{CmdLine: cmd, Found: found}
 	log.Println("/recall marshaling response ...")
 	jsn, err = json.Marshal(&resp)
 	if err != nil {
@@ -51,7 +53,7 @@ func (h *recallHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Println(string(jsn))
 	log.Println("/recall writing response ...")
 	w.Write(jsn)
-	log.Println("/recall END - sess id:", rec.SessionID, " - histno:", rec.RecallHistno, " -> ", cmd)
+	log.Println("/recall END - sess id:", rec.SessionID, " - histno:", rec.RecallHistno, " -> ", cmd, " (found:", found, ")")
 }
 
 type inspectHandler struct {

@@ -103,7 +103,9 @@ __resh_collect() {
                     -osReleasePrettyName "$__RESH_OS_RELEASE_PRETTY_NAME" \
                     -histno "$__RESH_HISTNO" \
                     "$@"
+            return $?
         fi
+        return 1
 }
 
 __resh_precmd() {

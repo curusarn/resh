@@ -1,7 +1,7 @@
 SHELL=/bin/bash
 LATEST_TAG=$(shell git describe --tags)
 REVISION=$(shell [ -z "$(git status --untracked-files=no --porcelain)" ] && git rev-parse --short=12 HEAD || echo "no_revision")
-VERSION=${LATEST_TAG}-dev-${REVISION}
+VERSION="${LATEST_TAG}-DEV"
 GOFLAGS=-ldflags "-X main.version=${VERSION} -X main.commit=${REVISION}"
 
 sanitize:

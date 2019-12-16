@@ -175,7 +175,11 @@ func main() {
 			RecallHistno: *recallHistno,
 			RecallPrefix: *recallPrefix,
 		}
-		fmt.Print(collect.SendRecallRequest(rec, strconv.Itoa(config.Port)))
+		str, found := collect.SendRecallRequest(rec, strconv.Itoa(config.Port))
+		if found == false {
+			os.Exit(1)
+		}
+		fmt.Println(str)
 	} else {
 		rec := records.Record{
 			// posix

@@ -51,10 +51,12 @@ __resh_widget_arrow_up() {
     else
         # run recall
         local NEW_BUFFER
+        local status_code
         NEW_BUFFER="$(__resh_collect --recall --prefix-search "$__RESH_PREFIX" 2> ~/.resh/arrow_up_last_run_out.txt)"
-        # IF new buffer in non-empty THEN use the new buffer ELSE revert histno change
+        status_code=$?
+        # revert histno change on error
         # shellcheck disable=SC2015
-        if [ "${#NEW_BUFFER}" -gt 0 ]; then
+        if [ "${status_code}" -eq 0 ]; then
             BUFFER=$NEW_BUFFER
         else
             __RESH_HISTNO=$((__RESH_HISTNO-1))

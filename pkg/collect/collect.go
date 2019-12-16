@@ -15,11 +15,12 @@ import (
 
 // SingleResponse json struct
 type SingleResponse struct {
+	Found   bool   `json:"found"`
 	CmdLine string `json:"cmdline"`
 }
 
 // SendRecallRequest to daemon
-func SendRecallRequest(r records.SlimRecord, port string) string {
+func SendRecallRequest(r records.SlimRecord, port string) (string, bool) {
 	recJSON, err := json.Marshal(r)
 	if err != nil {
 		log.Fatal("send err 1", err)
@@ -50,7 +51,7 @@ func SendRecallRequest(r records.SlimRecord, port string) string {
 		log.Fatal("unmarshal resp error: ", err)
 	}
 	log.Println(response)
-	return response.CmdLine
+	return response.CmdLine, response.Found
 }
 
 // SendRecord to daemon
