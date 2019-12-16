@@ -2,6 +2,7 @@
 
 set -euo pipefail
 
+echo
 echo "Please report any issues you encounter to: https://github.com/curusarn/resh/issues"
 echo
 

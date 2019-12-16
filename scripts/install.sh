@@ -76,9 +76,9 @@ else
     fi
 fi
 
+
 echo 
-echo "INSTALLATION"
-exit 0
+echo "Creating directories ..."
 # INSTALLATION
 
 mkdir_if_not_exists() {
@@ -115,6 +115,7 @@ cp -fr data/sanitizer ~/.resh/sanitizer_data
 # backward compatibility: We have a new location for resh history file 
 [ ! -f ~/.resh/history.json ] || mv ~/.resh/history.json ~/.resh_history.json 
 
+echo "Finishing up ..."
 # Adding resh shellrc to .bashrc ...
 grep -q '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' ~/.bashrc ||\
 	echo -e '\n[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' >> ~/.bashrc
@@ -143,7 +144,7 @@ nohup resh-daemon &>/dev/null & disown
 # Generating resh-uuid ...
 [ -e "$(HOME)/.resh/resh-uuid" ] \
 	|| cat /proc/sys/kernel/random/uuid > "$(HOME)/.resh/resh-uuid" 2>/dev/null \
-	|| ./uuid.sh > "$(HOME)/.resh/resh-uuid" 2>/dev/null 
+	|| scripts/uuid.sh > "$(HOME)/.resh/resh-uuid" 2>/dev/null 
 
 echo "\ 
 
