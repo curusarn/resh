@@ -2,21 +2,6 @@
 
 set -euo pipefail
 
-die() {
-    if [ $# -eq 1 ]; then
-        echo "$1"
-    elif [ $# -eq 0 ]; then
-        echo "ERROR: SomEtHiNg WeNt wRonG - ExItiNg!"
-        echo "THIS IS NOT SUPPOSED TO HAPPEN!"
-    fi
-    echo
-    echo "Please report any issues you encounter to: https://github.com/curusarn/resh/issues"
-    echo
-    echo "You can rerun this installation by executing: (you will skip downloading the files)"
-    echo "cd $PWD && scripts/install.sh"
-    exit 1
-}
-
 echo
 echo "Checking your system ..."
 
@@ -24,7 +9,8 @@ echo "Checking your system ..."
 login_shell=$(echo "$SHELL" | rev | cut -d'/' -f1 | rev)
 
 if [ "$login_shell" != bash ] && [ "$login_shell" != zsh ]; then
-    die "ERROR: Unsupported/unknown login shell: $login_shell"
+    echo "ERROR: Unsupported/unknown login shell: $login_shell"
+    exit 1
 fi
 echo " * Login shell: $login_shell - OK"
 

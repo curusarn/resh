@@ -80,6 +80,12 @@ curl $curl_opt "$dl_binaries"
 
 echo
 echo "Checking integrity ..."
+
+# macOS doesn't have sha256sum
+if [ "$OS" = darwin ]; then
+    function sha256sum() { shasum -a 256 "$@" ; } && export -f sha256sum
+fi
+
 if [ "$(sha256sum "$fname_binaries")" != "$(grep "$fname_binaries" "$fname_checksums")" ]; then
     echo "ERROR: integrity check failed - exiting!"
     exit 1
