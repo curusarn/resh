@@ -75,9 +75,14 @@ builds:
 #   - artifacts: checksum
 
 # include everything in the package
+# looks like xmas
 archives:
 - files:
   - ./*
+  - ./*/*
+  - ./*/*/*
+  - ./*/*/*/*
+  - ./*/*/*/*/*
 
 release:
   draft: true
