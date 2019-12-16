@@ -80,18 +80,14 @@ curl $curl_opt "$dl_binaries"
 echo
 echo "Checking integrity ..."
 if [ "$(sha256sum "$fname_binaries")" != "$(grep "$fname_binaries" "$fname_checksums")" ]; then
-    echo "Error integrity check failed - exiting!"
+    echo "ERROR: integrity check failed - exiting!"
     exit 1
 fi
-echo "OK"
 
 echo
 echo "Extracting downloaded files ..."
 
 tar -xzf "$fname_binaries"
-tree
-echo "DONE"
-echo
 
 if ! scripts/install.sh; then
     if [ $? != 130 ]; then

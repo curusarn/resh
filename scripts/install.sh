@@ -17,6 +17,7 @@ die() {
     exit 1
 }
 
+echo
 echo "Checking your system ..."
 
 # /usr/bin/zsh -> zsh
@@ -25,7 +26,7 @@ login_shell=$(echo "$SHELL" | rev | cut -d'/' -f1 | rev)
 if [ "$login_shell" != bash ] && [ "$login_shell" != zsh ]; then
     die "ERROR: Unsupported/unknown login shell: $login_shell"
 fi
-echo "Login shell: $login_shell - OK"
+echo " * Login shell: $login_shell - OK"
 
 
 # check like we are not running bash
@@ -40,39 +41,39 @@ elif [ "$bash_version_major" -eq 4 ] && [ "$bash_version_minor" -lt 3 ]; then
 fi
 
 if [ "$bash_too_old" = true ]; then
-    echo "Bash version: $bash_version - UNSUPPORTED!"
+    echo " * Bash version: $bash_version - UNSUPPORTED!"
     if [ "$login_shell" = bash ]; then
-        echo " > Your bash version is old."
-        echo " > Bash is also your login shell."
-        echo " > Updating to bash 4.3+ is strongly RECOMMENDED!"
+        echo "   > Your bash version is old."
+        echo "   > Bash is also your login shell."
+        echo "   > Updating to bash 4.3+ is strongly RECOMMENDED!"
     else
-        echo " > Your bash version is old"
-        echo " > Bash is not your login shell so it should not be an issue."
-        echo " > Updating to bash 4.3+ is recommended."
+        echo "   > Your bash version is old"
+        echo "   > Bash is not your login shell so it should not be an issue."
+        echo "   > Updating to bash 4.3+ is recommended."
     fi
 else
-    echo "Bash version: $bash_version - OK"
+    echo " * Bash version: $bash_version - OK"
 fi
 
 
 if ! zsh --version &>/dev/null; then
-    echo "Zsh version: ? - not installed!"
+    echo " * Zsh version: ? - not installed!"
 else
     zsh_version=$(zsh -c 'echo ${ZSH_VERSION}')
     zsh_version_major=$(echo "$zsh_version" | cut -d'.' -f1)
     if [ "$zsh_version_major" -lt 5 ]; then 
-        echo "Zsh version: $zsh_version - UNSUPPORTED!"
+        echo " * Zsh version: $zsh_version - UNSUPPORTED!"
         if [ "$login_shell" = zsh ]; then
-            echo " > Your zsh version is old."
-            echo " > Zsh is also your login shell."
-            echo " > Updating to Zsh 5.0+ is strongly RECOMMENDED!"
+            echo "   > Your zsh version is old."
+            echo "   > Zsh is also your login shell."
+            echo "   > Updating to Zsh 5.0+ is strongly RECOMMENDED!"
         else
-            echo " > Your zsh version is old"
-            echo " > Zsh is not your login shell so it should not be an issue."
-            echo " > Updating to zsh 5.0+ is recommended."
+            echo "   > Your zsh version is old"
+            echo "   > Zsh is not your login shell so it should not be an issue."
+            echo "   > Updating to zsh 5.0+ is recommended."
         fi
     else
-        echo "Zsh version: $zsh_version - OK"
+        echo " * Zsh version: $zsh_version - OK"
     fi
 fi
 
@@ -143,9 +144,9 @@ fi
 nohup resh-daemon &>/dev/null & disown
 
 # Generating resh-uuid ...
-[ -e "$(HOME)/.resh/resh-uuid" ] \
-	|| cat /proc/sys/kernel/random/uuid > "$(HOME)/.resh/resh-uuid" 2>/dev/null \
-	|| scripts/uuid.sh > "$(HOME)/.resh/resh-uuid" 2>/dev/null 
+[ -e ~/.resh/resh-uuid ] \
+	|| cat /proc/sys/kernel/random/uuid > ~/.resh/resh-uuid 2>/dev/null \
+	|| scripts/uuid.sh > ~/.resh/resh-uuid 2>/dev/null 
 
 echo "\ 
 
