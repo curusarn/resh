@@ -4,7 +4,7 @@ Context-based replacement/enhancement for zsh and bash shell history - :warning:
 
 ## Motivation
 
-When you exectue a command in zsh or bash following gets recorded to your shell history:
+When you execute a command in zsh or bash following gets recorded to your shell history:
 
 - Command itself
 - Date
