@@ -63,7 +63,7 @@ Imagine being able to search your shell history based on both the command itself
 
 - :heavy_check_mark: Be compatible with Linux and macOS  
 
-- :white_check_mark: Show cool graphs based on shell history
+- :white_check_mark: Show cool graphs based on recorded history
 
 - :heavy_check_mark: Provide a tool to sanitize the recorded history
 
