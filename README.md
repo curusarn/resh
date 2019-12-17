@@ -31,10 +31,10 @@ Why not synchronize your shell history accross your devices and add some metadat
 ## What this project does
 
 Legend:
-
-- :heavy_check_mark: Implemented
-- :white_check_mark: Implemented but there are issues
-- :x: Not implemented
+ | --- | --- |
+ | :heavy_check_mark: | Implemented |
+ | :white_check_mark: | Implemented but there are issues |
+ | :x: | Not implemented |
 
 *NOTE: Features can change in the future*
 
