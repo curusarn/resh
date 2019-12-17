@@ -1,47 +1,85 @@
 # Rich Enhanced Shell History
 
-## What
+Context-based replacement/enhancement for zsh and bash shell history
 
-This project is the first phase of my Master project.
+:warning: *Work in progress*
 
-It records shell history with rich set of metadata and saves it locally. (device, directory, git, time, terminal session pid, ... see example below)
+## Motivation
 
-It doesn't change the way your shell and your shell history behaves.
+When you exectue a command in zsh or bash following gets recorded to your shell history:
 
-You won't notice any delay in your shell (~40ms).
+- Command itself
+- Date
+- Duration of the command (only in zsh and only if enabled)
 
-If you are not happy with it you can uninstall it with a single command (`rm -rf ~/.resh`).
+But shell usage is contextual - you probably use different commands based on additional context:
 
-## Why
+- Current directory
+- Current git repository/origin
+- Previously executed commands
+- etc ...
 
-The ultimate point of my thesis is to provide a context-based replacement/enhancement for bash and zsh shell history.
+Additionally it's annoying to not have your shell history follow you accros your devices.
+Have you lost you history when reinstalling? I personally think this is unacceptable in 2019.
 
-The idea is to:
+Why not synchronize your shell history accross your devices and add some metadata to know where it came from:
 
-- Save each command with metadata (device, directory, git, time, terminal session pid, ... see example below)
-- Recommend history based on saved metadata
-  - e.g. it will be easier to get to commands specific to the project you are currently working on (based on directory, git repository url, ...)
-- Provide a simple way to search whole history by command itself and/or metadata (e.g. imagine searching by project, directory, device, ...)
-- Synchronize history across devices 
-- Provide an API (to make the project easily extensible)
-- And more ... 
+- Hostname
+- Username
+- Machine ID
 
-In order to be able to develop a good history tool I will need to get some insight into real life shell usage patterns.
+## What this project does
 
-That's why I ask YOU to install this tool to locally record your shell history. 
+Legend:
 
-After some time (probably a few months) I will create a script to replace anything too personal in the recorded data by placeholders. 
+- :heavy_check_mark: Implemented
+- :white_check_mark: Implemented but there are issues
+- :x: Not implemented
+- :zzz: Future ideas - no short-terms plans to implement it
+- :coffee: Working on it!
 
-Then I will ask you to run the script against the recorded data and tell me if you are willing to share the resluts with me.
+*NOTE: Features can change in the future*
 
-I'm very thankful for anyone who is willing to support my thesis by providing their usage data!
+- Record shell history with metadata
+  - save it as JSON to `~/.resh_history.json`
+  - save it to a database so we don't have to keep it all in memory
 
-If you install RESH, please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98 
+- Provide bindings for arrow keys
+  - imitate default behaviour (at first)
+  - provide enhanced behaviour
+  - save additional metadata (e.g. command was recalled using arrow keys)
+
+- Provide an application like [hstr](https://github.com/dvorka/hstr/) that allows searching history records based on both the command and metadata
+  - provide binding for Control+R
+
+- Synchronize recorded history between devices
+
+- Provide an API to make it possible to write other tools that use the recorded history
+
+- Show cool graphs based on shell history
+
+- Provide a tool to sanitize the recorded history
+
+- Be compatible with zsh and bash
+
+- Be compatible with Linux and macOS
+
+## Data sanitization and analysis
+
+In order to be able to develop a good history tool I will need to get some insight into real life shell and shell history usage patterns.
+
+This is also my Master thesis so I need to be a bit scientific and base my design decisions on evidence/data.
+
+Running `reshctl sanitize` creates a sanitized version of recorded history.  
+In sanitized history, all sensitive information is replaced with its SHA1 hashes.
+
+If you would consider supporting my research/thesis by sending me a sanitized version of your history then please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98
 
 ## Prereqisities
 
 Standard stuff: `bash`, `curl`, `tar`, ...
 
+Additional prerequisities: `bash-completion` (if you use bash)
 
 ## Installation
 
@@ -57,14 +95,6 @@ curl -s https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawinstal
 
 1. Run `git clone https://github.com/curusarn/resh.git && cd resh`
 2. Run `scripts/rawinstall.sh`
-
-If you install RESH, please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98 
-
-## Compatibility
-
-Works in `bash` and `zsh`.
-
-Works on Linux and macOS.
 
 ## Examples
 
