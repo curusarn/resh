@@ -30,28 +30,32 @@ Why not synchronize your shell history accross your devices and add some metadat
 
 ## What this project does
 
-Legend:
- | --- | --- |
- | :heavy_check_mark: | Implemented |
- | :white_check_mark: | Implemented but there are issues |
- | :x: | Not implemented |
+| | Legend |
+| --- | --- |
+| :heavy_check_mark: | Implemented |
+| :white_check_mark: | Implemented but there are issues |
+| :x: | Not implemented |
 
 *NOTE: Features can change in the future*
 
 - :heavy_check_mark: Record shell history with metadata
   - :heavy_check_mark: save it as JSON to `~/.resh_history.json`
 
-- :white_check_mark: Provide bindings for arrow keys - bindings are too slow in bash so they are disabled by default (in bash) when you install resh
+- :white_check_mark: Provide bindings for arrow keys
   - :heavy_check_mark: imitate default behaviour
   - :heavy_check_mark: save additional metadata (e.g. command was recalled using arrow keys)
   - :x: provide enhanced behaviour
+  - :heavy_check_mark: for zsh
+  - :white_check_mark: for bash
 
-- :x: Provide an application like [hstr](https://github.com/dvorka/hstr/) that allows searching history records based on both the command and metadata
+- :x: Provide an app to search the history (similar to [hstr](https://github.com/dvorka/hstr/))
   - :x: provide binding for Control+R
-
+  - :x: allow searchnig by metadata
+  - :x: app contians different search modes
+  
 - :x: Synchronize recorded history between devices
 
-- :x: Provide an API to make it possible to write other tools that use the recorded history
+- :x: Provide an API to make resh extendable
 
 - :white_check_mark: Show cool graphs based on shell history
 
