@@ -40,14 +40,14 @@ Legend:
 
 *NOTE: Features can change in the future*
 
-- Record shell history with metadata
-  - save it as JSON to `~/.resh_history.json`
+- :heavy_check_mark: Record shell history with metadata
+  - :heavy_check_mark: save it as JSON to `~/.resh_history.json`
   - save it to a database so we don't have to keep it all in memory
 
 - Provide bindings for arrow keys
-  - imitate default behaviour (at first)
+  - :heavy_check_mark: imitate default behaviour (at first)
   - provide enhanced behaviour
-  - save additional metadata (e.g. command was recalled using arrow keys)
+  - :heavy_check_mark: save additional metadata (e.g. command was recalled using arrow keys)
 
 - Provide an application like [hstr](https://github.com/dvorka/hstr/) that allows searching history records based on both the command and metadata
   - provide binding for Control+R
@@ -58,11 +58,11 @@ Legend:
 
 - Show cool graphs based on shell history
 
-- Provide a tool to sanitize the recorded history
+- :heavy_check_mark: Provide a tool to sanitize the recorded history
 
-- Be compatible with zsh and bash
+- :heavy_check_mark: Be compatible with zsh and bash
 
-- Be compatible with Linux and macOS
+- :heavy_check_mark: Be compatible with Linux and macOS
 
 ## Data sanitization and analysis
 
