@@ -44,19 +44,19 @@ Legend:
   - :heavy_check_mark: save it as JSON to `~/.resh_history.json`
   - save it to a database so we don't have to keep it all in memory
 
-- Provide bindings for arrow keys
+- :white_check_mark: Provide bindings for arrow keys - bindings are too slow in bash so they are disabled by default (in bash) when you install resh
   - :heavy_check_mark: imitate default behaviour (at first)
-  - provide enhanced behaviour
+  - :zzz: provide enhanced behaviour
   - :heavy_check_mark: save additional metadata (e.g. command was recalled using arrow keys)
 
-- Provide an application like [hstr](https://github.com/dvorka/hstr/) that allows searching history records based on both the command and metadata
+- :x: Provide an application like [hstr](https://github.com/dvorka/hstr/) that allows searching history records based on both the command and metadata
   - provide binding for Control+R
 
-- Synchronize recorded history between devices
+- :x: Synchronize recorded history between devices
 
-- Provide an API to make it possible to write other tools that use the recorded history
+- :x: Provide an API to make it possible to write other tools that use the recorded history
 
-- Show cool graphs based on shell history
+- :white_check_mark: Show cool graphs based on shell history
 
 - :heavy_check_mark: Provide a tool to sanitize the recorded history
 
