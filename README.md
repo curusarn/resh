@@ -1,8 +1,6 @@
 # Rich Enhanced Shell History
 
-Context-based replacement/enhancement for zsh and bash shell history
-
-:warning: *Work in progress*
+Context-based replacement/enhancement for zsh and bash shell history - :warning: *Work in progress*
 
 ## Motivation
 
@@ -27,6 +25,10 @@ Why not synchronize your shell history accross your devices and add some metadat
 - Hostname
 - Username
 - Machine ID
+- OS
+- etc ...
+
+Imagine being able to search your shell history based on both the command itself and all this additional metadata.
 
 ## What this project does
 
@@ -44,26 +46,27 @@ Why not synchronize your shell history accross your devices and add some metadat
 - :white_check_mark: Provide bindings for arrow keys
   - :heavy_check_mark: imitate default behaviour
   - :heavy_check_mark: save additional metadata (e.g. command was recalled using arrow keys)
-  - :x: provide enhanced behaviour
-  - :heavy_check_mark: for zsh
-  - :white_check_mark: for bash
+  - :x: use the context (metadata) when searching
+  - :heavy_check_mark: zsh
+  - :white_check_mark: bash *(performance issues)*
 
 - :x: Provide an app to search the history (similar to [hstr](https://github.com/dvorka/hstr/))
   - :x: provide binding for Control+R
   - :x: allow searchnig by metadata
   - :x: app contians different search modes
-  
+
 - :x: Synchronize recorded history between devices
 
 - :x: Provide an API to make resh extendable
+
+- :heavy_check_mark: Be compatible with zsh and bash
+
+- :heavy_check_mark: Be compatible with Linux and macOS  
 
 - :white_check_mark: Show cool graphs based on shell history
 
 - :heavy_check_mark: Provide a tool to sanitize the recorded history
 
-- :heavy_check_mark: Be compatible with zsh and bash
-
-- :heavy_check_mark: Be compatible with Linux and macOS
 
 ## Data sanitization and analysis
 
