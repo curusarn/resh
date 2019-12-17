@@ -128,6 +128,15 @@ fi
 # Final touch
 touch ~/.resh_history.json
 
+# Generating resh-uuid ...
+[ -e ~/.resh/resh-uuid ] \
+	|| cat /proc/sys/kernel/random/uuid > ~/.resh/resh-uuid 2>/dev/null \
+	|| scripts/uuid.sh > ~/.resh/resh-uuid 2>/dev/null 
+
+# Source utils to get __resh_run_daemon function
+# shellcheck source=util.sh
+. ~/.resh/util.sh
+
 # Restarting resh daemon ...
 if [ -f ~/.resh/resh.pid ]; then
     kill -SIGTERM "$(cat ~/.resh/resh.pid)" || true
@@ -135,12 +144,9 @@ if [ -f ~/.resh/resh.pid ]; then
 else
     pkill -SIGTERM "resh-daemon" || true
 fi
-nohup resh-daemon >/dev/null 2>&1 & disown
+__resh_run_daemon
 
-# Generating resh-uuid ...
-[ -e ~/.resh/resh-uuid ] \
-	|| cat /proc/sys/kernel/random/uuid > ~/.resh/resh-uuid 2>/dev/null \
-	|| scripts/uuid.sh > ~/.resh/resh-uuid 2>/dev/null 
+
 
 echo " 
 ##########################################################

@@ -4,10 +4,10 @@ __resh_get_uuid() {
 }
 
 __resh_get_pid() {
-    if [ -n "$ZSH_VERSION" ]; then
+    if [ -n "${ZSH_VERSION-}" ]; then
         # assume Zsh
         local __RESH_PID="$$" # current pid
-    elif [ -n "$BASH_VERSION" ]; then
+    elif [ -n "${BASH_VERSION-}" ]; then
         # assume Bash
         local __RESH_PID="$BASHPID" # current pid
     fi
@@ -21,7 +21,7 @@ __resh_get_epochrealtime() {
     elif gdate --version >/dev/null && gdate +%s.%N | grep -vq 'N'; then
         # GNU date take 2
         gdate +%s.%N
-    elif [ -n "$ZSH_VERSION" ]; then
+    elif [ -n "${ZSH_VERSION-}" ]; then
         # zsh fallback using $EPOCHREALTIME
         if [ -z "${__RESH_ZSH_LOADED_DATETIME+x}" ]; then
             zmodload zsh/datetime
@@ -40,10 +40,10 @@ __resh_get_epochrealtime() {
 }
 
 __resh_run_daemon() {
-    if [ -n "$ZSH_VERSION" ]; then
+    if [ -n "${ZSH_VERSION-}" ]; then
         setopt LOCAL_OPTIONS NO_NOTIFY NO_MONITOR
     fi
-    if [ "$__RESH_MACOS" = 1 ]; then
+    if [ "$(uname)" = Darwin ]; then
         # needs testing
         nohup script -q -c 'resh-daemon' ~/.resh/daemon_last_run_out.txt &
     else
