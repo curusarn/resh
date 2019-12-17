@@ -35,22 +35,20 @@ Legend:
 - :heavy_check_mark: Implemented
 - :white_check_mark: Implemented but there are issues
 - :x: Not implemented
-- :zzz: Future ideas - no short-terms plans to implement it
-- :coffee: Working on it!
 
 *NOTE: Features can change in the future*
 
 - :heavy_check_mark: Record shell history with metadata
   - :heavy_check_mark: save it as JSON to `~/.resh_history.json`
-  - save it to a database so we don't have to keep it all in memory
+  - :x: save it to a database so we don't have to keep it all in memory
 
 - :white_check_mark: Provide bindings for arrow keys - bindings are too slow in bash so they are disabled by default (in bash) when you install resh
   - :heavy_check_mark: imitate default behaviour (at first)
-  - :zzz: provide enhanced behaviour
+  - :x: provide enhanced behaviour
   - :heavy_check_mark: save additional metadata (e.g. command was recalled using arrow keys)
 
 - :x: Provide an application like [hstr](https://github.com/dvorka/hstr/) that allows searching history records based on both the command and metadata
-  - provide binding for Control+R
+  - :x: provide binding for Control+R
 
 - :x: Synchronize recorded history between devices
 
@@ -68,10 +66,12 @@ Legend:
 
 In order to be able to develop a good history tool I will need to get some insight into real life shell and shell history usage patterns.
 
-This is also my Master thesis so I need to be a bit scientific and base my design decisions on evidence/data.
+This project is also my Master thesis so I need to be a bit scientific and base my design decisions on evidence/data.
 
 Running `reshctl sanitize` creates a sanitized version of recorded history.  
 In sanitized history, all sensitive information is replaced with its SHA1 hashes.
+
+If you tried sanitizing your history and you think the result is not sanitized enough then please create an issue or message me.
 
 If you would consider supporting my research/thesis by sending me a sanitized version of your history then please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98
 
