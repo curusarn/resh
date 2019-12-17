@@ -40,12 +40,11 @@ Legend:
 
 - :heavy_check_mark: Record shell history with metadata
   - :heavy_check_mark: save it as JSON to `~/.resh_history.json`
-  - :x: save it to a database so we don't have to keep it all in memory
 
 - :white_check_mark: Provide bindings for arrow keys - bindings are too slow in bash so they are disabled by default (in bash) when you install resh
-  - :heavy_check_mark: imitate default behaviour (at first)
-  - :x: provide enhanced behaviour
+  - :heavy_check_mark: imitate default behaviour
   - :heavy_check_mark: save additional metadata (e.g. command was recalled using arrow keys)
+  - :x: provide enhanced behaviour
 
 - :x: Provide an application like [hstr](https://github.com/dvorka/hstr/) that allows searching history records based on both the command and metadata
   - :x: provide binding for Control+R
