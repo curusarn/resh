@@ -69,7 +69,7 @@ Imagine being able to search your shell history based on both the command itself
 
 - :white_check_mark: Require very little prerequisite software
   - :heavy_check_mark: Linux
-  - :x: MacOS
+  - :x: MacOS *(requires coreutils)*
 
 - :white_check_mark: Show cool graphs based on recorded history
 
