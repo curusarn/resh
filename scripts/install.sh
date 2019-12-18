@@ -63,6 +63,19 @@ else
     fi
 fi
 
+# if setsid --version >/dev/null 2>&1; then
+#     echo " * Setsid installed: OK"
+# else
+#     echo " * Setsid installed: NOT INSTALLED!"
+#     # > Install using ...
+# fi
+
+# if gnohup --version >/dev/null 2>&1; then
+#     echo " * Setsid installed: OK"
+# else
+#     echo " * Setsid installed: NOT INSTALLED!"
+#     # > Install using ...
+# fi
 
 # echo 
 # echo "Continue with installation? (Any key to CONTINUE / Ctrl+C to ABORT)"
