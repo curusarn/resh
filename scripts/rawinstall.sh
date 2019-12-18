@@ -6,7 +6,7 @@ echo
 echo "Please report any issues you encounter to: https://github.com/curusarn/resh/issues"
 echo
 
-if [ "$1" = "--test" ] || [ "$1" = "-t" ]; then
+if [ "${1-}" = "--test" ] || [ "${1-}" = "-t" ]; then
     echo "Looking for the latest release or PRERELEASE (because you used --test flag) ..."
     # debug
     # latest release OR pre-release
