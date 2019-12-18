@@ -43,12 +43,12 @@ __resh_run_daemon() {
     if [ -n "${ZSH_VERSION-}" ]; then
         setopt LOCAL_OPTIONS NO_NOTIFY NO_MONITOR
     fi
-    if [ "$(uname)" = Darwin ]; then
-        # needs testing
-        nohup script -q -c 'resh-daemon' ~/.resh/daemon_last_run_out.txt &
-    else
+    # if [ "$(uname)" = Darwin ]; then
+    #     # needs testing
+    #     nohup script -q -c 'resh-daemon' ~/.resh/daemon_last_run_out.txt &
+    # else
         setsid resh-daemon > ~/.resh/daemon_last_run_out.txt 2>&1 & disown
-    fi
+    #fi
 }
 
 __resh_bash_completion_init() {
