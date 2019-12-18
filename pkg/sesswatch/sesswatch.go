@@ -18,23 +18,37 @@ type sesswatch struct {
 }
 
 // Go runs the session watcher - watches sessions and sends
-func Go(sessionsToWatch chan records.Record, sessionsToDrop []chan string, sleepSeconds uint) {
+func Go(sessionsToWatch chan records.Record, sessionsToWatchRecords chan records.Record, sessionsToDrop []chan string, sleepSeconds uint) {
 	sw := sesswatch{sessionsToDrop: sessionsToDrop, sleepSeconds: sleepSeconds, watchedSessions: map[string]bool{}}
-	go sw.waiter(sessionsToWatch)
+	go sw.waiter(sessionsToWatch, sessionsToWatchRecords)
 }
 
-func (s *sesswatch) waiter(sessionsToWatch chan records.Record) {
+func (s *sesswatch) waiter(sessionsToWatch chan records.Record, sessionsToWatchRecords chan records.Record) {
 	for {
 		func() {
-			record := <-sessionsToWatch
-			id := record.SessionID
-			pid := record.SessionPID
-			s.mutex.Lock()
-			defer s.mutex.Unlock()
-			if s.watchedSessions[id] == false {
-				log.Println("sesswatch: start watching NEW session ~ pid:", id, "~", pid)
-				s.watchedSessions[id] = true
-				go s.watcher(id, pid)
+			select {
+			case record := <-sessionsToWatch:
+				// normal way to start watching a session
+				id := record.SessionID
+				pid := record.SessionPID
+				s.mutex.Lock()
+				defer s.mutex.Unlock()
+				if s.watchedSessions[id] == false {
+					log.Println("sesswatch: start watching NEW session ~ pid:", id, "~", pid)
+					s.watchedSessions[id] = true
+					go s.watcher(id, pid)
+				}
+			case record := <-sessionsToWatchRecords:
+				// additional safety - watch sessions that were never properly initialized
+				id := record.SessionID
+				pid := record.SessionPID
+				s.mutex.Lock()
+				defer s.mutex.Unlock()
+				if s.watchedSessions[id] == false {
+					log.Println("sesswatch WARN: start watching NEW session (based on /record) ~ pid:", id, "~", pid)
+					s.watchedSessions[id] = true
+					go s.watcher(id, pid)
+				}
 			}
 		}()
 	}

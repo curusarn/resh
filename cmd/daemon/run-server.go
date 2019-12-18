@@ -49,9 +49,11 @@ func runServer(config cfg.Config, reshHistoryPath, bashHistoryPath, zshHistoryPa
 		config.SesshistInitHistorySize)
 
 	// sesswatch
+	sesswatchRecords := make(chan records.Record)
+	recordSubscribers = append(recordSubscribers, sesswatchRecords)
 	sesswatchSessionsToWatch := make(chan records.Record)
-	sessionInitSubscribers = append(sessionInitSubscribers, sesswatchSessionsToWatch)
-	sesswatch.Go(sesswatchSessionsToWatch, sessionDropSubscribers, config.SesswatchPeriodSeconds)
+	sessionInitSubscribers = append(sessionInitSubscribers, sesswatchRecords, sesswatchSessionsToWatch)
+	sesswatch.Go(sesswatchSessionsToWatch, sesswatchRecords, sessionDropSubscribers, config.SesswatchPeriodSeconds)
 
 	// handlers
 	mux := http.NewServeMux()
