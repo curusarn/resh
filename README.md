@@ -103,7 +103,7 @@ MacOS: `coreutils`
 Run this command.
 
 ```sh
-curl -s https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawinstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawinstall.sh | bash
 ```
 
 ### Simple
