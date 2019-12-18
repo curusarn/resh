@@ -9,8 +9,13 @@ echo
 echo "Looking for the latest release ..."
 json=$(curl --silent "https://api.github.com/repos/curusarn/resh/releases/latest")
 
+# latest release
 # not very robust but we don't want any dependencies to parse to JSON
 tag=$(echo "$json" | grep '"tag_name":' | cut -d':' -f2 | tr -d ',' | cut -d'"' -f2)
+
+# latest release OR pre-release
+# json=$(curl --silent "https://api.github.com/repos/curusarn/resh/releases")
+# tag=$(echo "$json" | grep '"tag_name":' | cut -d':' -f2 | tr -d ',' | cut -d'"' -f2 | sort --version-sort --reverse | head -n 1)
 
 if [ ${#tag} -lt 2 ]; then
     echo "ERROR: Couldn't determine the latest release! (extracted git tag is too short \"${tag}\")"
