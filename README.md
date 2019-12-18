@@ -55,6 +55,10 @@ Imagine being able to search your shell history based on both the command itself
   - :x: allow searchnig by metadata
   - :x: app contians different search modes
 
+- :heavy_check_mark: Provide a `reshctl` utility to control and interact with the project
+  - :heavy_check_mark: zsh completion
+  - :heavy_check_mark: bash completion
+
 - :x: Synchronize recorded history between devices
 
 - :x: Provide an API to make resh extendable
@@ -62,6 +66,8 @@ Imagine being able to search your shell history based on both the command itself
 - :heavy_check_mark: Be compatible with zsh and bash
 
 - :heavy_check_mark: Be compatible with Linux and macOS  
+
+- :heavy_check_mark: Require very little prerequisite software
 
 - :white_check_mark: Show cool graphs based on recorded history
 
@@ -103,6 +109,8 @@ curl -s https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawinstal
 
 ## Examples
 
+### View the recorded history
+
 Resh history is saved to `~/.resh_history.json`
 
 Each line is a JSON that represents one executed command line.
@@ -112,6 +120,60 @@ This is how I view it `tail -f ~/.resh_history.json | jq` or `jq < ~/.resh_histo
 You can install `jq` using your favourite package manager or you can use other JSON parser to view the history.
 
 ![screenshot](img/screen.png)
+
+*Recorded metadata will be reduced to only include useful information in the future.*
+
+### Update
+
+Check for updates and update
+
+```sh
+reshctl update
+```
+
+### Arrow key bindings
+
+Resh provides arrow key bindings.
+
+These bindings do regular stepping through history and prefix search.
+
+They allow resh to record bindings usage metadata.
+
+![bindings metadata](img/screen-recall.png)
+
+*In example above I pressed UP, pressed DOWN, pressed UP (prefix search `make`) and the command line after the last command line retrieved from history was `make build` so we see that I executed the retrieved command without editing it.*
+
+Arrow key bindings are enabled by default in zsh and they are disabled by default in bash because there are some performance issues.
+
+Enable/disable arrow key bindnigs for THIS shell session:
+
+```sh
+reshctl enable arrow_key_bindings
+
+reshctl disable arrow_key_bindings
+```
+
+Enable/disable for FUTURE shell sessions:
+
+```sh
+reshctl enable arrow_key_bindings_global
+
+reshctl disable arrow_key_bindings_global
+```
+
+See what your current setting is:
+
+```sh
+reshctl status
+```
+
+### Graphs
+
+:clock10: *coming soon*
+
+Sneak peak
+
+![graph of command sequences](img/graph-command-sequences.png)
 
 ## Known issues
 

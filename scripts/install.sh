@@ -173,9 +173,9 @@ echo "
     please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98
 
  ARROW KEY BINDINGS
-    Resh arrow key bindings replicate the default behaviour (for now).
-    That means stepping through history and prefix search.
-    They also provide very precious usage metadata.
+    Resh provides arrow key bindings.
+    These bindings do regular stepping through history and prefix search.
+    They allow resh to record bindings usage metadata.
     
      * Enabled by default in zsh
      * Disabled by default in bash
