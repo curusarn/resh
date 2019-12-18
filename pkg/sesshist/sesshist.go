@@ -151,8 +151,9 @@ func (s *Dispatch) Recall(sessionID string, histno int, prefix string) (string, 
 	s.mutex.RUnlock()
 
 	if found == false {
-		// go s.initSession(sessionID)
-		return "", errors.New("sesshist ERROR: No session history for SessionID " + sessionID + " - should we create one?")
+		// TODO: propagate actual shell here so we can use it
+		go s.initSession(sessionID, "bash")
+		return "", errors.New("sesshist ERROR: No session history for SessionID " + sessionID + " - creating one ...")
 	}
 	log.Println("sesshist - recall: Locking session lock ...")
 	session.mutex.Lock()

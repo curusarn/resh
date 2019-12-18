@@ -67,7 +67,9 @@ Imagine being able to search your shell history based on both the command itself
 
 - :heavy_check_mark: Be compatible with Linux and macOS  
 
-- :heavy_check_mark: Require very little prerequisite software
+- :white_check_mark: Require very little prerequisite software
+  - :heavy_check_mark: Linux
+  - :x: MacOS
 
 - :white_check_mark: Show cool graphs based on recorded history
 
@@ -91,6 +93,8 @@ If you would consider supporting my research/thesis by sending me a sanitized ve
 Standard stuff: `bash`, `curl`, `tar`, ...
 
 Additional prerequisities: `bash-completion` (if you use bash)
+
+MacOS: `coreutils`
 
 ## Installation
 
