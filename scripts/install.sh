@@ -63,19 +63,30 @@ else
     fi
 fi
 
-# if setsid --version >/dev/null 2>&1; then
-#     echo " * Setsid installed: OK"
-# else
-#     echo " * Setsid installed: NOT INSTALLED!"
-#     # > Install using ...
-# fi
 
-# if gnohup --version >/dev/null 2>&1; then
-#     echo " * Setsid installed: OK"
-# else
-#     echo " * Setsid installed: NOT INSTALLED!"
-#     # > Install using ...
-# fi
+if [ "$(uname)" = Darwin ]; then
+    if gnohup --version >/dev/null 2>&1; then
+        echo " * Nohup installed: OK"
+    else
+        echo " * Nohup installed: NOT INSTALLED!"
+        echo "   > You don't have nohup"
+        echo "   > Please install GNU coreutils"
+        echo
+        echo "   $ brew install coreutils"
+        echo
+        exit 1
+    fi
+else
+    if setsid --version >/dev/null 2>&1; then
+        echo " * Setsid installed: OK"
+    else
+        echo " * Setsid installed: NOT INSTALLED!"
+        echo "   > You don't have setsid"
+        echo "   > Please install unix-util"
+        echo
+        exit 1
+    fi
+fi
 
 # echo 
 # echo "Continue with installation? (Any key to CONTINUE / Ctrl+C to ABORT)"

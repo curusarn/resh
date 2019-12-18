@@ -6,16 +6,19 @@ echo
 echo "Please report any issues you encounter to: https://github.com/curusarn/resh/issues"
 echo
 
-echo "Looking for the latest release ..."
-json=$(curl --silent "https://api.github.com/repos/curusarn/resh/releases/latest")
-
-# latest release
-# not very robust but we don't want any dependencies to parse to JSON
-tag=$(echo "$json" | grep '"tag_name":' | cut -d':' -f2 | tr -d ',' | cut -d'"' -f2)
-
-# latest release OR pre-release
-# json=$(curl --silent "https://api.github.com/repos/curusarn/resh/releases")
-# tag=$(echo "$json" | grep '"tag_name":' | cut -d':' -f2 | tr -d ',' | cut -d'"' -f2 | sort --version-sort --reverse | head -n 1)
+if [ "$1" = "--test" ] || [ "$1" = "-t" ]; then
+    echo "Looking for the latest release or PRERELEASE (because you used --test flag) ..."
+    # debug
+    # latest release OR pre-release
+    json=$(curl --silent "https://api.github.com/repos/curusarn/resh/releases")
+    tag=$(echo "$json" | grep '"tag_name":' | cut -d':' -f2 | tr -d ',' | cut -d'"' -f2 | sort --version-sort --reverse | head -n 1)
+else
+    echo "Looking for the latest release ..."
+    # latest release
+    json=$(curl --silent "https://api.github.com/repos/curusarn/resh/releases/latest")
+    # not very robust but we don't want any dependencies to parse to JSON
+    tag=$(echo "$json" | grep '"tag_name":' | cut -d':' -f2 | tr -d ',' | cut -d'"' -f2)
+fi
 
 if [ ${#tag} -lt 2 ]; then
     echo "ERROR: Couldn't determine the latest release! (extracted git tag is too short \"${tag}\")"
