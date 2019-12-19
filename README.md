@@ -43,11 +43,6 @@ Imagine being able to search your shell history based on both the command itself
 - :heavy_check_mark: Record shell history with metadata
   - :heavy_check_mark: save it as JSON to `~/.resh_history.json`
 
-- :heavy_check_mark: Support zsh and bash
-
-- :heavy_check_mark: Support Linux and macOS  
-
-
 - :white_check_mark: Provide bindings for arrow keys
   - :heavy_check_mark: imitate default behaviour
   - :heavy_check_mark: save additional metadata (e.g. command was recalled using arrow keys)
