@@ -94,7 +94,7 @@ Standard stuff: `bash`, `curl`, `tar`, ...
 
 Additional prerequisities: `bash-completion` (if you use bash)
 
-MacOS: `coreutils`
+MacOS: `coreutils` (`brew install coreutils`)
 
 ## Installation
 
