@@ -18,7 +18,7 @@ But shell usage is contextual - you probably use different commands based on add
 - etc ...
 
 Additionally it's annoying to not have your shell history follow you accros your devices.
-Have you lost you history when reinstalling? I personally think this is unacceptable in 2019.
+Have you lost your history when reinstalling? I personally think this is unacceptable in 2019.
 
 Why not synchronize your shell history accross your devices and add some metadata to know where it came from:
 
