@@ -27,7 +27,7 @@ elif [ "$bash_version_major" -eq 4 ] && [ "$bash_version_minor" -lt 3 ]; then
 fi
 
 if [ "$bash_too_old" = true ]; then
-    echo " * Bash version: $bash_version"
+    echo " * Bash version: $bash_version - WARNING!"
     if [ "$login_shell" = bash ]; then
         echo "   > Your bash version is old."
         echo "   > Bash is also your login shell."
