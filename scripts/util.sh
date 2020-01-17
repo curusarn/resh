@@ -61,8 +61,7 @@ __resh_bash_completion_init() {
             i=$bash_completion_dir/$i
             # shellcheck disable=SC2154
             # shellcheck source=/dev/null
-            [[ ${i##*/} != @($_backup_glob|Makefile*|$_blacklist_glob) \
-                && -f $i && -r $i ]] && . "$i"
+            [[ -f "$i" && -r "$i" ]] && . "$i"
         done
     fi
 }
