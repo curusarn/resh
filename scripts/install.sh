@@ -20,7 +20,7 @@ bash_version=$(bash -c 'echo ${BASH_VERSION}')
 bash_version_major=$(bash -c 'echo ${BASH_VERSINFO[0]}')
 bash_version_minor=$(bash -c 'echo ${BASH_VERSINFO[1]}')
 bash_too_old=""
-if [ "$bash_version_major" -lt 3 ]; then 
+if [ "$bash_version_major" -le 3 ]; then 
     bash_too_old=true
 elif [ "$bash_version_major" -eq 4 ] && [ "$bash_version_minor" -lt 3 ]; then 
     bash_too_old=true
