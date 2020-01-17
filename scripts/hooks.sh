@@ -42,10 +42,10 @@ __resh_collect() {
     #__RESH_GIT_TOPLEVEL="$(git rev-parse --show-toplevel)"
     #__RESH_GIT_TOPLEVEL_EXIT_CODE=$?
 
-    if [ -n "$ZSH_VERSION" ]; then
+    if [ -n "${ZSH_VERSION-}" ]; then
         # assume Zsh
         local __RESH_PID="$$" # current pid
-    elif [ -n "$BASH_VERSION" ]; then
+    elif [ -n "${BASH_VERSION-}" ]; then
         # assume Bash
         if [ "${BASH_VERSINFO[0]}" -ge "4" ]; then
             # $BASHPID is only available in bash4+

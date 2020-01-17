@@ -9,7 +9,13 @@ __resh_get_pid() {
         local __RESH_PID="$$" # current pid
     elif [ -n "${BASH_VERSION-}" ]; then
         # assume Bash
-        local __RESH_PID="$BASHPID" # current pid
+        if [ "${BASH_VERSINFO[0]}" -ge "4" ]; then
+            # $BASHPID is only available in bash4+
+            # $$ is fairly similar so it should not be an issue
+            local __RESH_PID="$BASHPID" # current pid
+        else
+            local __RESH_PID="$$" # current pid
+        fi
     fi
     echo "$__RESH_PID"
 }
