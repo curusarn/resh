@@ -173,7 +173,7 @@ reshctl status
 
 ### Graphs
 
-:clock10: *coming soon*
+:clock10: *coming soon-ish (working on other parts of the project atm)*
 
 Sneak peak
 
