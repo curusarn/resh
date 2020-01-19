@@ -62,6 +62,7 @@ func runServer(config cfg.Config, reshHistoryPath, bashHistoryPath, zshHistoryPa
 	mux.Handle("/session_init", &sessionInitHandler{subscribers: sessionInitSubscribers})
 	mux.Handle("/recall", &recallHandler{sesshistDispatch: sesshistDispatch})
 	mux.Handle("/inspect", &inspectHandler{sesshistDispatch: sesshistDispatch})
+	mux.Handle("/dump", &dumpHandler{histfileBox: histfileBox})
 
 	server := &http.Server{Addr: ":" + strconv.Itoa(config.Port), Handler: mux}
 	go server.ListenAndServe()

@@ -75,6 +75,21 @@ __resh_unbind_all() {
     __resh_unbind_control_R
 }
 
+# wrapper for resh-cli
+# meant to be launched on ctrl+R
+resh() {
+    if resh-cli --sessionID "$__RESH_SESSION_ID" --pwd "$PWD" > ~/.resh/cli_last_run_out.txt 2>&1; then
+        # insert on cmdline
+        cat ~/.resh/cli_last_run_out.txt
+        eval "$(cat ~/.resh/cli_last_run_out.txt)"
+        # TODO: get rid of eval
+    else
+        # print errors
+        echo "resh-cli ERROR:"
+        cat ~/.resh/cli_last_run_out.txt
+    fi
+}
+
 reshctl() {
     # local log=~/.resh/reshctl.log
     # export current shell because resh-control needs to know
