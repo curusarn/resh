@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"sort"
@@ -236,7 +237,7 @@ type item struct {
 	cmdLine        string
 	pwd            string
 	pwdTilde       string
-	hits           int
+	hits           float64
 }
 
 func (i item) less(i2 item) bool {
@@ -254,33 +255,64 @@ func (i item) key() string {
 // 	return i.cmdLine == i2.cmdLine && i.pwd == i2.pwd
 // }
 
+// proper match for path is when whole directory is matched
+// proper match for command is when term matches word delimeted by whitespace
+func properMatch(str, term, padChar string) bool {
+	if strings.Contains(padChar+str+padChar, padChar+term+padChar) {
+		return true
+	}
+	return false
+}
+
 // newItemFromRecordForQuery creates new item from record based on given query
 //		returns error if the query doesn't match the record
 func newItemFromRecordForQuery(record records.EnrichedRecord, query query) (item, error) {
 	// TODO: use color to highlight matches
-	hits := 0
+	const properMatchScore = 0.3
+	const actualPwdScore = 0.9
+
+	hits := 0.0
 	cmd := record.CmdLine
 	pwdTilde := strings.Replace(record.Pwd, record.Home, "~", 1)
 	pwdDisp := leftCutPadString(pwdTilde, 25)
 	pwdRawDisp := leftCutPadString(record.Pwd, 25)
 	var useRawPwd bool
 	for _, term := range query.terms {
+		alreadyHit := false
 		if strings.Contains(record.CmdLine, term) {
-			hits++
+			if alreadyHit == false {
+				hits++
+			}
+			alreadyHit = true
+			if properMatch(cmd, term, " ") {
+				hits += properMatchScore
+			}
 			cmd = strings.ReplaceAll(cmd, term, highlightMatch(term))
 			// NO continue
 		}
 		if strings.Contains(pwdTilde, term) {
-			hits++
+			if alreadyHit == false {
+				hits++
+			}
+			alreadyHit = true
+			if properMatch(pwdTilde, term, " ") {
+				hits += properMatchScore
+			}
 			pwdDisp = strings.ReplaceAll(pwdDisp, term, highlightMatch(term))
 			useRawPwd = false
-			continue
+			continue // IMPORTANT
 		}
 		if strings.Contains(record.Pwd, term) {
-			hits++
+			if alreadyHit == false {
+				hits++
+			}
+			alreadyHit = true
+			if properMatch(pwdTilde, term, " ") {
+				hits += properMatchScore
+			}
 			pwdRawDisp = strings.ReplaceAll(pwdRawDisp, term, highlightMatch(term))
 			useRawPwd = true
-			continue
+			continue // IMPORTANT
 		}
 		// if strings.Contains(record.GitOriginRemote, term) {
 		// 	hits++
@@ -288,22 +320,22 @@ func newItemFromRecordForQuery(record records.EnrichedRecord, query query) (item
 	}
 	// actual pwd matches
 	if record.Pwd == query.pwd {
-		hits++
+		hits += actualPwdScore
 		pwdDisp = highlightMatchAlternative(pwdDisp)
-		pwdRawDisp = highlightMatchAlternative(pwdRawDisp)
+		// pwdRawDisp = highlightMatchAlternative(pwdRawDisp)
 		useRawPwd = false
 	}
 	if hits == 0 {
 		return item{}, errors.New("no match for given record and query")
 	}
-	display := "  "
+	display := ""
 	// pwd := leftCutPadString("<"+pwdTilde+">", 20)
 	if useRawPwd {
 		display += pwdRawDisp
 	} else {
 		display += pwdDisp
 	}
-	hitsDisp := " " + rightCutPadString(strconv.Itoa(hits), 2)
+	hitsDisp := " " + rightCutPadString(strconv.Itoa(int(math.Floor(hits))), 2)
 	display += hitsDisp
 	// cmd := "<" + strings.ReplaceAll(record.CmdLine, "\n", ";") + ">"
 	cmd = strings.ReplaceAll(cmd, "\n", ";")
@@ -326,7 +358,6 @@ func newItemFromRecordForQuery(record records.EnrichedRecord, query query) (item
 }
 
 func doHighlightString(str string, minLength int) string {
-	str = "> " + string(str[2:])
 	if len(str) < minLength {
 		str = str + strings.Repeat(" ", minLength-len(str))
 	}
