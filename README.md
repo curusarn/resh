@@ -50,9 +50,9 @@ Imagine being able to search your shell history based on both the command itself
   - :heavy_check_mark: zsh
   - :white_check_mark: bash *(performance issues)*
 
-- :x: Provide an app to search the history (similar to [hstr](https://github.com/dvorka/hstr/))
+- :white_check_mark: Provide an app to search the history (launch it using following command `resh`)
   - :x: provide binding for Control+R
-  - :x: allow searchnig by metadata
+  - :white_check_mark: allow searchnig by metadata
   - :x: app contians different search modes
 
 - :heavy_check_mark: Provide a `reshctl` utility to control and interact with the project
