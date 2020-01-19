@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/curusarn/resh/pkg/histcli"
 	"github.com/curusarn/resh/pkg/histlist"
 	"github.com/curusarn/resh/pkg/records"
 )
@@ -25,6 +26,8 @@ type Histfile struct {
 	//			resh_history itself is common for both bash and zsh
 	bashCmdLines histlist.Histlist
 	zshCmdLines  histlist.Histlist
+
+	fullRecords histcli.Histcli
 }
 
 // New creates new histfile and runs its gorutines
@@ -38,11 +41,22 @@ func New(input chan records.Record, sessionsToDrop chan string,
 		historyPath:  reshHistoryPath,
 		bashCmdLines: histlist.New(),
 		zshCmdLines:  histlist.New(),
+		fullRecords:  histcli.New(),
 	}
 	go hf.loadHistory(bashHistoryPath, zshHistoryPath, maxInitHistSize, minInitHistSizeKB)
 	go hf.writer(input, signals, shutdownDone)
 	go hf.sessionGC(sessionsToDrop)
+	go hf.loadFullRecords()
 	return &hf
+}
+
+// load records from resh history, reverse, enrich and save
+func (h *Histfile) loadFullRecords() {
+	recs := records.LoadFromFile(h.historyPath, math.MaxInt32)
+	for i := len(recs) - 1; i >= 0; i-- {
+		rec := recs[i]
+		h.fullRecords.AddRecord(rec)
+	}
 }
 
 // loadsHistory from resh_history and if there is not enough of it also load native shell histories
@@ -208,4 +222,10 @@ func (h *Histfile) GetRecentCmdLines(shell string, limit int) histlist.Histlist 
 	hl = histlist.Copy(h.zshCmdLines)
 	log.Println("histfile: history copied (zsh) - cmdLine count:", len(hl.List))
 	return hl
+}
+
+// DumpRecords returns enriched records
+func (h *Histfile) DumpRecords() histcli.Histcli {
+	// don't forget locks in the future
+	return h.fullRecords
 }

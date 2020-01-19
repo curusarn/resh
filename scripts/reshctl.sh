@@ -78,9 +78,9 @@ __resh_unbind_all() {
 # wrapper for resh-cli
 # meant to be launched on ctrl+R
 resh() {
-    if resh-cli --sessionID "$__RESH_SESSION_ID" > ~/.resh/cli_last_run_out.txt 2>&1; then
+    if resh-cli --sessionID "$__RESH_SESSION_ID" --pwd "$PWD" > ~/.resh/cli_last_run_out.txt 2>&1; then
         # insert on cmdline
-        echo "$(cat ~/.resh/cli_last_run_out.txt)"
+        cat ~/.resh/cli_last_run_out.txt
         eval "$(cat ~/.resh/cli_last_run_out.txt)"
         # TODO: get rid of eval
     else

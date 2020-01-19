@@ -1,5 +1,18 @@
 package msg
 
+import "github.com/curusarn/resh/pkg/records"
+
+// DumpMsg struct
+type DumpMsg struct {
+	SessionID string `json:"sessionID"`
+	PWD       string `json:"pwd"`
+}
+
+// DumpResponse struct
+type DumpResponse struct {
+	FullRecords []records.EnrichedRecord `json:"fullRecords"`
+}
+
 // InspectMsg struct
 type InspectMsg struct {
 	SessionID string `json:"sessionId"`
