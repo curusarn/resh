@@ -35,6 +35,7 @@ uninstall:
 	-rm -rf ~/.resh/
 
 bin/resh-%: cmd/%/*.go pkg/*/*.go cmd/control/cmd/*.go cmd/control/status/status.go
+	grep $@ .goreleaser.yml -q # all build targets need to be included in .goreleaser.yml
 	go build ${GOFLAGS} -o $@ cmd/$*/*.go
 
 .PHONY: ser submodules build install rebuild uninstall clean
