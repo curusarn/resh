@@ -51,7 +51,7 @@ Imagine being able to search your shell history based on both the command itself
   - :white_check_mark: bash *(performance issues)*
 
 - :white_check_mark: Provide an app to search the history (launch it using following command `resh`)
-  - :x: provide binding for Control+R
+  - :heavy_check_mark: provide binding for Control+R
   - :white_check_mark: allow searchnig by metadata
   - :x: app contians different search modes
 
