@@ -358,7 +358,7 @@ func newItemFromRecordForQuery(record records.EnrichedRecord, query query, debug
 		// pwdRawDisp = highlightMatchAlternative(pwdRawDisp)
 		useRawPwd = false
 	}
-	if hits == 0 {
+	if hits <= 0 {
 		return item{}, errors.New("no match for given record and query")
 	}
 	display := ""
