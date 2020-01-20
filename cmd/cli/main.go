@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math"
 	"net/http"
 	"os"
 	"sort"
@@ -60,7 +59,6 @@ func runReshCli() (string, int) {
 		log.Fatal("Error reading config:", err)
 	}
 	if config.Debug {
-		// Debug = true
 		log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	}
 
@@ -95,7 +93,8 @@ func runReshCli() (string, int) {
 
 	st := state{
 		// lock sync.Mutex
-		fullRecords: resp.FullRecords,
+		fullRecords:  resp.FullRecords,
+		initialQuery: *query,
 	}
 
 	layout := manager{
@@ -279,24 +278,33 @@ func properMatch(str, term, padChar string) bool {
 
 // newItemFromRecordForQuery creates new item from record based on given query
 //		returns error if the query doesn't match the record
-func newItemFromRecordForQuery(record records.EnrichedRecord, query query) (item, error) {
+func newItemFromRecordForQuery(record records.EnrichedRecord, query query, debug bool) (item, error) {
 	// TODO: use color to highlight matches
+	const hitScore = 1.0
+	const hitScoreConsecutive = 0.1
 	const properMatchScore = 0.3
 	const actualPwdScore = 0.9
+	const actualPwdScoreExtra = 0.2
 
 	hits := 0.0
+	if record.ExitCode != 0 {
+		hits--
+	}
 	cmd := record.CmdLine
 	pwdTilde := strings.Replace(record.Pwd, record.Home, "~", 1)
 	pwdDisp := leftCutPadString(pwdTilde, 25)
 	pwdRawDisp := leftCutPadString(record.Pwd, 25)
 	var useRawPwd bool
+	var dirHit bool
 	for _, term := range query.terms {
-		alreadyHit := false
+		termHit := false
 		if strings.Contains(record.CmdLine, term) {
-			if alreadyHit == false {
-				hits++
+			if termHit == false {
+				hits += hitScore
+			} else {
+				hits += hitScoreConsecutive
 			}
-			alreadyHit = true
+			termHit = true
 			if properMatch(cmd, term, " ") {
 				hits += properMatchScore
 			}
@@ -304,36 +312,48 @@ func newItemFromRecordForQuery(record records.EnrichedRecord, query query) (item
 			// NO continue
 		}
 		if strings.Contains(pwdTilde, term) {
-			if alreadyHit == false {
-				hits++
+			if termHit == false {
+				hits += hitScore
+			} else {
+				hits += hitScoreConsecutive
 			}
-			alreadyHit = true
-			if properMatch(pwdTilde, term, " ") {
+			termHit = true
+			if properMatch(pwdTilde, term, "/") {
 				hits += properMatchScore
 			}
 			pwdDisp = strings.ReplaceAll(pwdDisp, term, highlightMatch(term))
-			useRawPwd = false
-			continue // IMPORTANT
-		}
-		if strings.Contains(record.Pwd, term) {
-			if alreadyHit == false {
-				hits++
+			pwdRawDisp = strings.ReplaceAll(pwdRawDisp, term, highlightMatch(term))
+			dirHit = true
+		} else if strings.Contains(record.Pwd, term) {
+			if termHit == false {
+				hits += hitScore
+			} else {
+				hits += hitScoreConsecutive
 			}
-			alreadyHit = true
-			if properMatch(pwdTilde, term, " ") {
+			termHit = true
+			if properMatch(pwdTilde, term, "/") {
 				hits += properMatchScore
 			}
 			pwdRawDisp = strings.ReplaceAll(pwdRawDisp, term, highlightMatch(term))
+			dirHit = true
 			useRawPwd = true
-			continue // IMPORTANT
 		}
 		// if strings.Contains(record.GitOriginRemote, term) {
 		// 	hits++
 		// }
 	}
 	// actual pwd matches
+	// only use if there was no directory match on any of the terms
+	// N terms can only produce:
+	//		-> N matches against the command
+	//		-> N matches against the directory
+	//		-> 1 extra match for the actual directory match
 	if record.Pwd == query.pwd {
-		hits += actualPwdScore
+		if dirHit {
+			hits += actualPwdScoreExtra
+		} else {
+			hits += actualPwdScore
+		}
 		pwdDisp = highlightMatchAlternative(pwdDisp)
 		// pwdRawDisp = highlightMatchAlternative(pwdRawDisp)
 		useRawPwd = false
@@ -348,8 +368,13 @@ func newItemFromRecordForQuery(record records.EnrichedRecord, query query) (item
 	} else {
 		display += pwdDisp
 	}
-	hitsDisp := " " + rightCutPadString(strconv.Itoa(int(math.Floor(hits))), 2)
-	display += hitsDisp
+	if debug {
+		hitsStr := fmt.Sprintf("%.1f", hits)
+		hitsDisp := "  " + hitsStr + "  "
+		display += hitsDisp
+	} else {
+		display += "  "
+	}
 	// cmd := "<" + strings.ReplaceAll(record.CmdLine, "\n", ";") + ">"
 	cmd = strings.ReplaceAll(cmd, "\n", ";")
 	display += cmd
@@ -382,6 +407,8 @@ type state struct {
 	fullRecords     []records.EnrichedRecord
 	data            []item
 	highlightedItem int
+
+	initialQuery string
 
 	output   string
 	exitCode int
@@ -427,7 +454,7 @@ func (m manager) UpdateData(input string) {
 	m.s.lock.Lock()
 	defer m.s.lock.Unlock()
 	for _, rec := range m.s.fullRecords {
-		itm, err := newItemFromRecordForQuery(rec, query)
+		itm, err := newItemFromRecordForQuery(rec, query, m.config.Debug)
 		if err != nil {
 			// records didn't match the query
 			// log.Println(" * continue (no match)", rec.Pwd)
@@ -482,8 +509,6 @@ func (m manager) Prev(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-// you can have Layout with pointer reciever if you pass the layout function to the setmanger
-// I dont think we need that tho
 func (m manager) Layout(g *gocui.Gui) error {
 	var b byte
 	maxX, maxY := g.Size()
@@ -494,11 +519,18 @@ func (m manager) Layout(g *gocui.Gui) error {
 	}
 
 	v.Editable = true
-	// v.Editor = gocui.EditorFunc(m.editor.Edit)
 	v.Editor = m
 	v.Title = "resh cli"
 
 	g.SetCurrentView("input")
+
+	m.s.lock.Lock()
+	defer m.s.lock.Unlock()
+	if len(m.s.initialQuery) > 0 {
+		v.WriteString(m.s.initialQuery)
+		v.SetCursor(len(m.s.initialQuery), 0)
+		m.s.initialQuery = ""
+	}
 
 	v, err = g.SetView("body", 0, 2, maxX-1, maxY, b)
 	if err != nil && gocui.IsUnknownView(err) == false {
@@ -509,8 +541,6 @@ func (m manager) Layout(g *gocui.Gui) error {
 	v.Clear()
 	v.Rewind()
 
-	m.s.lock.Lock()
-	defer m.s.lock.Unlock()
 	for i, itm := range m.s.data {
 		if i == maxY {
 			log.Println(maxY)

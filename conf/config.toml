@@ -1,7 +1,7 @@
 port = 2627 
 sesswatchPeriodSeconds = 120 
 sesshistInitHistorySize = 1000
-debug = true 
+debug = false 
 bindArrowKeysBash = false
 bindArrowKeysZsh = true
 bindControlR = false

@@ -25,6 +25,11 @@ __resh_bind_arrows() {
     return 0
 }
 
+__resh_nop() {
+    # does nothing
+    true
+}
+
 __resh_bind_control_R() {
     if [ "${__RESH_control_R_bind_enabled-0}" != 0 ]; then
         echo "Error: Can't enable control R binding because it is already enabled!"
@@ -34,13 +39,15 @@ __resh_bind_control_R() {
     __RESH_bindfunc_revert_control_R_bind=$_bindfunc_revert
     __RESH_control_R_bind_enabled=1
     if [ -n "${BASH_VERSION-}" ]; then
-        echo "BASH is not currently not supported"
-        return 1
         # fuck bash
-        # TODO set \C-r bind to \impossible1 \impossible2
-        #      set \impossible1 to widget
-        #      that's it - \impossible2 is set in the widget and revert function is still working
+        bind '"\C-r": "\u[31~\u[32~"'
+        bind -x '"\u[31~": __resh_widget_control_R_compat'
 
+        # execute
+        # bind '"\u[32~": accept-line'
+
+        # just paste
+        # bind -x '"\u[32~": __resh_nop'
         true
     fi
     return 0
@@ -110,6 +117,8 @@ resh() {
     elif [ $status_code = 0 ]; then
         # paste
         echo "$buffer" 
+    elif [ $status_code = 130 ]; then
+        true
     else
         echo "$buffer" > ~/.resh/cli_last_run_out.txt
         echo "resh-cli ERROR:"

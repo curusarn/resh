@@ -102,18 +102,18 @@ __resh_widget_control_R() {
             # zsh
             zle accept-line
         elif [ -n "${BASH_VERSION-}" ]; then
-            echo "BASH is not currently not supported for control R binding - sorry"
             # bash
-            # TODO set chained keyseq to accept-line
-            true 
+            # set chained keyseq to accept-line
+            bind '"\u[32~": accept-line'
         fi
     elif [ $status_code = 0 ]; then
         if [ -n "${BASH_VERSION-}" ]; then
-            echo "BASH is not currently not supported for control R binding - sorry"
             # bash
-            # TODO set chained keyseq to nothing
-            true
+            # set chained keyseq to nothing
+            bind -x '"\u[32~": __resh_nop'
         fi
+    elif [ $status_code = 130 ]; then
+        BUFFER="$PREVBUFFER"
     else
         echo "$BUFFER" > ~/.resh/cli_last_run_out.txt
         echo "# RESH cli failed - sorry for the inconvinience (error output was saved to ~/.resh/cli_last_run_out.txt)" 
