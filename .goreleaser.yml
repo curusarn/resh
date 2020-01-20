@@ -31,6 +31,10 @@ builds:
     #   pre: rice embed-go
     #   post: ./script.sh
   -
+    id: "cli"
+    main: ./cmd/cli
+    binary: bin/resh-cli
+  -
     id: "collect"
     main: ./cmd/collect
     binary: bin/resh-collect
