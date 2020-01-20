@@ -88,10 +88,38 @@ __resh_widget_arrow_down() {
     __resh_helper_arrow_post
 }
 __resh_widget_control_R() {
-    local __RESH_PREFIX=${BUFFER:0:CURSOR}
-    __RESH_HIST_RECALL_ACTIONS="$__RESH_HIST_RECALL_ACTIONS;control_R:$__RESH_PREFIX"
-    # resh-collect --hstr
-    hstr
+    # local __RESH_PREFIX=${BUFFER:0:CURSOR}
+    # __RESH_HIST_RECALL_ACTIONS="$__RESH_HIST_RECALL_ACTIONS;control_R:$__RESH_PREFIX"
+    local PREVBUFFER=$BUFFER
+    __RESH_HIST_RECALL_ACTIONS="$__RESH_HIST_RECALL_ACTIONS;control_R:$BUFFER"
+
+    local status_code
+    BUFFER=$(resh-cli --sessionID "$__RESH_SESSION_ID" --pwd "$PWD" --query "$BUFFER")
+    status_code=$?
+    if [ $status_code = 111 ]; then
+        # execute
+        if [ -n "${ZSH_VERSION-}" ]; then
+            # zsh
+            zle accept-line
+        elif [ -n "${BASH_VERSION-}" ]; then
+            echo "BASH is not currently not supported"
+            # bash
+            # TODO set chained keyseq to accept-line
+            true 
+        fi
+    elif [ $status_code = 0 ]; then
+        if [ -n "${BASH_VERSION-}" ]; then
+            echo "BASH is not currently not supported"
+            # bash
+            # TODO set chained keyseq to nothing
+            true
+        fi
+    else
+        echo "$BUFFER" > ~/.resh/cli_last_run_out.txt
+        echo "# RESH cli failed - sorry for the inconvinience (error output was saved to ~/.resh/cli_last_run_out.txt)" 
+        BUFFER="$PREVBUFFER"
+    fi
+    CURSOR=${#BUFFER}
 }
 
 __resh_widget_arrow_up_compat() {

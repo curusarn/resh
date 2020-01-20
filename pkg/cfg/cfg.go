@@ -8,4 +8,5 @@ type Config struct {
 	Debug                   bool
 	BindArrowKeysBash       bool
 	BindArrowKeysZsh        bool
+	BindControlR            bool
 }

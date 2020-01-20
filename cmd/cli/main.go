@@ -32,7 +32,16 @@ var version string
 // commit from git set during build
 var commit string
 
+// special constant recognized by RESH wrappers
+const exitCodeExecute = 111
+
 func main() {
+	output, exitCode := runReshCli()
+	fmt.Print(output)
+	os.Exit(exitCode)
+}
+
+func runReshCli() (string, int) {
 	usr, _ := user.Current()
 	dir := usr.HomeDir
 	configPath := filepath.Join(dir, "/.config/resh.toml")
@@ -57,6 +66,7 @@ func main() {
 
 	sessionID := flag.String("sessionID", "", "resh generated session id")
 	pwd := flag.String("pwd", "", "present working directory")
+	query := flag.String("query", "", "search query")
 	flag.Parse()
 
 	if *sessionID == "" {
@@ -111,13 +121,16 @@ func main() {
 	if err := g.SetKeybinding("", gocui.KeyEnter, gocui.ModNone, layout.SelectExecute); err != nil {
 		log.Panicln(err)
 	}
+	if err := g.SetKeybinding("", gocui.KeyArrowRight, gocui.ModNone, layout.SelectPaste); err != nil {
+		log.Panicln(err)
+	}
 
-	layout.UpdateData("")
+	layout.UpdateData(*query)
 	err = g.MainLoop()
 	if err != nil && gocui.IsQuit(err) == false {
 		log.Panicln(err)
 	}
-	layout.Output()
+	return layout.s.output, layout.s.exitCode
 }
 
 func leftCutPadString(str string, newLen int) string {
@@ -370,7 +383,8 @@ type state struct {
 	data            []item
 	highlightedItem int
 
-	outputBuffer string
+	output   string
+	exitCode int
 }
 
 type manager struct {
@@ -381,19 +395,23 @@ type manager struct {
 	s *state
 }
 
-func (m manager) Output() {
-	m.s.lock.Lock()
-	defer m.s.lock.Unlock()
-	if len(m.s.outputBuffer) > 0 {
-		fmt.Print(m.s.outputBuffer)
-	}
-}
-
 func (m manager) SelectExecute(g *gocui.Gui, v *gocui.View) error {
 	m.s.lock.Lock()
 	defer m.s.lock.Unlock()
 	if m.s.highlightedItem < len(m.s.data) {
-		m.s.outputBuffer = m.s.data[m.s.highlightedItem].cmdLine + "\n"
+		m.s.output = m.s.data[m.s.highlightedItem].cmdLine
+		m.s.exitCode = exitCodeExecute
+		return gocui.ErrQuit
+	}
+	return nil
+}
+
+func (m manager) SelectPaste(g *gocui.Gui, v *gocui.View) error {
+	m.s.lock.Lock()
+	defer m.s.lock.Unlock()
+	if m.s.highlightedItem < len(m.s.data) {
+		m.s.output = m.s.data[m.s.highlightedItem].cmdLine
+		m.s.exitCode = 0 // success
 		return gocui.ErrQuit
 	}
 	return nil

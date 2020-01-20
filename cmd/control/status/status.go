@@ -13,11 +13,15 @@ const (
 
 	// EnableArrowKeyBindings exit code - tells reshctl() wrapper to enable arrow key bindings
 	EnableArrowKeyBindings = 101
+	// EnableControlRBinding exit code - tells reshctl() wrapper to enable control R binding
+	EnableControlRBinding = 102
 	// DisableResh exit code -  tells reshctl() wrapper to enable resh
 	// DisableResh = 110
 
 	// DisableArrowKeyBindings exit code - tells reshctl() wrapper to disable arrow key bindings
 	DisableArrowKeyBindings = 111
+	// DisableControlRBinding exit code - tells reshctl() wrapper to disable control R binding
+	DisableControlRBinding = 112
 	// ReloadRcFiles exit code - tells reshctl() wrapper to reload shellrc resh file
 	ReloadRcFiles = 200
 	// InspectSessionHistory exit code - tells reshctl() wrapper to take current sessionID and send /inspect request to daemon

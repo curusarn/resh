@@ -26,8 +26,23 @@ __resh_bind_arrows() {
 }
 
 __resh_bind_control_R() {
-    # TODO
-    echo "bindfunc __resh_widget_control_R_compat"
+    if [ "${__RESH_control_R_bind_enabled-0}" != 0 ]; then
+        echo "Error: Can't enable control R binding because it is already enabled!"
+        return 1 
+    fi
+    bindfunc --revert '\C-r' __resh_widget_control_R_compat
+    __RESH_bindfunc_revert_control_R_bind=$_bindfunc_revert
+    __RESH_control_R_bind_enabled=1
+    if [ -n "${BASH_VERSION-}" ]; then
+        echo "BASH is not currently not supported"
+        return 1
+        # fuck bash
+        # TODO set \C-r bind to \impossible1 \impossible2
+        #      set \impossible1 to widget
+        #      that's it - \impossible2 is set in the widget and revert function is still working
+
+        true
+    fi
     return 0
 }
 
@@ -60,8 +75,15 @@ __resh_unbind_arrows() {
 }
 
 __resh_unbind_control_R() {
-    # TODO
-    echo "\ bindfunc __resh_widget_control_R_compat"
+    if [ "${__RESH_control_R_bind_enabled-0}" != 1 ]; then
+        echo "Error: Can't disable control R binding because it is not enabled!"
+        return 1 
+    fi
+    if [ -z "${__RESH_bindfunc_revert_control_R_bind+x}" ]; then
+        echo "Warn: Couldn't revert control R binding because 'revert command' is empty."
+    else
+        eval "$__RESH_bindfunc_revert_control_R_bind"
+    fi
     return 0
 }
 
@@ -78,6 +100,7 @@ __resh_unbind_all() {
 # wrapper for resh-cli
 # meant to be launched on ctrl+R
 resh() {
+    # TODO: rewrite this based on the widget
     if resh-cli --sessionID "$__RESH_SESSION_ID" --pwd "$PWD" > ~/.resh/cli_last_run_out.txt 2>&1; then
         # insert on cmdline
         cat ~/.resh/cli_last_run_out.txt
@@ -118,6 +141,11 @@ reshctl() {
         __resh_bind_arrows
         return 0
         ;;
+    102)
+        # enable control R
+        __resh_bind_control_R
+        return 0
+        ;;
     # disable
     # 110)
     #     # disable all
@@ -127,6 +155,11 @@ reshctl() {
     111)
         # disable arrow keys
         __resh_unbind_arrows
+        return 0
+        ;;
+    112)
+        # disable control R
+        __resh_unbind_control_R
         return 0
         ;;
     200)
