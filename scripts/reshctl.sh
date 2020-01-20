@@ -97,17 +97,20 @@ __resh_unbind_all() {
     __resh_unbind_control_R
 }
 
-# wrapper for resh-cli
-# meant to be launched on ctrl+R
+# wrapper for resh-cli for calling resh directly
 resh() {
-    # TODO: rewrite this based on the widget
-    if resh-cli --sessionID "$__RESH_SESSION_ID" --pwd "$PWD" > ~/.resh/cli_last_run_out.txt 2>&1; then
-        # insert on cmdline
-        cat ~/.resh/cli_last_run_out.txt
-        eval "$(cat ~/.resh/cli_last_run_out.txt)"
-        # TODO: get rid of eval
+    local buffer
+    buffer=$(resh-cli --sessionID "$__RESH_SESSION_ID" --pwd "$PWD")
+    status_code=$?
+    if [ $status_code = 111 ]; then
+        # execute
+        echo "$buffer" 
+        eval "$buffer"
+    elif [ $status_code = 0 ]; then
+        # paste
+        echo "$buffer" 
     else
-        # print errors
+        echo "$buffer" > ~/.resh/cli_last_run_out.txt
         echo "resh-cli ERROR:"
         cat ~/.resh/cli_last_run_out.txt
     fi
@@ -176,9 +179,21 @@ reshctl() {
     202)
         # show status 
         if [ "${__RESH_arrow_keys_bind_enabled-0}" != 0 ]; then
-            echo " * this session: ENABLED"
+            echo ' * this session: ENABLED'
         else
-            echo " * this session: DISABLED"
+            echo ' * this session: DISABLED'
+        fi
+        echo
+		echo 'Control R binding ...'
+        if [ "$(resh-config --key BindControlR)" = true ]; then
+			echo ' * future sessions: ENABLED (experimental)'
+		else
+			echo ' * future sessions: DISABLED (recommended)'
+        fi
+        if [ "${__RESH_control_R_bind_enabled-0}" != 0 ]; then
+            echo ' * this session: ENABLED'
+        else
+            echo ' * this session: DISABLED'
         fi
         return 0
         ;;

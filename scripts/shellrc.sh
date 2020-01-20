@@ -96,6 +96,7 @@ if [ -z "${__RESH_INIT_DONE+x}" ]; then
         echo "RESH error: unknown shell (init)"
         echo "$__RESH_SHELL"
     fi
+    [ "$(resh-config --key BindControlR)" = true ] && reshctl enable ctrl_r_binding
 
     __RESH_INIT_DONE=1
 fi

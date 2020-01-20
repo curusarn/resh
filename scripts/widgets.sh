@@ -102,14 +102,14 @@ __resh_widget_control_R() {
             # zsh
             zle accept-line
         elif [ -n "${BASH_VERSION-}" ]; then
-            echo "BASH is not currently not supported"
+            echo "BASH is not currently not supported for control R binding - sorry"
             # bash
             # TODO set chained keyseq to accept-line
             true 
         fi
     elif [ $status_code = 0 ]; then
         if [ -n "${BASH_VERSION-}" ]; then
-            echo "BASH is not currently not supported"
+            echo "BASH is not currently not supported for control R binding - sorry"
             # bash
             # TODO set chained keyseq to nothing
             true

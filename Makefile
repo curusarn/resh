@@ -11,7 +11,7 @@ build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect bi
 install: build conf/config-dev.toml
 	scripts/install.sh
 	# Dev config
-	cp -f conf/config-dev.toml ~/.config/
+	cp -f conf/config-dev.toml ~/.config/resh.toml
 
 test_go:
 	# Running tests

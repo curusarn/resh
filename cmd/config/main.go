@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/curusarn/resh/pkg/cfg"
@@ -31,15 +32,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	*configKey = strings.ToLower(*configKey)
 	switch *configKey {
-	case "BindArrowKeysBash":
-		fallthrough
-	case "bindArrowKeysBash":
+	case "bindarrowkeysbash":
 		printBoolNormalized(config.BindArrowKeysBash)
-	case "BindArrowKeysZsh":
-		fallthrough
-	case "bindArrowKeysZsh":
+	case "bindarrowkeyszsh":
 		printBoolNormalized(config.BindArrowKeysZsh)
+	case "bindcontrolr":
+		printBoolNormalized(config.BindControlR)
 	default:
 		fmt.Println("Error: illegal --key!")
 		os.Exit(1)

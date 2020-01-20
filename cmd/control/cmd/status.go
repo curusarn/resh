@@ -44,7 +44,7 @@ var statusCmd = &cobra.Command{
 		}
 
 		fmt.Println()
-		fmt.Println("Arrow key bindnigs ...")
+		fmt.Println("Arrow key bindings ...")
 		if config.BindArrowKeysBash {
 			fmt.Println(" * bash future sessions: ENABLED (not recommended)")
 		} else {
@@ -55,6 +55,7 @@ var statusCmd = &cobra.Command{
 		} else {
 			fmt.Println(" * zsh future sessions: DISABLED (not recommended)")
 		}
+
 		exitCode = status.ReshStatus
 	},
 }
