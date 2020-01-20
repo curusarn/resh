@@ -84,6 +84,7 @@ __resh_unbind_control_R() {
     else
         eval "$__RESH_bindfunc_revert_control_R_bind"
     fi
+    __RESH_control_R_bind_enabled=0
     return 0
 }
 
