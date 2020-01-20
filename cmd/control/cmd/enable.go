@@ -50,7 +50,7 @@ var enableControlRBindingGlobalCmd = &cobra.Command{
 	Use:   "ctrl_r_binding_global",
 	Short: "enable bindings for control+R FOR FUTURE SHELL SESSIONS",
 	Run: func(cmd *cobra.Command, args []string) {
-		exitCode = enableDisableArrowKeyBindingsGlobally(true)
+		exitCode = enableDisableControlRBindingGlobally(true)
 	},
 }
 
@@ -76,7 +76,7 @@ var disableArrowKeyBindingsGlobalCmd = &cobra.Command{
 		"Note that this only affects sessions of the same shell.\n" +
 		"(e.g. running this in zsh will only affect future zsh sessions)",
 	Run: func(cmd *cobra.Command, args []string) {
-		exitCode = enableDisableControlRBindingGlobally(false)
+		exitCode = enableDisableArrowKeyBindingsGlobally(false)
 	},
 }
 
