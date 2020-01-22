@@ -134,7 +134,7 @@ This means that you should install this project now and try out RESH CLI in a mo
 
 RESH CLI tool can be bound to ctrl+R or executed directly.
 
-Enable/disable ctrl+R bindnig for THIS shell session:
+Enable/disable ctrl+R binding for THIS shell session:
 
 ```sh
 reshctl enable ctrl_r_binding
