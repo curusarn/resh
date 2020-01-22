@@ -179,6 +179,7 @@ func (h *Histfile) mergeAndWriteRecord(part1, part2 records.Record) {
 		cmdLine := part1.CmdLine
 		h.bashCmdLines.AddCmdLine(cmdLine)
 		h.zshCmdLines.AddCmdLine(cmdLine)
+		h.fullRecords.AddRecord(part1)
 	}()
 
 	writeRecord(part1, h.historyPath)
