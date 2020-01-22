@@ -35,7 +35,7 @@ Imagine being able to search your shell history based on both the command itself
 | | Legend |
 | --- | --- |
 | :heavy_check_mark: | Implemented |
-| :white_check_mark: | Implemented but there are issues |
+| :white_check_mark: | Implemented but I'm not happy with it |
 | :x: | Not implemented |
 
 *NOTE: Features can change in the future*
@@ -65,13 +65,11 @@ Imagine being able to search your shell history based on both the command itself
 
 - :heavy_check_mark: Support zsh and bash
 
-- :heavy_check_mark: Support Linux and macOS  
+- :heavy_check_mark: Support Linux and macOS
 
-- :white_check_mark: Require very little prerequisite software
+- :white_check_mark: Require only essential prerequisite software
   - :heavy_check_mark: Linux
   - :white_check_mark: MacOS *(requires coreutils - `brew install coreutils`)*
-
-- :white_check_mark: Show cool graphs based on recorded history
 
 - :heavy_check_mark: Provide a tool to sanitize the recorded history
 
