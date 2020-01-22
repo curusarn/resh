@@ -90,7 +90,7 @@ If you would consider supporting my research/thesis by sending me a sanitized ve
 
 Standard stuff: `bash`, `curl`, `tar`, ...
 
-Additional prerequisities: `bash-completion` (if you use bash)
+Bash completions will only work if you have `bash-completion` installed
 
 MacOS: `coreutils` (`brew install coreutils`)
 
