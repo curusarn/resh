@@ -135,6 +135,39 @@ Check for updates and update
 reshctl update
 ```
 
+### RESH CLI tool
+
+RESH CLI searches your history by commands and directories.  
+
+Directories are not in regular shell history. Because of that RESH CLI will only search shell history recorded by this project.
+This means that you should install this project now and try out RESH CLI in a month or so.
+
+*Please remember that RESH CLI is an early prototype.*
+
+![resh cli](img/screen-resh-cli.png)
+
+RESH CLI tool can be bound to ctrl+R or executed directly.
+
+Enable/disable ctrl+R bindnig for THIS shell session:
+
+```sh
+reshctl enable ctrl_r_binding
+reshctl disable ctrl_r_binding
+```
+
+Enable/disable for FUTURE shell sessions:
+
+```sh
+reshctl enable ctrl_r_binding_global
+reshctl disable ctrl_r_binding_global
+```
+
+Run the RESH CLI tool as a one-off:
+
+```sh
+resh
+```
+
 ### Arrow key bindings
 
 Resh provides arrow key bindings.
