@@ -218,12 +218,35 @@ echo "
  COMPLETIONS
     Zsh and bash completions for 'reshctl' command were installed and should be working.
 
- CHECK FOR UPDATES
-     $ reshctl update
-
  GRAPHS
     You can get some graphs of your history by running 
      $ <coming soon> 
+
+ CHECK FOR UPDATES
+     $ reshctl update
+
+ RESH CLI - SEARCH THE RECORDED HISTORY
+     RESH CLI searches your history by commands and directories.
+
+     Directories are not in regular shell history. Because of that RESH CLI will only search shell history recorded by this project.
+     This means that you should keep this project and try out RESH CLI in a month or so.
+
+     Please remember that RESH CLI is still an early prototype.
+
+     RESH CLI tool can be bound to ctrl+R or executed directly.
+
+      * RESH CLI is not bound to ctrl+R by default
+
+     Enable/disable ctrl+R binding for THIS shell session:
+      $ reshctl enable ctrl_r_binding
+      $ reshctl disable ctrl_r_binding
+
+     Enable/disable for FUTURE shell sessions:
+      $ reshctl enable ctrl_r_binding_global
+      $ reshctl disable ctrl_r_binding_global
+
+     Run the RESH CLI tool as a one-off:
+      $ resh
  
  ISSUES
     Please report issues to: https://github.com/curusarn/resh/issues
