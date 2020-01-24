@@ -51,7 +51,7 @@ __resh_widget_arrow_up() {
         # run recall
         local NEW_BUFFER
         local status_code
-        NEW_BUFFER="$(__resh_collect --recall --prefix-search "$__RESH_PREFIX" 2> ~/.resh/arrow_up_last_run_out.txt)"
+        NEW_BUFFER="$(__resh_collect --recall --prefix-search "$__RESH_PREFIX" 2>| ~/.resh/arrow_up_last_run_out.txt)"
         status_code=$?
         # revert histno change on error
         # shellcheck disable=SC2015
@@ -80,7 +80,7 @@ __resh_widget_arrow_down() {
     else
         # run recall
         local NEW_BUFFER
-        NEW_BUFFER="$(__resh_collect --recall --prefix-search "$__RESH_PREFIX" 2> ~/.resh/arrow_down_last_run_out.txt)"
+        NEW_BUFFER="$(__resh_collect --recall --prefix-search "$__RESH_PREFIX" 2>| ~/.resh/arrow_down_last_run_out.txt)"
         # IF new buffer in non-empty THEN use the new buffer ELSE revert histno change
         # shellcheck disable=SC2015
         [ "${#NEW_BUFFER}" -gt 0 ] && BUFFER=$NEW_BUFFER || (( __RESH_HISTNO++ ))
@@ -115,7 +115,7 @@ __resh_widget_control_R() {
     elif [ $status_code = 130 ]; then
         BUFFER="$PREVBUFFER"
     else
-        echo "$BUFFER" > ~/.resh/cli_last_run_out.txt
+        echo "$BUFFER" >| ~/.resh/cli_last_run_out.txt
         echo "# RESH cli failed - sorry for the inconvinience (error output was saved to ~/.resh/cli_last_run_out.txt)" 
         BUFFER="$PREVBUFFER"
     fi

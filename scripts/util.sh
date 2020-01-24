@@ -51,9 +51,9 @@ __resh_run_daemon() {
     fi
     if [ "$(uname)" = Darwin ]; then
         # hotfix
-        gnohup resh-daemon > ~/.resh/daemon_last_run_out.txt 2>&1 & disown
+        gnohup resh-daemon >| ~/.resh/daemon_last_run_out.txt 2>&1 & disown
     else
-        setsid resh-daemon > ~/.resh/daemon_last_run_out.txt 2>&1 & disown
+        setsid resh-daemon >| ~/.resh/daemon_last_run_out.txt 2>&1 & disown
     fi
 }
 
@@ -161,6 +161,6 @@ __resh_session_init() {
                     -osReleaseIdLike "$__RESH_OS_RELEASE_ID_LIKE" \
                     -osReleaseName "$__RESH_OS_RELEASE_NAME" \
                     -osReleasePrettyName "$__RESH_OS_RELEASE_PRETTY_NAME" \
-                    > ~/.resh/session_init_last_run_out.txt 2>&1 || echo "resh-session-init ERROR: $(head -n 1 ~/.resh/session_init_last_run_out.txt)"
+                    >| ~/.resh/session_init_last_run_out.txt 2>&1 || echo "resh-session-init ERROR: $(head -n 1 ~/.resh/session_init_last_run_out.txt)"
         fi
 }

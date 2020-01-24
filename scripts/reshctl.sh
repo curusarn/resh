@@ -120,7 +120,7 @@ resh() {
     elif [ $status_code = 130 ]; then
         true
     else
-        echo "$buffer" > ~/.resh/cli_last_run_out.txt
+        echo "$buffer" >| ~/.resh/cli_last_run_out.txt
         echo "resh-cli ERROR:"
         cat ~/.resh/cli_last_run_out.txt
     fi
