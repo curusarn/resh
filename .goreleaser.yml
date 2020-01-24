@@ -34,46 +34,101 @@ builds:
     id: "cli"
     main: ./cmd/cli
     binary: bin/resh-cli
+    goarch: 
+      - 386
+      - amd64
+      - arm
+      - arm64
   -
     id: "collect"
     main: ./cmd/collect
     binary: bin/resh-collect
+    goarch: 
+      - 386
+      - amd64
+      - arm
+      - arm64
   -
     id: "config"
     main: ./cmd/config
     binary: bin/resh-config
+    goarch: 
+      - 386
+      - amd64
+      - arm
+      - arm64
   -
     id: "control"
     main: ./cmd/control
     binary: bin/resh-control
+    goarch: 
+      - 386
+      - amd64
+      - arm
+      - arm64
   -
     id: "daemon"
     main: ./cmd/daemon
     binary: bin/resh-daemon
+    goarch: 
+      - 386
+      - amd64
+      - arm
+      - arm64
   -
     id: "evaluate"
     main: ./cmd/evaluate
     binary: bin/resh-evaluate
+    goarch: 
+      - 386
+      - amd64
+      - arm
+      - arm64
   -
     id: "event"
     main: ./cmd/event
     binary: bin/resh-event
+    goarch: 
+      - 386
+      - amd64
+      - arm
+      - arm64
   -
     id: "inspect"
     main: ./cmd/inspect
     binary: bin/resh-inspect
+    goarch: 
+      - 386
+      - amd64
+      - arm
+      - arm64
   -
     id: "postcollect"
     main: ./cmd/postcollect
     binary: bin/resh-postcollect
+    goarch: 
+      - 386
+      - amd64
+      - arm
+      - arm64
   -
     id: "sanitize"
     main: ./cmd/sanitize
     binary: bin/resh-sanitize
+    goarch: 
+      - 386
+      - amd64
+      - arm
+      - arm64
   -
     id: "session-init"
     main: ./cmd/session-init
     binary: bin/resh-session-init
+    goarch: 
+      - 386
+      - amd64
+      - arm
+      - arm64
 
 # signs:
 #   - artifacts: checksum
