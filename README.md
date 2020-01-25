@@ -92,7 +92,7 @@ Standard stuff: `bash`, `curl`, `tar`, ...
 
 Bash completions will only work if you have `bash-completion` installed
 
-MacOS: `coreutils` (`brew install coreutils`)
+MacOS: `coreutils` (`brew install coreutils`), `bash4.3+` is recommanded
 
 ## Installation
 
