@@ -49,7 +49,7 @@ else
     OS=unknown
 fi
 
-case "$(uname -m)" in 
+case "$(uname -m)" in
 x86_64)
     ARCH=amd64
     ;;
