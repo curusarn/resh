@@ -166,7 +166,7 @@ They allow resh to record bindings usage metadata.
 
 Arrow key bindings are enabled by default in zsh and they are disabled by default in bash because there are some performance issues.
 
-Enable/disable arrow key bindnigs for THIS shell session:
+Enable/disable arrow key bindings for THIS shell session:
 
 ```sh
 reshctl enable arrow_key_bindings
