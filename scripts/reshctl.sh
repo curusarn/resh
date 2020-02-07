@@ -144,49 +144,49 @@ reshctl() {
         return "$_status"
         ;;
     # enable
-    # 100)
+    # 30)
     #     # enable all
     #     __resh_bind_all
     #     return 0
     #     ;;
-    101)
+    31)
         # enable arrow keys
         __resh_bind_arrows
         return 0
         ;;
-    102)
+    32)
         # enable control R
         __resh_bind_control_R
         return 0
         ;;
     # disable
-    # 110)
+    # 40)
     #     # disable all
     #     __resh_unbind_all
     #     return 0
     #     ;;
-    111)
+    41)
         # disable arrow keys
         __resh_unbind_arrows
         return 0
         ;;
-    112)
+    42)
         # disable control R
         __resh_unbind_control_R
         return 0
         ;;
-    200)
+    50)
         # reload rc files
         . ~/.resh/shellrc
         return 0
         ;;
-    201)
+    51)
         # inspect session history 
         # reshctl debug inspect N
         resh-inspect --sessionID "$__RESH_SESSION_ID" --count "${3-10}"
         return 0
         ;;
-    202)
+    52)
         # show status 
         if [ "${__RESH_arrow_keys_bind_enabled-0}" != 0 ]; then
             echo ' * this session: ENABLED'
