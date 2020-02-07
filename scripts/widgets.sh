@@ -91,7 +91,7 @@ __resh_widget_control_R() {
     # local __RESH_PREFIX=${BUFFER:0:CURSOR}
     # __RESH_HIST_RECALL_ACTIONS="$__RESH_HIST_RECALL_ACTIONS;control_R:$__RESH_PREFIX"
     local PREVBUFFER=$BUFFER
-    __RESH_HIST_RECALL_ACTIONS="$__RESH_HIST_RECALL_ACTIONS;control_R:$BUFFER"
+    __RESH_HIST_RECALL_ACTIONS="$__RESH_HIST_RECALL_ACTIONS|||control_R:$BUFFER"
 
     local status_code
     BUFFER=$(resh-cli --sessionID "$__RESH_SESSION_ID" --pwd "$PWD" --query "$BUFFER")
