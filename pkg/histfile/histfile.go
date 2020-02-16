@@ -46,13 +46,11 @@ func New(input chan records.Record, sessionsToDrop chan string,
 	go hf.loadHistory(bashHistoryPath, zshHistoryPath, maxInitHistSize, minInitHistSizeKB)
 	go hf.writer(input, signals, shutdownDone)
 	go hf.sessionGC(sessionsToDrop)
-	go hf.loadFullRecords()
 	return &hf
 }
 
 // load records from resh history, reverse, enrich and save
-func (h *Histfile) loadFullRecords() {
-	recs := records.LoadFromFile(h.historyPath, math.MaxInt32)
+func (h *Histfile) loadFullRecords(recs []records.Record) {
 	for i := len(recs) - 1; i >= 0; i-- {
 		rec := recs[i]
 		h.fullRecords.AddRecord(rec)
@@ -83,10 +81,11 @@ func (h *Histfile) loadHistory(bashHistoryPath, zshHistoryPath string, maxInitHi
 		maxInitHistSize = math.MaxInt32
 	}
 	log.Println("histfile: Loading resh history from file ...")
-	reshCmdLines := histlist.New()
+	history := records.LoadFromFile(h.historyPath, math.MaxInt32)
+	go h.loadFullRecords(history)
 	// NOTE: keeping this weird interface for now because we might use it in the future
 	//			when we only load bash or zsh history
-	records.LoadCmdLinesFromFile(&reshCmdLines, h.historyPath, maxInitHistSize)
+	reshCmdLines := loadCmdLines(history)
 	log.Println("histfile: resh history loaded - cmdLine count:", len(reshCmdLines.List))
 	if useNativeHistories == false {
 		h.bashCmdLines = reshCmdLines
@@ -229,4 +228,27 @@ func (h *Histfile) GetRecentCmdLines(shell string, limit int) histlist.Histlist 
 func (h *Histfile) DumpRecords() histcli.Histcli {
 	// don't forget locks in the future
 	return h.fullRecords
+}
+
+func loadCmdLines(recs []records.Record) histlist.Histlist {
+	hl := histlist.New()
+	// go from bottom and deduplicate
+	var cmdLines []string
+	cmdLinesSet := map[string]bool{}
+	for i := len(recs) - 1; i >= 0; i-- {
+		cmdLine := recs[i].CmdLine
+		if cmdLinesSet[cmdLine] {
+			continue
+		}
+		cmdLinesSet[cmdLine] = true
+		cmdLines = append([]string{cmdLine}, cmdLines...)
+		// if len(cmdLines) > limit {
+		// 	break
+		// }
+	}
+	// add everything to histlist
+	for _, cmdLine := range cmdLines {
+		hl.AddCmdLine(cmdLine)
+	}
+	return hl
 }

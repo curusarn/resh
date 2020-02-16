@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
+	"io"
 	"log"
 	"math"
 	"os"
@@ -173,16 +174,16 @@ func Enriched(r Record) EnrichedRecord {
 	record.Command, record.FirstWord, err = GetCommandAndFirstWord(r.CmdLine)
 	if err != nil {
 		record.Errors = append(record.Errors, "GetCommandAndFirstWord error:"+err.Error())
-		rec, _ := record.ToString()
-		log.Println("Invalid command:", rec)
+		// rec, _ := record.ToString()
+		// log.Println("Invalid command:", rec)
 		record.Invalid = true
 		return record
 	}
 	err = r.Validate()
 	if err != nil {
 		record.Errors = append(record.Errors, "Validate error:"+err.Error())
-		rec, _ := record.ToString()
-		log.Println("Invalid command:", rec)
+		// rec, _ := record.ToString()
+		// log.Println("Invalid command:", rec)
 		record.Invalid = true
 	}
 	return record
@@ -306,7 +307,7 @@ func Stripped(r EnrichedRecord) EnrichedRecord {
 func GetCommandAndFirstWord(cmdLine string) (string, string, error) {
 	args, err := shellwords.Parse(cmdLine)
 	if err != nil {
-		log.Println("shellwords Error:", err, " (cmdLine: <", cmdLine, "> )")
+		// log.Println("shellwords Error:", err, " (cmdLine: <", cmdLine, "> )")
 		return "", "", err
 	}
 	if len(args) == 0 {
@@ -456,31 +457,10 @@ func (r *EnrichedRecord) DistanceTo(r2 EnrichedRecord, p DistParams) float64 {
 	return dist
 }
 
-// LoadCmdLinesFromFile loads cmdlines from file
-func LoadCmdLinesFromFile(hl *histlist.Histlist, fname string, limit int) {
-	recs := LoadFromFile(fname, limit*3) // assume that at least 1/3 of commands is unique
-	// go from bottom and deduplicate
-	var cmdLines []string
-	cmdLinesSet := map[string]bool{}
-	for i := len(recs) - 1; i >= 0; i-- {
-		cmdLine := recs[i].CmdLine
-		if cmdLinesSet[cmdLine] {
-			continue
-		}
-		cmdLinesSet[cmdLine] = true
-		cmdLines = append([]string{cmdLine}, cmdLines...)
-		if len(cmdLines) > limit {
-			break
-		}
-	}
-	// add everything to histlist
-	for _, cmdLine := range cmdLines {
-		hl.AddCmdLine(cmdLine)
-	}
-}
-
 // LoadFromFile loads records from 'fname' file
 func LoadFromFile(fname string, limit int) []Record {
+	const allowedErrors = 1
+	var encounteredErrors int
 	// NOTE: limit does nothing atm
 	var recs []Record
 	file, err := os.Open(fname)
@@ -492,7 +472,10 @@ func LoadFromFile(fname string, limit int) []Record {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
+	var i int
+	var firstErrLine int
 	for scanner.Scan() {
+		i++
 		record := Record{}
 		fallbackRecord := FallbackRecord{}
 		line := scanner.Text()
@@ -500,14 +483,76 @@ func LoadFromFile(fname string, limit int) []Record {
 		if err != nil {
 			err = json.Unmarshal([]byte(line), &fallbackRecord)
 			if err != nil {
+				if encounteredErrors == 0 {
+					firstErrLine = i
+				}
+				encounteredErrors++
 				log.Println("Line:", line)
-				log.Fatal("Decoding error:", err)
+				log.Println("Decoding error:", err)
+				if encounteredErrors > allowedErrors {
+					log.Fatalf("Fatal: Encountered more than %d decoding errors (%d)", allowedErrors, encounteredErrors)
+				}
 			}
 			record = Convert(&fallbackRecord)
 		}
 		recs = append(recs, record)
 	}
+	if encounteredErrors > 0 {
+		// fix errors in the history file
+		log.Printf("There were %d decoding errors, the first error happend on line %d/%d", encounteredErrors, firstErrLine, i)
+		log.Println("Backing up current history file ...")
+		err := copyFile(fname, fname+".bak")
+		if err != nil {
+			log.Fatalln("Failed to backup history file with decode errors")
+		}
+		log.Println("Writing out a history file without errors ...")
+		err = writeHistory(fname, recs)
+		if err != nil {
+			log.Fatalln("Fatal: Failed write out new history")
+		}
+	}
 	return recs
+}
+
+func copyFile(source, dest string) error {
+	from, err := os.Open(source)
+	if err != nil {
+		// log.Println("Open() resh history file error:", err)
+		return err
+	}
+	defer from.Close()
+
+	// to, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE, 0666)
+	to, err := os.Create(dest)
+	if err != nil {
+		// log.Println("Create() resh history backup error:", err)
+		return err
+	}
+	defer to.Close()
+
+	_, err = io.Copy(to, from)
+	if err != nil {
+		// log.Println("Copy() resh history to backup error:", err)
+		return err
+	}
+	return nil
+}
+
+func writeHistory(fname string, history []Record) error {
+	file, err := os.Create(fname)
+	if err != nil {
+		// log.Println("Create() resh history error:", err)
+		return err
+	}
+	defer file.Close()
+	for _, rec := range history {
+		jsn, err := json.Marshal(rec)
+		if err != nil {
+			log.Fatalln("Encode error!")
+		}
+		file.Write(append(jsn, []byte("\n")...))
+	}
+	return nil
 }
 
 // LoadCmdLinesFromZshFile loads cmdlines from zsh history file

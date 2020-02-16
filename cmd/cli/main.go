@@ -34,6 +34,8 @@ var commit string
 // special constant recognized by RESH wrappers
 const exitCodeExecute = 111
 
+var debug bool
+
 func main() {
 	output, exitCode := runReshCli()
 	fmt.Print(output)
@@ -59,6 +61,7 @@ func runReshCli() (string, int) {
 		log.Fatal("Error reading config:", err)
 	}
 	if config.Debug {
+		debug = true
 		log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	}
 
@@ -225,20 +228,26 @@ func filterTerms(terms []string) []string {
 }
 
 func newQueryFromString(queryInput string, pwd string) query {
-	log.Println("QUERY input = <" + queryInput + ">")
+	if debug {
+		log.Println("QUERY input = <" + queryInput + ">")
+	}
 	terms := strings.Fields(queryInput)
 	var logStr string
 	for _, term := range terms {
 		logStr += " <" + term + ">"
 	}
-	log.Println("QUERY raw terms =" + logStr)
+	if debug {
+		log.Println("QUERY raw terms =" + logStr)
+	}
 	terms = filterTerms(terms)
 	logStr = ""
 	for _, term := range terms {
 		logStr += " <" + term + ">"
 	}
-	log.Println("QUERY filtered terms =" + logStr)
-	log.Println("QUERY pwd =" + pwd)
+	if debug {
+		log.Println("QUERY filtered terms =" + logStr)
+		log.Println("QUERY pwd =" + pwd)
+	}
 	return query{terms: terms, pwd: pwd}
 }
 
@@ -445,9 +454,11 @@ func (m manager) SelectPaste(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (m manager) UpdateData(input string) {
-	log.Println("EDIT start")
-	log.Println("len(fullRecords) =", len(m.s.fullRecords))
-	log.Println("len(data) =", len(m.s.data))
+	if debug {
+		log.Println("EDIT start")
+		log.Println("len(fullRecords) =", len(m.s.fullRecords))
+		log.Println("len(data) =", len(m.s.data))
+	}
 	query := newQueryFromString(input, m.pwd)
 	var data []item
 	itemSet := make(map[string]bool)
@@ -468,7 +479,9 @@ func (m manager) UpdateData(input string) {
 		data = append(data, itm)
 		// log.Println("DATA =", itm.display)
 	}
-	log.Println("len(tmpdata) =", len(data))
+	if debug {
+		log.Println("len(tmpdata) =", len(data))
+	}
 	sort.SliceStable(data, func(p, q int) bool {
 		return data[p].hits > data[q].hits
 	})
@@ -480,9 +493,11 @@ func (m manager) UpdateData(input string) {
 		m.s.data = append(m.s.data, itm)
 	}
 	m.s.highlightedItem = 0
-	log.Println("len(fullRecords) =", len(m.s.fullRecords))
-	log.Println("len(data) =", len(m.s.data))
-	log.Println("EDIT end")
+	if debug {
+		log.Println("len(fullRecords) =", len(m.s.fullRecords))
+		log.Println("len(data) =", len(m.s.data))
+		log.Println("EDIT end")
+	}
 }
 
 func (m manager) Edit(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
@@ -563,8 +578,10 @@ func (m manager) Layout(g *gocui.Gui) error {
 		// 	v.SetHighlight(m.s.highlightedItem, true)
 		// }
 	}
-	log.Println("len(data) =", len(m.s.data))
-	log.Println("highlightedItem =", m.s.highlightedItem)
+	if debug {
+		log.Println("len(data) =", len(m.s.data))
+		log.Println("highlightedItem =", m.s.highlightedItem)
+	}
 	return nil
 }
 
