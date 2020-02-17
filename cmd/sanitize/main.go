@@ -2,7 +2,7 @@ package main
 
 import (
 	"bufio"
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
@@ -480,21 +480,17 @@ func (s *sanitizer) hashToken(token string) string {
 	if len(token) <= 0 {
 		return token
 	}
-	// hash with sha1
-	h := sha1.New()
-	h.Write([]byte(token))
-	sum := h.Sum(nil)
-	return s.trimHash(hex.EncodeToString(sum))
+	// hash with sha256
+	sum := sha256.Sum256([]byte(token))
+	return s.trimHash(hex.EncodeToString(sum[:]))
 }
 
 func (s *sanitizer) hashNumericToken(token string) string {
 	if len(token) <= 0 {
 		return token
 	}
-	h := sha1.New()
-	h.Write([]byte(token))
-	sum := h.Sum(nil)
-	sumInt := int(binary.LittleEndian.Uint64(sum))
+	sum := sha256.Sum256([]byte(token))
+	sumInt := int(binary.LittleEndian.Uint64(sum[:]))
 	if sumInt < 0 {
 		return strconv.Itoa(sumInt * -1)
 	}

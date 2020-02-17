@@ -20,9 +20,9 @@ var sanitizeCmd = &cobra.Command{
 
 		fmt.Println()
 		fmt.Println(" HOW IT WORKS")
-		fmt.Println("   In sanitized history, all sensitive information is replaced with its SHA1 hashes.")
+		fmt.Println("   In sanitized history, all sensitive information is replaced with its SHA256 hashes.")
 		fmt.Println()
-		fmt.Println("Resulting sanitized files ...")
+		fmt.Println("Creating sanitized history files ...")
 		fmt.Println(" * ~/resh_history_sanitized.json (full lengh hashes)")
 		execCmd := exec.Command("resh-sanitize", "-trim-hashes", "0", "--output", dir+"/resh_history_sanitized.json")
 		execCmd.Stdout = os.Stdout
