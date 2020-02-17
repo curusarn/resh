@@ -48,7 +48,7 @@ var sanitizeCmd = &cobra.Command{
 		fmt.Println("     cat ~/resh_history_sanitized_trim12.json | jq")
 		fmt.Println()
 		fmt.Println(" * Only show commands, don't show metadata")
-		fmt.Println("     cat ~/resh_history_sanitized_trim12.json | jq '.[\"cmdLine\"]")
+		fmt.Println("     cat ~/resh_history_sanitized_trim12.json | jq '.[\"cmdLine\"]'")
 		fmt.Println()
 	},
 }
