@@ -10,6 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math"
 	"net/url"
 	"os"
 	"os/user"
@@ -19,6 +20,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/coreos/go-semver/semver"
 	"github.com/curusarn/resh/pkg/records"
 	giturls "github.com/whilp/git-urls"
 )
@@ -178,7 +180,7 @@ func (s *sanitizer) sanitizeRecord(record *records.Record) error {
 	}
 
 	if len(record.RecallActionsRaw) > 0 {
-		record.RecallActionsRaw, err = s.sanitizeRecallActions(record.RecallActionsRaw)
+		record.RecallActionsRaw, err = s.sanitizeRecallActions(record.RecallActionsRaw, record.ReshVersion)
 		if err != nil {
 			log.Fatal("RecallActionsRaw:", record.RecallActionsRaw, "; sanitization error:", err)
 		}
@@ -188,44 +190,80 @@ func (s *sanitizer) sanitizeRecord(record *records.Record) error {
 	return nil
 }
 
-// sanitizes the recall actions by replacing the recall prefix with it's length
-func (s *sanitizer) sanitizeRecallActions(str string) (string, error) {
-	sanStr := ""
-	divider := ";"
-	if strings.Contains(str, "|||") {
-		divider = "|||"
-		// normal mode
+func fixSeparator(str string) string {
+	if len(str) > 0 && str[0] == ';' {
+		return "|||" + str[1:]
 	}
-	for x, actionStr := range strings.Split(str, divider+"arrow_") {
-		if x == 0 {
-			continue
+	return str
+}
+
+func minIndex(str string, substrs []string) (idx, substrIdx int) {
+	minMatch := math.MaxInt32
+	for i, sep := range substrs {
+		match := strings.Index(str, sep)
+		if match != -1 && match < minMatch {
+			minMatch = match
+			substrIdx = i
 		}
-		if len(actionStr) == 0 {
-			return str, errors.New("Action can't be empty; idx=" + strconv.Itoa(x))
+	}
+	idx = minMatch
+	return
+}
+
+// sanitizes the recall actions by replacing the recall prefix with it's length
+func (s *sanitizer) sanitizeRecallActions(str string, reshVersion string) (string, error) {
+	if len(str) == 0 {
+		return "", nil
+	}
+	var separators []string
+	seps := []string{"|||"}
+	refVersion, err := semver.NewVersion("2.5.14")
+	if err != nil {
+		return str, err
+	}
+	if len(reshVersion) == 0 {
+		return str, errors.New("sanitizeRecallActions: record.ReshVersion is an empty string")
+	}
+	recordVersion, err := semver.NewVersion(reshVersion[1:])
+	if err != nil {
+		return str, err
+	}
+	if recordVersion.LessThan(*refVersion) {
+		seps = append(seps, ";")
+	}
+
+	actions := []string{"arrow_up", "arrow_down", "control_R"}
+	for _, sep := range seps {
+		for _, action := range actions {
+			separators = append(separators, sep+action+":")
 		}
-		var action string
-		var prefix string
-		if strings.HasPrefix(actionStr, "up:") {
-			action = "arrow_up"
-			if len(actionStr) < 3 {
-				return str, errors.New("Action is too short:" + actionStr)
-			}
-			if len(actionStr) != 3 {
-				prefix = actionStr[4:]
-			}
-		} else if strings.HasPrefix(actionStr, "down:") {
-			action = "arrow_down"
-			if len(actionStr) < 5 {
-				return str, errors.New("Action is too short:" + actionStr)
-			}
-			if len(actionStr) != 5 {
-				prefix = actionStr[6:]
-			}
-		} else {
-			return str, errors.New("Action should start with one of (arrow_up, arrow_down); got: arrow_" + actionStr)
+	}
+	/*
+		- find any of {|||,;}{arrow_up,arrow_down,control_R}: in the recallActions (on the lowest index)
+		- use found substring to parse out the next prefix
+		- sanitize prefix
+		- add fixed substring and sanitized prefix to output
+	*/
+	doBreak := false
+	sanStr := ""
+	idx := 0
+	var currSeparator string
+	tokenLen, sepIdx := minIndex(str, separators)
+	if tokenLen != 0 {
+		return str, errors.New("sanitizeReacallActions: unexpected string before first action/separator")
+	}
+	currSeparator = separators[sepIdx]
+	idx += len(currSeparator)
+	for !doBreak {
+		tokenLen, sepIdx := minIndex(str[idx:], separators)
+		if tokenLen > len(str[idx:]) {
+			tokenLen = len(str[idx:])
+			doBreak = true
 		}
-		sanPrefix := strconv.Itoa(len(prefix))
-		sanStr += "|||" + action + ":" + sanPrefix
+		// token := str[idx : idx+tokenLen]
+		sanStr += fixSeparator(currSeparator) + strconv.Itoa(tokenLen)
+		idx += tokenLen + len(currSeparator)
+		currSeparator = separators[sepIdx]
 	}
 	return sanStr, nil
 }
