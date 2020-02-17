@@ -182,7 +182,7 @@ func (s *sanitizer) sanitizeRecord(record *records.Record) error {
 	if len(record.RecallActionsRaw) > 0 {
 		record.RecallActionsRaw, err = s.sanitizeRecallActions(record.RecallActionsRaw, record.ReshVersion)
 		if err != nil {
-			log.Fatal("RecallActionsRaw:", record.RecallActionsRaw, "; sanitization error:", err)
+			log.Println("RecallActionsRaw:", record.RecallActionsRaw, "; sanitization error:", err)
 		}
 	}
 	// add a flag to signify that the record has been sanitized
@@ -219,14 +219,20 @@ func (s *sanitizer) sanitizeRecallActions(str string, reshVersion string) (strin
 	seps := []string{"|||"}
 	refVersion, err := semver.NewVersion("2.5.14")
 	if err != nil {
-		return str, err
+		return str, fmt.Errorf("sanitizeRecallActions: semver error: %s", err.Error())
 	}
 	if len(reshVersion) == 0 {
 		return str, errors.New("sanitizeRecallActions: record.ReshVersion is an empty string")
 	}
-	recordVersion, err := semver.NewVersion(reshVersion[1:])
+	if reshVersion == "dev" {
+		reshVersion = "0.0.0"
+	}
+	if reshVersion[0] == 'v' {
+		reshVersion = reshVersion[1:]
+	}
+	recordVersion, err := semver.NewVersion(reshVersion)
 	if err != nil {
-		return str, err
+		return str, fmt.Errorf("sanitizeRecallActions: semver error: %s; version string: %s", err.Error(), reshVersion)
 	}
 	if recordVersion.LessThan(*refVersion) {
 		seps = append(seps, ";")
@@ -262,8 +268,8 @@ func (s *sanitizer) sanitizeRecallActions(str string, reshVersion string) (strin
 		}
 		// token := str[idx : idx+tokenLen]
 		sanStr += fixSeparator(currSeparator) + strconv.Itoa(tokenLen)
-		idx += tokenLen + len(currSeparator)
 		currSeparator = separators[sepIdx]
+		idx += tokenLen + len(currSeparator)
 	}
 	return sanStr, nil
 }
