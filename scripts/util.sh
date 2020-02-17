@@ -60,10 +60,9 @@ __resh_run_daemon() {
 __resh_bash_completion_init() {
     # primitive check to find out if bash_completions are installed
     # skip completion init if they are not
-    _get_comp_words_by_ref >/dev/null 2>/dev/null || return
+    _get_comp_words_by_ref >/dev/null 2>/dev/null
+    [[ $? == 127 ]] && return
     local bash_completion_dir=~/.resh/bash_completion.d
-    # source user completion directory definitions
-    # taken from /usr/share/bash-completion/bash_completion
     if [[ -d $bash_completion_dir && -r $bash_completion_dir && \
         -x $bash_completion_dir ]]; then
         for i in $(LC_ALL=C command ls "$bash_completion_dir"); do
