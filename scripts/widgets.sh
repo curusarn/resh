@@ -88,6 +88,12 @@ __resh_widget_arrow_down() {
     __resh_helper_arrow_post
 }
 __resh_widget_control_R() {
+    # this is a very bad workaround
+    # force bash-preexec to run repeatedly because otherwise premature run of bash-preexec overshadows the next poper run
+    # I honestly think that it's impossible to make widgets work in bash without hacks like this
+    # shellcheck disable=2034
+    __bp_preexec_interactive_mode="on"
+
     # local __RESH_PREFIX=${BUFFER:0:CURSOR}
     # __RESH_HIST_RECALL_ACTIONS="$__RESH_HIST_RECALL_ACTIONS;control_R:$__RESH_PREFIX"
     local PREVBUFFER=$BUFFER
