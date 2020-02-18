@@ -112,10 +112,23 @@ echo "Copying files ..."
 cp -f submodules/bash-preexec/bash-preexec.sh ~/.bash-preexec.sh
 cp -f submodules/bash-zsh-compat-widgets/bindfunc.sh ~/.resh/bindfunc.sh
 
-cp -f conf/config.toml ~/.config/resh.toml
-
 cp -f scripts/shellrc.sh ~/.resh/shellrc
 cp -f scripts/reshctl.sh scripts/widgets.sh scripts/hooks.sh scripts/util.sh ~/.resh/
+
+# hotfix to not overwrite enabled ctrl+R binding in config
+bindcontrolr=0
+if [ "$(bin/resh-config -key bindcontrolr)" = true ]; then
+    # control_R binding is enabled
+    bindcontrolr=1
+fi
+
+cp -f conf/config.toml ~/.config/resh.toml
+
+# hotfix part2 (ctrl+R)
+if [ "$bindcontrolr" = 1 ]; then
+    # reenable ctrl+R binding if it was enabled before
+    bin/resh-control enable ctrl_r_binding_global >/dev/null 2>/dev/null
+fi
 
 echo "Generating completions ..."
 bin/resh-control completion bash > ~/.resh/bash_completion.d/_reshctl
@@ -172,7 +185,7 @@ __resh_run_daemon
 
 
 
-echo " 
+echo "
 ##########################################################
 #                                                        #
 #    SUCCESS - thank you for trying out this project!    #

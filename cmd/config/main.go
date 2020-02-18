@@ -40,6 +40,12 @@ func main() {
 		printBoolNormalized(config.BindArrowKeysZsh)
 	case "bindcontrolr":
 		printBoolNormalized(config.BindControlR)
+	case "port":
+		fmt.Println(config.Port)
+	case "sesswatchperiodseconds":
+		fmt.Println(config.SesswatchPeriodSeconds)
+	case "sesshistinithistorysize":
+		fmt.Println(config.SesshistInitHistorySize)
 	default:
 		fmt.Println("Error: illegal --key!")
 		os.Exit(1)
