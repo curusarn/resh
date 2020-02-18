@@ -179,63 +179,36 @@ echo "
 #                                                        #
 ##########################################################
 
- WARNING 
-    It's recommended to RESTART all open terminal windows
- 
  HISTORY
-    Your resh history will be recorded to '~/.resh_history.json'
-    Look at it using e.g. following command (you might need to install jq)
-     $ tail -f ~/.resh_history.json | jq
+     Your resh history will be recorded to '~/.resh_history.json'
+     Look at it using e.g. following command (you might need to install jq)
+      $ tail -f ~/.resh_history.json | jq
 
-    Your default shell history will stay intact.
+     Your default shell history will stay intact.
 
  SANITIZATION
-    In sanitized history, all sensitive information is replaced with its SHA1 hashes
-     $ reshctl sanitize
+     In sanitized history, all sensitive information is replaced with its SHA256 hashes.
+     To get a sanitized version of your shell history run:
+      $ reshctl sanitize
 
-    If you would consider supporting my research/thesis by giving me a sanitized version of your history then
-    please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98
+     If you would consider supporting my research/thesis by giving me a sanitized version of your history then
+     please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98
 
  ARROW KEY BINDINGS
-    Resh provides arrow key bindings.
-    These bindings do regular stepping through history and prefix search.
-    They allow resh to record bindings usage metadata.
-    
-     * Enabled by default in zsh
-     * Disabled by default in bash
-
-    Enable/disable for THIS shell session
-     $ reshctl enable arrow_key_bindings
-     $ reshctl disable arrow_key_bindings
-
-    Enable/disable for FUTURE shell sessions
-     $ reshctl enable arrow_key_bindings_global
-     $ reshctl disable arrow_key_bindings_global
-
-    See what your current setting is
-     $ reshctl status
-
- COMPLETIONS
-    Zsh and bash completions for 'reshctl' command were installed and should be working.
-
- GRAPHS
-    You can get some graphs of your history by running 
-     $ <coming soon> 
-
- CHECK FOR UPDATES
-     $ reshctl update
+     Regular stepping through history and prefix search. There might be more features in the future.
+     They are enabled by default in zsh (and disabled in bash). 
+     Enable/disable them using reshctl command: 
+      $ reshctl enable ... / reshctl disable ...
 
  RESH CLI - SEARCH THE RECORDED HISTORY
      RESH CLI searches your history by commands and directories.
 
      Directories are not in regular shell history. Because of that RESH CLI will only search shell history recorded by this project.
-     This means that you should keep this project and try out RESH CLI in a month or so.
+     This means that you can enable RESH CLI now and use it as your history grows or you can wait for a little bit.
 
      Please remember that RESH CLI is still an early prototype.
 
-     RESH CLI tool can be bound to ctrl+R or executed directly.
-
-      * RESH CLI is not bound to ctrl+R by default
+     RESH CLI tool can be bound to ctrl+R (recommended) or executed directly.
 
      Enable/disable ctrl+R binding for THIS shell session:
       $ reshctl enable ctrl_r_binding
@@ -247,11 +220,14 @@ echo "
 
      Run the RESH CLI tool as a one-off:
       $ resh
+
+ CHECK FOR UPDATES
+     To check for (and install) updates use:
+      $ reshctl update
+ 
+ WARNING 
+     It's recommended to RESTART all open terminal windows
  
  ISSUES
-    Please report issues to: https://github.com/curusarn/resh/issues
-
- UNINSTALL
-    You can uninstall resh at any time by running 
-     $ rm -rf ~/.resh/
+     Please report issues to: https://github.com/curusarn/resh/issues
 "
