@@ -24,7 +24,9 @@ var statusCmd = &cobra.Command{
 		fmt.Println(" * installed: " + version + " (" + commit + ")")
 		resp, err := getDaemonStatus(config.Port)
 		if err != nil {
-			fmt.Println(" * daemon: NOT RUNNING!")
+			fmt.Println(" * RESH-DAEMON IS NOT RUNNING")
+			exitCode = status.Fail
+			return
 		} else {
 			fmt.Println(" * daemon: " + resp.Version + " (" + resp.Commit + ")")
 		}
@@ -65,7 +67,6 @@ func getDaemonStatus(port int) (msg.StatusResponse, error) {
 	url := "http://localhost:" + strconv.Itoa(port) + "/status"
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Println("Daemon is not running!", err)
 		return mess, err
 	}
 	defer resp.Body.Close()
