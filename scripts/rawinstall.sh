@@ -34,7 +34,7 @@ version="${tag:1}"
 echo " * Latest version: $version (git tag: $tag)"
 
 # TODO: compare semanitcally instead of just using equality
-if [ "${__RESH_VERSION-}" == "$version" ]; then
+if [ "${__RESH_VERSION:-}" == "$version" ]; then
     echo " * Resh is up to date - nothing to do - exiting."
     exit 0
 fi
