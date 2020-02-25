@@ -126,6 +126,8 @@ __resh_widget_control_R() {
         BUFFER="$PREVBUFFER"
     fi
     CURSOR=${#BUFFER}
+    # recorded to history
+    __RESH_HIST_PREV_LINE=${BUFFER}
 }
 
 __resh_widget_arrow_up_compat() {
