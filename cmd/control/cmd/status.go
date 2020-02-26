@@ -35,6 +35,8 @@ var statusCmd = &cobra.Command{
 		resp, err := getDaemonStatus(config.Port)
 		if err != nil {
 			fmt.Println(" * RESH-DAEMON IS NOT RUNNING")
+			fmt.Println(" * Please REPORT this here: https://github.com/curusarn/resh/issues")
+			fmt.Println(" * Please RESTART this terminal window")
 			exitCode = status.Fail
 			return
 		}
