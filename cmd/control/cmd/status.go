@@ -22,14 +22,6 @@ var statusCmd = &cobra.Command{
 		fmt.Println()
 		fmt.Println("Resh versions ...")
 		fmt.Println(" * installed: " + version + " (" + commit + ")")
-		resp, err := getDaemonStatus(config.Port)
-		if err != nil {
-			fmt.Println(" * RESH-DAEMON IS NOT RUNNING")
-			exitCode = status.Fail
-			return
-		} else {
-			fmt.Println(" * daemon: " + resp.Version + " (" + resp.Commit + ")")
-		}
 		versionEnv, found := os.LookupEnv("__RESH_VERSION")
 		if found == false {
 			versionEnv = "UNKNOWN!"
@@ -39,6 +31,15 @@ var statusCmd = &cobra.Command{
 			commitEnv = "unknown"
 		}
 		fmt.Println(" * this session: " + versionEnv + " (" + commitEnv + ")")
+
+		resp, err := getDaemonStatus(config.Port)
+		if err != nil {
+			fmt.Println(" * RESH-DAEMON IS NOT RUNNING")
+			exitCode = status.Fail
+			return
+		}
+		fmt.Println(" * daemon: " + resp.Version + " (" + resp.Commit + ")")
+
 		if version != resp.Version || version != versionEnv {
 			fmt.Println(" * THERE IS A MISMATCH BETWEEN VERSIONS!")
 			fmt.Println(" * Please REPORT this here: https://github.com/curusarn/resh/issues")
