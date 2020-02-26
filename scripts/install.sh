@@ -248,6 +248,7 @@ echo "
  WARNING 
      It's recommended to RESTART all open terminal windows
  
- ISSUES
+ ISSUES & FEEDBACK
      Please report issues to: https://github.com/curusarn/resh/issues
+     Feedback and suggestions are also very welcome!
 "

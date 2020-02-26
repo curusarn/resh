@@ -32,7 +32,7 @@ func main() {
 	showVersion := flag.Bool("version", false, "Show version and exit")
 	showRevision := flag.Bool("revision", false, "Show git revision and exit")
 	input := flag.String("input", "",
-		"Input file (default: "+historyPath+"OR"+sanitizedHistoryPath+
+		"Input file (default: "+historyPath+" OR "+sanitizedHistoryPath+
 			" depending on --sanitized-input option)")
 	// outputDir := flag.String("output", "/tmp/resh-evaluate", "Output directory")
 	sanitizedInput := flag.Bool("sanitized-input", false,
