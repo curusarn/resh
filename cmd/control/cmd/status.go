@@ -30,7 +30,7 @@ var statusCmd = &cobra.Command{
 		if found == false {
 			commitEnv = "unknown"
 		}
-		fmt.Println(" * this session: " + versionEnv + " (" + commitEnv + ")")
+		fmt.Println(" * this shell session: " + versionEnv + " (" + commitEnv + ")")
 
 		resp, err := getDaemonStatus(config.Port)
 		if err != nil {
