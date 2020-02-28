@@ -156,14 +156,14 @@ if [ ! -f ~/.bashrc ]; then
     touch ~/.bashrc
 fi
 grep -q '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' ~/.bashrc ||\
-	echo -e '\n[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' >> ~/.bashrc
+	echo -e '\n[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc # this line was added by RESH (Rich Enchanced Shell History)' >> ~/.bashrc
 # Adding bash-preexec to .bashrc ...
 grep -q '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' ~/.bashrc ||\
-	echo -e '\n[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' >> ~/.bashrc
+	echo -e '\n[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh # this line was added by RESH (Rich Enchanced Shell History)' >> ~/.bashrc
 # Adding resh shellrc to .zshrc ...
 if [ -f ~/.zshrc ]; then
     grep -q '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' ~/.zshrc ||\
-        echo -e '\n[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' >> ~/.zshrc
+        echo -e '\n[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc # this line was added by RESH (Rich Enchanced Shell History)' >> ~/.zshrc
 fi
 
 # Deleting zsh completion cache - for future use
