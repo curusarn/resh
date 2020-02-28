@@ -16,7 +16,7 @@ import (
 
 var statusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "show RESH status (aka systemctl status)",
+	Short: "show RESH status",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("resh " + version)
 		fmt.Println()

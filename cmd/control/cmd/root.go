@@ -21,7 +21,7 @@ var config cfg.Config
 
 var rootCmd = &cobra.Command{
 	Use:   "reshctl",
-	Short: "Reshctl (RESH control) - enable/disable RESH features and more.",
+	Short: "Reshctl (RESH control) - check status, update, enable/disable features, sanitize history and more.",
 }
 
 // Execute reshctl
