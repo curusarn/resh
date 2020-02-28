@@ -293,11 +293,12 @@ func newItemFromRecordForQuery(record records.EnrichedRecord, query query, debug
 	const hitScoreConsecutive = 0.1
 	const properMatchScore = 0.3
 	const actualPwdScore = 0.9
-	const actualPwdScoreExtra = 0.2
+	const actualPwdScoreExtra = 0.2         // this + hitScore > actualPwdScore
+	const nonZeroExitCodeScorePenalty = 0.8 // this < min(hitScore, actualPwdScore)
 
 	hits := 0.0
 	if record.ExitCode != 0 {
-		hits--
+		hits -= nonZeroExitCodeScorePenalty
 	}
 	cmd := record.CmdLine
 	pwdTilde := strings.Replace(record.Pwd, record.Home, "~", 1)
