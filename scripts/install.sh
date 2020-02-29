@@ -116,19 +116,6 @@ cp -f scripts/shellrc.sh ~/.resh/shellrc
 cp -f scripts/reshctl.sh scripts/widgets.sh scripts/hooks.sh scripts/util.sh ~/.resh/
 cp -f scripts/rawinstall.sh ~/.resh/
 
-echo "Generating completions ..."
-bin/resh-control completion bash > ~/.resh/bash_completion.d/_reshctl
-bin/resh-control completion zsh > ~/.resh/zsh_completion.d/_reshctl
-
-echo "Copying more files ..."
-cp -f scripts/uuid.sh ~/.resh/bin/resh-uuid
-cp -f bin/* ~/.resh/bin/
-cp -f scripts/resh-evaluate-plot.py ~/.resh/bin/
-cp -fr data/sanitizer ~/.resh/sanitizer_data
-
-# backward compatibility: We have a new location for resh history file 
-[ ! -f ~/.resh/history.json ] || mv ~/.resh/history.json ~/.resh_history.json 
-
 update_config() {
     version=$1
     key=$2
@@ -141,14 +128,29 @@ update_config() {
     fi
 }
 
-# Do not overwrite if exists
-if [ ! -f ~/.config/resh.toml ]; then
-    cp conf/config.toml ~/.config/resh.toml
-# else 
-    # echo "Merging config files ..."
-    # NOTE: This is where we will merge configs when we make changes to the upstream config
-    # HINT: check which version are we updating FROM and make changes to config based on that 
-fi
+cp conf/config.toml ~/.config/resh.toml >/dev/null 2>/dev/null
+
+# # Do not overwrite if exists
+# if [ ! -f ~/.config/resh.toml ]; then
+#     cp conf/config.toml ~/.config/resh.toml
+# # else 
+#     # echo "Merging config files ..."
+#     # NOTE: This is where we will merge configs when we make changes to the upstream config
+#     # HINT: check which version are we updating FROM and make changes to config based on that 
+# fi
+
+echo "Generating completions ..."
+bin/resh-control completion bash > ~/.resh/bash_completion.d/_reshctl
+bin/resh-control completion zsh > ~/.resh/zsh_completion.d/_reshctl
+
+echo "Copying more files ..."
+cp -f scripts/uuid.sh ~/.resh/bin/resh-uuid
+cp -f bin/* ~/.resh/bin/
+cp -f scripts/resh-evaluate-plot.py ~/.resh/bin/
+cp -fr data/sanitizer ~/.resh/sanitizer_data
+
+# backward compatibility: We have a new location for resh history file 
+[ ! -f ~/.resh/history.json ] || mv ~/.resh/history.json ~/.resh_history.json 
 
 echo "Finishing up ..."
 # Adding resh shellrc to .bashrc ...
