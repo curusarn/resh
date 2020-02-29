@@ -1,4 +1,3 @@
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/curusarn/resh/goreleaser/master)
 ![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/curusarn/resh?sort=semver)
 
 
