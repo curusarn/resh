@@ -169,8 +169,7 @@ func (e *HistLoad) loadHistoryRecords(fname string) []records.EnrichedRecord {
 				log.Fatal("Assert failed - 'cmdLength' is set in raw data. Maybe you want to use '--sanitized-input' option?")
 			}
 			record.CmdLength = len(record.CmdLine)
-		}
-		if record.CmdLength == 0 {
+		} else if record.CmdLength == 0 {
 			log.Fatal("Assert failed - 'cmdLength' is unset in the data. This should not happen.")
 		}
 		recs = append(recs, records.Enriched(record))

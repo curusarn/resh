@@ -5,11 +5,16 @@ import traceback
 import sys
 import json
 from collections import defaultdict
-import matplotlib.pyplot as plt
-import matplotlib.path as mpath
 import numpy as np
 from graphviz import Digraph
 from datetime import datetime
+
+from matplotlib import rcParams
+rcParams['font.family'] = 'serif'
+# rcParams['font.serif'] = ['']
+
+import matplotlib.pyplot as plt
+import matplotlib.path as mpath
 
 PLOT_WIDTH = 10 # inches
 PLOT_HEIGHT = 7 # inches
@@ -252,13 +257,13 @@ def graph_cmdSequences(node_count=33, edge_minValue=0.05, view_graph=True):
                 #penwidth_bold_ = str(8 * scale_)
                 if scale_ > 0.5:
                     graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='true', splines='curved',
-                            penwidth=penwidth_, style='bold')
+                            penwidth=penwidth_, style='bold', arrowhead='diamond')
                 elif scale_ > 0.2:
                     graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='true', splines='curved',
-                            penwidth=penwidth_, arrowhead='open')
+                            penwidth=penwidth_)
                 elif scale_ > 0.1:
                     graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='true', splines='curved',
-                            penwidth=penwidth_, style='dashed', arrowhead='open')
+                            penwidth=penwidth_, style='dashed')
                 else:
                     graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='false', splines='curved',
                             penwidth=penwidth_, style='dotted', arrowhead='empty')
@@ -335,6 +340,7 @@ def plot_strategies_matches(plot_size=50, selected_strategies=[]):
     assert(saved_matches_total is not None)
     assert(saved_dataPoint_count is not None)
     max_values = [100 * saved_matches_total / saved_dataPoint_count] * len(x_values)
+    print(">>> Avg recurrence rate = {}".format(max_values[0]))
     plt.plot(x_values, max_values, 'r-')
     legend.append("maximum possible")
 
@@ -406,6 +412,7 @@ def plot_strategies_charsRecalled(plot_size=50, selected_strategies=[]):
     assert(saved_charsRecalled_total is not None)
     assert(saved_dataPoint_count is not None)
     max_values = [saved_charsRecalled_total / saved_dataPoint_count] * len(x_values)
+    print(">>> Max avg recalled characters = {}".format(max_values[0]))
     plt.plot(x_values, max_values, 'r-')
     legend.append("maximum possible")
 
@@ -481,6 +488,7 @@ def plot_strategies_charsRecalled_prefix(plot_size=50, selected_strategies=[]):
     assert(saved_charsRecalled_total is not None)
     assert(saved_dataPoint_count is not None)
     max_values = [saved_charsRecalled_total / saved_dataPoint_count] * len(x_values)
+    print(">>> Max avg recalled characters (including prefix matches) = {}".format(max_values[0]))
     plt.plot(x_values, max_values, 'r-')
     legend.append("maximum possible")
 
@@ -494,19 +502,19 @@ def plot_strategies_charsRecalled_prefix(plot_size=50, selected_strategies=[]):
         plt.show()
 
 
-# plot_cmdLineFrq_rank()
-# plot_cmdFrq_rank()
+plot_cmdLineFrq_rank()
+plot_cmdFrq_rank()
         
-# plot_cmdLineVocabularySize_cmdLinesEntered()
-# plot_cmdVocabularySize_cmdLinesEntered()
+plot_cmdLineVocabularySize_cmdLinesEntered()
+plot_cmdVocabularySize_cmdLinesEntered()
 
 plot_strategies_matches(20)
 plot_strategies_charsRecalled(20)
-# plot_strategies_charsRecalled_prefix(20)
+plot_strategies_charsRecalled_prefix(20)
 
-# graph_cmdSequences(node_count=33, edge_minValue=0.048)
+graph_cmdSequences(node_count=33, edge_minValue=0.048)
 
-# graph_cmdSequences(node_count=28, edge_minValue=0.06)
+graph_cmdSequences(node_count=28, edge_minValue=0.06)
 
 # for n in range(29, 35):
 #     for e in range(44, 56, 2):
