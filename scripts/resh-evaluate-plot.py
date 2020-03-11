@@ -25,6 +25,7 @@ data = json.load(sys.stdin)
 
 DATA_records = []
 DATA_records_by_session = defaultdict(list) 
+DATA_records_by_user = defaultdict(list) 
 for user in data["UsersRecords"]:
     for device in user["Devices"]:
         for record in device["Records"]:
@@ -33,6 +34,7 @@ for user in data["UsersRecords"]:
             
             DATA_records.append(record)
             DATA_records_by_session[record["seqSessionId"]].append(record)
+            DATA_records_by_user[user["Name"]].append(record)
 
 DATA_records = list(sorted(DATA_records, key=lambda x: x["realtimeAfterLocal"]))
 
@@ -85,16 +87,24 @@ def plot_cmdLineFrq_rank(plotSize=PLOT_SIZE_zipf, show_labels=False):
 # similar to ~ Figure 3.1. The normalized command frequency, compared with Zipf.
 def plot_cmdFrq_rank(plotSize=PLOT_SIZE_zipf, show_labels=False):
     cmd_count = defaultdict(int)
+    len_records = 0
     for record in DATA_records:
         cmd = record["command"]
         if cmd == "":
             continue
         cmd_count[cmd] += 1
+        len_records += 1
 
     tmp = sorted(cmd_count.items(), key=lambda x: x[1], reverse=True)[:plotSize]
     cmdFrq = list(map(lambda x: x[1] / tmp[0][1], tmp))
     labels = list(map(lambda x: trim(x[0], 7), tmp))
 
+    top100percent = 100 * sum(map(lambda x: x[1], list(cmd_count.items())[:int(1 * len(cmd_count))])) / len_records
+    top10percent = 100 * sum(map(lambda x: x[1], list(cmd_count.items())[:int(0.1 * len(cmd_count))])) / len_records
+    top20percent = 100 * sum(map(lambda x: x[1], list(cmd_count.items())[:int(0.2 * len(cmd_count))])) / len_records
+    print(">>> Top {} %% of cmds amounts for {} %% of all command lines".format(100, top100percent))
+    print(">>> Top {} %% of cmds amounts for {} %% of all command lines".format(10, top10percent))
+    print(">>> Top {} %% of cmds amounts for {} %% of all command lines".format(20, top20percent))
     ranks = range(1, len(cmdFrq)+1)
     plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
     plt.plot(ranks, zipf(len(ranks)), 'o-')
@@ -113,26 +123,36 @@ def plot_cmdFrq_rank(plotSize=PLOT_SIZE_zipf, show_labels=False):
 
 # Figure 3.2. Command vocabulary size vs. the number of command lines entered for four individuals.
 def plot_cmdVocabularySize_cmdLinesEntered():
-    cmd_vocabulary = set()
-    y_cmd_count = [0]
-    for record in DATA_records:
-        cmd = record["command"]
-        if cmd in cmd_vocabulary:
-            # repeat last value
-            y_cmd_count.append(y_cmd_count[-1])
-        else:
-            cmd_vocabulary.add(cmd)  
-            # append last value +1
-            y_cmd_count.append(y_cmd_count[-1] + 1)
-
-    # print(cmd_vocabulary)
-    x_cmds_entered = range(0, len(y_cmd_count))
-
     plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
-    plt.plot(x_cmds_entered, y_cmd_count, '-')
     plt.title("Command vocabulary size vs. the number of command lines entered")
     plt.ylabel("Command vocabulary size")
     plt.xlabel("# of command lines entered")
+    legend = []
+
+    # x_count = max(map(lambda x: len(x[1]), DATA_records_by_user.items()))
+    # x_values = range(0, x_count)  
+    for user in DATA_records_by_user.items():
+        cmd_vocabulary = set()
+        y_cmd_count = [0]
+        name, records = user
+        for record in records:
+            cmd = record["command"]
+            if cmd in cmd_vocabulary:
+                # repeat last value
+                y_cmd_count.append(y_cmd_count[-1])
+            else:
+                cmd_vocabulary.add(cmd)  
+                # append last value +1
+                y_cmd_count.append(y_cmd_count[-1] + 1)
+
+        x_cmds_entered = range(0, len(y_cmd_count))
+        plt.plot(x_cmds_entered, y_cmd_count, '-')
+        legend.append(name + " (TODO: sanitize!)")
+
+    # print(cmd_vocabulary)
+
+    plt.legend(legend, loc="best")
+
     if async_draw:
         plt.draw()
     else:
