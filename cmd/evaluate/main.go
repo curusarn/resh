@@ -101,13 +101,13 @@ func main() {
 	directory.Init()
 	simpleStrategies = append(simpleStrategies, &directory)
 
-	dynamicDistG := strat.DynamicRecordDistance{
-		MaxDepth:   3000,
-		DistParams: records.DistParams{Pwd: 10, RealPwd: 10, SessionID: 1, Time: 1, Git: 10},
-		Label:      "10*pwd,10*realpwd,session,time,10*git",
-	}
-	dynamicDistG.Init()
-	strategies = append(strategies, &dynamicDistG)
+	// dynamicDistG := strat.DynamicRecordDistance{
+	// 	MaxDepth:   3000,
+	// 	DistParams: records.DistParams{Pwd: 10, RealPwd: 10, SessionID: 1, Time: 1, Git: 10},
+	// 	Label:      "10*pwd,10*realpwd,session,time,10*git",
+	// }
+	// dynamicDistG.Init()
+	// strategies = append(strategies, &dynamicDistG)
 
 	distanceStaticBest := strat.RecordDistance{
 		MaxDepth:   3000,
