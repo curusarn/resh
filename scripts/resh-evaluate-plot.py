@@ -102,9 +102,9 @@ def plot_cmdFrq_rank(plotSize=PLOT_SIZE_zipf, show_labels=False):
     top100percent = 100 * sum(map(lambda x: x[1], list(cmd_count.items())[:int(1 * len(cmd_count))])) / len_records
     top10percent = 100 * sum(map(lambda x: x[1], list(cmd_count.items())[:int(0.1 * len(cmd_count))])) / len_records
     top20percent = 100 * sum(map(lambda x: x[1], list(cmd_count.items())[:int(0.2 * len(cmd_count))])) / len_records
-    print(">>> Top {} %% of cmds amounts for {} %% of all command lines".format(100, top100percent))
-    print(">>> Top {} %% of cmds amounts for {} %% of all command lines".format(10, top10percent))
-    print(">>> Top {} %% of cmds amounts for {} %% of all command lines".format(20, top20percent))
+    print("% >>> Top {} %% of cmds amounts for {} %% of all command lines".format(100, top100percent))
+    print("% >>> Top {} %% of cmds amounts for {} %% of all command lines".format(10, top10percent))
+    print("% >>> Top {} %% of cmds amounts for {} %% of all command lines".format(20, top20percent))
     ranks = range(1, len(cmdFrq)+1)
     plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
     plt.plot(ranks, zipf(len(ranks)), 'o-')
@@ -132,6 +132,9 @@ def plot_cmdVocabularySize_cmdLinesEntered():
     # x_count = max(map(lambda x: len(x[1]), DATA_records_by_user.items()))
     # x_values = range(0, x_count)  
     for user in DATA_records_by_user.items():
+        new_cmds_after_1k = 0
+        new_cmds_after_2k = 0
+        new_cmds_after_3k = 0
         cmd_vocabulary = set()
         y_cmd_count = [0]
         name, records = user
@@ -144,7 +147,24 @@ def plot_cmdVocabularySize_cmdLinesEntered():
                 cmd_vocabulary.add(cmd)  
                 # append last value +1
                 y_cmd_count.append(y_cmd_count[-1] + 1)
+                if len(y_cmd_count) > 1000:
+                    new_cmds_after_1k+=1
+                if len(y_cmd_count) > 2000:
+                    new_cmds_after_2k+=1
+                if len(y_cmd_count) > 3000:
+                    new_cmds_after_3k+=1
+        
+            if len(y_cmd_count) == 1000:
+                print("% {}: Cmd adoption rate at 1k (between 0 and 1k) cmdlines = {}".format(name ,len(cmd_vocabulary) / (len(y_cmd_count))))
+            if len(y_cmd_count) == 2000:
+                print("% {}: Cmd adoption rate at 2k cmdlines = {}".format(name ,len(cmd_vocabulary) / (len(y_cmd_count))))
+                print("% {}: Cmd adoption rate between 1k and 2k cmdlines = {}".format(name ,new_cmds_after_1k / (len(y_cmd_count) - 1000)))
+            if len(y_cmd_count) == 3000:
+                print("% {}: Cmd adoption rate between 2k and 3k cmdlines = {}".format(name ,new_cmds_after_2k / (len(y_cmd_count) - 2000)))
 
+        print("% {}: New cmd adoption rate after 1k cmdlines = {}".format(name ,new_cmds_after_1k / (len(y_cmd_count) - 1000)))
+        print("% {}: New cmd adoption rate after 2k cmdlines = {}".format(name ,new_cmds_after_2k / (len(y_cmd_count) - 2000)))
+        print("% {}: New cmd adoption rate after 3k cmdlines = {}".format(name ,new_cmds_after_3k / (len(y_cmd_count) - 3000)))
         x_cmds_entered = range(0, len(y_cmd_count))
         plt.plot(x_cmds_entered, y_cmd_count, '-')
         legend.append(name + " (TODO: sanitize!)")
@@ -160,26 +180,33 @@ def plot_cmdVocabularySize_cmdLinesEntered():
 
 # Figure 5.6. Command line vocabulary size vs. the number of commands entered for four typical individuals.
 def plot_cmdLineVocabularySize_cmdLinesEntered():
-    cmdLine_vocabulary = set()
-    y_cmdLine_count = [0]
-    for record in DATA_records:
-        cmdLine = record["cmdLine"]
-        if cmdLine in cmdLine_vocabulary:
-            # repeat last value
-            y_cmdLine_count.append(y_cmdLine_count[-1])
-        else:
-            cmdLine_vocabulary.add(cmdLine)  
-            # append last value +1
-            y_cmdLine_count.append(y_cmdLine_count[-1] + 1)
-
-    # print(cmdLine_vocabulary)
-    x_cmdLines_entered = range(0, len(y_cmdLine_count))
-
     plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
-    plt.plot(x_cmdLines_entered, y_cmdLine_count, '-')
     plt.title("Command line vocabulary size vs. the number of command lines entered")
     plt.ylabel("Command line vocabulary size")
     plt.xlabel("# of command lines entered")
+    legend = []
+
+    for user in DATA_records_by_user.items():
+        cmdLine_vocabulary = set()
+        y_cmdLine_count = [0]
+        name, records = user
+        for record in records:
+            cmdLine = record["cmdLine"]
+            if cmdLine in cmdLine_vocabulary:
+                # repeat last value
+                y_cmdLine_count.append(y_cmdLine_count[-1])
+            else:
+                cmdLine_vocabulary.add(cmdLine)  
+                # append last value +1
+                y_cmdLine_count.append(y_cmdLine_count[-1] + 1)
+
+        # print(cmdLine_vocabulary)
+        x_cmdLines_entered = range(0, len(y_cmdLine_count))
+        plt.plot(x_cmdLines_entered, y_cmdLine_count, '-')
+        legend.append(name + " (TODO: sanitize!)")
+
+    plt.legend(legend, loc="best")
+
     if async_draw:
         plt.draw()
     else:
@@ -190,11 +217,14 @@ def plot_cmdLineVocabularySize_cmdLinesEntered():
 #       solid ones being more probable (p < .0001) and dashed ones less probable (.005 < p < .0001).
 def graph_cmdSequences(node_count=33, edge_minValue=0.05, view_graph=True):
     START_CMD = "_start_"
+    END_CMD = "_end_"
     cmd_count = defaultdict(int)
     cmdSeq_count = defaultdict(lambda: defaultdict(int))
     cmd_id = dict()
     x = 0
     cmd_id[START_CMD] = str(x) 
+    x += 1
+    cmd_id[END_CMD] = str(x) 
     for pid, session in DATA_records_by_session.items():
         cmd_count[START_CMD] += 1
         prev_cmd = START_CMD
@@ -206,6 +236,10 @@ def graph_cmdSequences(node_count=33, edge_minValue=0.05, view_graph=True):
                 x += 1
                 cmd_id[cmd] = str(x)
             prev_cmd = cmd
+        # end the session
+        cmdSeq_count[prev_cmd][END_CMD] += 1
+        cmd_count[END_CMD] += 1
+        
 
     # get `node_count` of largest nodes
     sorted_cmd_count = sorted(cmd_count.items(), key=lambda x: x[1], reverse=True)
@@ -275,15 +309,18 @@ def graph_cmdSequences(node_count=33, edge_minValue=0.05, view_graph=True):
                 scale_ = seq_count / cmd_count[cmd]
                 penwidth_ = str((0.5 + 4.5 * scale_) * extra_scaling_factor)
                 #penwidth_bold_ = str(8 * scale_)
-                if scale_ > 0.5:
+                # if scale_ > 0.5:
+                #     graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='true', splines='curved',
+                #             penwidth=penwidth_, style='bold', arrowhead='diamond')
+                # elif scale_ > 0.2:
+                if scale_ > 0.3:
+                    scale_ = str(int(scale_ * 100)/100)
                     graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='true', splines='curved',
-                            penwidth=penwidth_, style='bold', arrowhead='diamond')
+                            penwidth=penwidth_, forcelables='true', label=scale_)
                 elif scale_ > 0.2:
                     graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='true', splines='curved',
-                            penwidth=penwidth_)
-                elif scale_ > 0.1:
-                    graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='true', splines='curved',
                             penwidth=penwidth_, style='dashed')
+                # elif scale_ > 0.1:
                 else:
                     graph.edge(cmd_id[cmd], cmd_id[cmd2], constraint='false', splines='curved',
                             penwidth=penwidth_, style='dotted', arrowhead='empty')
@@ -360,7 +397,7 @@ def plot_strategies_matches(plot_size=50, selected_strategies=[]):
     assert(saved_matches_total is not None)
     assert(saved_dataPoint_count is not None)
     max_values = [100 * saved_matches_total / saved_dataPoint_count] * len(x_values)
-    print(">>> Avg recurrence rate = {}".format(max_values[0]))
+    print("% >>> Avg recurrence rate = {}".format(max_values[0]))
     plt.plot(x_values, max_values, 'r-')
     legend.append("maximum possible")
 
@@ -432,7 +469,7 @@ def plot_strategies_charsRecalled(plot_size=50, selected_strategies=[]):
     assert(saved_charsRecalled_total is not None)
     assert(saved_dataPoint_count is not None)
     max_values = [saved_charsRecalled_total / saved_dataPoint_count] * len(x_values)
-    print(">>> Max avg recalled characters = {}".format(max_values[0]))
+    print("% >>> Max avg recalled characters = {}".format(max_values[0]))
     plt.plot(x_values, max_values, 'r-')
     legend.append("maximum possible")
 
@@ -508,7 +545,7 @@ def plot_strategies_charsRecalled_prefix(plot_size=50, selected_strategies=[]):
     assert(saved_charsRecalled_total is not None)
     assert(saved_dataPoint_count is not None)
     max_values = [saved_charsRecalled_total / saved_dataPoint_count] * len(x_values)
-    print(">>> Max avg recalled characters (including prefix matches) = {}".format(max_values[0]))
+    print("% >>> Max avg recalled characters (including prefix matches) = {}".format(max_values[0]))
     plt.plot(x_values, max_values, 'r-')
     legend.append("maximum possible")
 
@@ -522,24 +559,30 @@ def plot_strategies_charsRecalled_prefix(plot_size=50, selected_strategies=[]):
         plt.show()
 
 
-plot_cmdLineFrq_rank()
-plot_cmdFrq_rank()
-        
-plot_cmdLineVocabularySize_cmdLinesEntered()
-plot_cmdVocabularySize_cmdLinesEntered()
 
-plot_strategies_matches(20)
-plot_strategies_charsRecalled(20)
-plot_strategies_charsRecalled_prefix(20)
+# plot_cmdLineFrq_rank()
+# plot_cmdFrq_rank()
+#         
+# plot_cmdLineVocabularySize_cmdLinesEntered()
+# plot_cmdVocabularySize_cmdLinesEntered()
+# 
+# plot_strategies_matches(20)
+# plot_strategies_charsRecalled(20)
+# plot_strategies_charsRecalled_prefix(20)
+# 
+# graph_cmdSequences(node_count=33, edge_minValue=0.048)
+# 
+# graph_cmdSequences(node_count=28, edge_minValue=0.06)
 
-graph_cmdSequences(node_count=33, edge_minValue=0.048)
+for n in range(40, 43):
+    for e in range(94, 106, 2):
+        e *= 0.001
+        graph_cmdSequences(node_count=n, edge_minValue=e, view_graph=False)
 
-graph_cmdSequences(node_count=28, edge_minValue=0.06)
-
-# for n in range(29, 35):
-#     for e in range(44, 56, 2):
-#         e *= 0.001
-#         graph_cmdSequences(node_count=n, edge_minValue=e, view_graph=False)
+#for n in range(29, 35):
+#    for e in range(44, 56, 2):
+#        e *= 0.001
+#        graph_cmdSequences(node_count=n, edge_minValue=e, view_graph=False)
 
 # be careful and check if labels fit the display
 

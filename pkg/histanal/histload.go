@@ -172,7 +172,9 @@ func (e *HistLoad) loadHistoryRecords(fname string) []records.EnrichedRecord {
 		} else if record.CmdLength == 0 {
 			log.Fatal("Assert failed - 'cmdLength' is unset in the data. This should not happen.")
 		}
-		recs = append(recs, records.Enriched(record))
+		if !e.skipFailedCmds || record.ExitCode == 0 {
+			recs = append(recs, records.Enriched(record))
+		}
 	}
 	return recs
 }
