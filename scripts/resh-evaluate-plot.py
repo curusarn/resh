@@ -86,6 +86,13 @@ def plot_cmdLineFrq_rank(plotSize=PLOT_SIZE_zipf, show_labels=False):
 
 # similar to ~ Figure 3.1. The normalized command frequency, compared with Zipf.
 def plot_cmdFrq_rank(plotSize=PLOT_SIZE_zipf, show_labels=False):
+    plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
+    plt.title("Command frequency / rank")
+    plt.ylabel("Normalized command frequency")
+    plt.xlabel("Command rank")
+    legend = []
+
+
     cmd_count = defaultdict(int)
     len_records = 0
     for record in DATA_records:
@@ -102,17 +109,43 @@ def plot_cmdFrq_rank(plotSize=PLOT_SIZE_zipf, show_labels=False):
     top100percent = 100 * sum(map(lambda x: x[1], list(cmd_count.items())[:int(1 * len(cmd_count))])) / len_records
     top10percent = 100 * sum(map(lambda x: x[1], list(cmd_count.items())[:int(0.1 * len(cmd_count))])) / len_records
     top20percent = 100 * sum(map(lambda x: x[1], list(cmd_count.items())[:int(0.2 * len(cmd_count))])) / len_records
-    print("% >>> Top {} %% of cmds amounts for {} %% of all command lines".format(100, top100percent))
-    print("% >>> Top {} %% of cmds amounts for {} %% of all command lines".format(10, top10percent))
-    print("% >>> Top {} %% of cmds amounts for {} %% of all command lines".format(20, top20percent))
+    print("% ALL: Top {} %% of cmds amounts for {} %% of all command lines".format(100, top100percent))
+    print("% ALL: Top {} %% of cmds amounts for {} %% of all command lines".format(10, top10percent))
+    print("% ALL: Top {} %% of cmds amounts for {} %% of all command lines".format(20, top20percent))
     ranks = range(1, len(cmdFrq)+1)
-    plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
-    plt.plot(ranks, zipf(len(ranks)), 'o-')
+    plt.plot(ranks, zipf(len(ranks)), '-')
+    legend.append("Zipf distribution")
     plt.plot(ranks, cmdFrq, 'o-')
-    plt.title("Command frequency / rank")
-    plt.ylabel("Normalized command frequency")
-    plt.xlabel("Command rank")
-    plt.legend(("Zipf", "Command"), loc="best")
+    legend.append("All subjects")
+
+
+    for user in DATA_records_by_user.items():
+        cmd_count = defaultdict(int)
+        len_records = 0
+        name, records = user
+        for record in records:
+            cmd = record["command"]
+            if cmd == "":
+                continue
+            cmd_count[cmd] += 1
+            len_records += 1
+
+        tmp = sorted(cmd_count.items(), key=lambda x: x[1], reverse=True)[:plotSize]
+        cmdFrq = list(map(lambda x: x[1] / tmp[0][1], tmp))
+        labels = list(map(lambda x: trim(x[0], 7), tmp))
+
+        top100percent = 100 * sum(map(lambda x: x[1], list(cmd_count.items())[:int(1 * len(cmd_count))])) / len_records
+        top10percent = 100 * sum(map(lambda x: x[1], list(cmd_count.items())[:int(0.1 * len(cmd_count))])) / len_records
+        top20percent = 100 * sum(map(lambda x: x[1], list(cmd_count.items())[:int(0.2 * len(cmd_count))])) / len_records
+        print("% {}: Top {} %% of cmds amounts for {} %% of all command lines".format(name, 100, top100percent))
+        print("% {}: Top {} %% of cmds amounts for {} %% of all command lines".format(name, 10, top10percent))
+        print("% {}: Top {} %% of cmds amounts for {} %% of all command lines".format(name, 20, top20percent))
+        ranks = range(1, len(cmdFrq)+1)
+        plt.plot(ranks, cmdFrq, 'o-')
+        legend.append("{} (sanitize!)".format(name))
+
+    plt.legend(legend, loc="best")
+
     if show_labels:
         plt.xticks(ranks, labels, rotation=-60)
     # TODO: make xticks integral
@@ -140,6 +173,8 @@ def plot_cmdVocabularySize_cmdLinesEntered():
         name, records = user
         for record in records:
             cmd = record["command"]
+            if cmd == "":
+                continue
             if cmd in cmd_vocabulary:
                 # repeat last value
                 y_cmd_count.append(y_cmd_count[-1])
@@ -230,6 +265,8 @@ def graph_cmdSequences(node_count=33, edge_minValue=0.05, view_graph=True):
         prev_cmd = START_CMD
         for record in session:
             cmd = record["command"]
+            if cmd == "":
+                continue
             cmdSeq_count[prev_cmd][cmd] += 1
             cmd_count[cmd] += 1
             if cmd not in cmd_id:
@@ -559,9 +596,49 @@ def plot_strategies_charsRecalled_prefix(plot_size=50, selected_strategies=[]):
         plt.show()
 
 
+def print_top_cmds(num_cmds=20):
+    cmd_count = defaultdict(int)
+    cmd_total = 0
+    for pid, session in DATA_records_by_session.items():
+        for record in session:
+            cmd = record["command"]
+            if cmd == "":
+                continue
+            cmd_count[cmd] += 1
+            cmd_total += 1
+
+    # get `node_count` of largest nodes
+    sorted_cmd_count = list(sorted(cmd_count.items(), key=lambda x: x[1], reverse=True))
+    print("\n\n% All subjects: Top commands")
+    for cmd, count in sorted_cmd_count[:num_cmds]:
+        print("{} {}".format(cmd, count))
+    # print(sorted_cmd_count)
+    # cmds_to_graph = list(map(lambda x: x[0], sorted_cmd_count))[:cmd_count]
+
+def print_top_cmds_by_user(num_cmds=20):
+    for user in DATA_records_by_user.items():
+        name, records = user
+        cmd_count = defaultdict(int)
+        cmd_total = 0
+        for record in records:
+            cmd = record["command"]
+            if cmd == "":
+                continue
+            cmd_count[cmd] += 1
+            cmd_total += 1
+
+        # get `node_count` of largest nodes
+        sorted_cmd_count = list(sorted(cmd_count.items(), key=lambda x: x[1], reverse=True))
+        print("\n\n% {}: Top commands".format(name))
+        for cmd, count in sorted_cmd_count[:num_cmds]:
+            print("{} {}".format(cmd, count))
+        # print(sorted_cmd_count)
+        # cmds_to_graph = list(map(lambda x: x[0], sorted_cmd_count))[:cmd_count]
 
 # plot_cmdLineFrq_rank()
-# plot_cmdFrq_rank()
+plot_cmdFrq_rank()
+print_top_cmds(30)
+print_top_cmds_by_user(30)
 #         
 # plot_cmdLineVocabularySize_cmdLinesEntered()
 # plot_cmdVocabularySize_cmdLinesEntered()
@@ -574,10 +651,11 @@ def plot_strategies_charsRecalled_prefix(plot_size=50, selected_strategies=[]):
 # 
 # graph_cmdSequences(node_count=28, edge_minValue=0.06)
 
-for n in range(40, 43):
-    for e in range(94, 106, 2):
-        e *= 0.001
-        graph_cmdSequences(node_count=n, edge_minValue=e, view_graph=False)
+# new improved
+# for n in range(40, 43):
+#     for e in range(94, 106, 2):
+#         e *= 0.001
+#         graph_cmdSequences(node_count=n, edge_minValue=e, view_graph=False)
 
 #for n in range(29, 35):
 #    for e in range(44, 56, 2):
