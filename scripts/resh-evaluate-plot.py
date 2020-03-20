@@ -596,6 +596,80 @@ def plot_strategies_charsRecalled_prefix(plot_size=50, selected_strategies=[]):
         plt.show()
 
 
+def plot_strategies_matches_noncummulative(plot_size=50, selected_strategies=["recent (bash-like)"], show_strat_title=False):
+    plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
+    plt.title("Matches at distance (noncumulative) <{}>".format(datetime.now().strftime('%H:%M:%S')))
+    plt.ylabel('%' + " of matches")
+    plt.xlabel("Distance")
+    legend = []
+    x_values = range(1, plot_size+1)
+    saved_matches_total = None
+    saved_dataPoint_count = None
+    for strategy in data["Strategies"]:
+        strategy_title = strategy["Title"]
+        # strategy_description = strategy["Description"]
+
+        dataPoint_count = 0
+        matches = [0] * plot_size
+        matches_total = 0
+        charsRecalled = [0] * plot_size
+        charsRecalled_total = 0
+        
+        for match in strategy["Matches"]:
+            dataPoint_count += 1
+
+            if not match["Match"]:
+                continue
+
+            chars = match["CharsRecalled"]
+            charsRecalled_total += chars 
+            matches_total += 1
+
+            dist = match["Distance"]  
+            if dist > plot_size:
+                continue
+
+            matches[dist-1] += 1
+            charsRecalled[dist-1] += chars
+            
+        # recent is very simple strategy so we will believe 
+        #       that there is no bug in it and we can use it to determine total
+        if strategy_title == "recent":
+            saved_matches_total = matches_total
+            saved_dataPoint_count = dataPoint_count
+
+        if len(selected_strategies) and strategy_title not in selected_strategies:
+            continue
+
+        # acc = 0
+        # matches_cumulative = []
+        # for x in matches:
+        #     acc += x
+        #     matches_cumulative.append(acc)
+        # # matches_cumulative.append(matches_total)
+        matches_percent = list(map(lambda x: 100 * x / dataPoint_count, matches))
+
+        plt.plot(x_values, matches_percent, 'o-')
+        legend.append(strategy_title)
+
+    assert(saved_matches_total is not None)
+    assert(saved_dataPoint_count is not None)
+    # max_values = [100 * saved_matches_total / saved_dataPoint_count] * len(x_values)
+    # print("% >>> Avg recurrence rate = {}".format(max_values[0]))
+    # plt.plot(x_values, max_values, 'r-')
+    # legend.append("maximum possible")
+
+    x_ticks = list(range(1, plot_size+1, 2))
+    x_labels = x_ticks[:]
+    plt.xticks(x_ticks, x_labels)
+    if show_strat_title:
+        plt.legend(legend, loc="best")
+    if async_draw:
+        plt.draw()
+    else:
+        plt.show()
+
+
 def plot_strategies_charsRecalled_noncummulative(plot_size=50, selected_strategies=["recent (bash-like)"], show_strat_title=False):
     plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
     plt.title("Average characters recalled at distance (noncumulative) <{}>".format(datetime.now().strftime('%H:%M:%S')))
@@ -819,6 +893,7 @@ print_avg_cmdline_length()
 # plot_strategies_charsRecalled_prefix(20)
 recent_strats=("recent", "recent (bash-like)")
 # plot_strategies_charsRecalled_noncummulative(20, selected_strategies=recent_strats)
+plot_strategies_matches_noncummulative(20)
 plot_strategies_charsRecalled_noncummulative(20)
 plot_strategies_charsRecalled_prefix_noncummulative(20)
 # graph_cmdSequences(node_count=33, edge_minValue=0.048)
