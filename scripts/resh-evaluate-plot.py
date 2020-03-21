@@ -372,7 +372,7 @@ def graph_cmdSequences(node_count=33, edge_minValue=0.05, view_graph=True):
             print("GRAPHVIZ EXCEPTION: <{}>\nGRAPHVIZ TRACE: <{}>".format(str(e), trace))
 
 
-def plot_strategies_matches(plot_size=50, selected_strategies=[]):
+def plot_strategies_matches(plot_size=50, selected_strategies=[], show_strat_title=True, force_strat_title=None):
     plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
     plt.title("Matches at distance <{}>".format(datetime.now().strftime('%H:%M:%S')))
     plt.ylabel('%' + " of matches")
@@ -384,9 +384,6 @@ def plot_strategies_matches(plot_size=50, selected_strategies=[]):
     for strategy in data["Strategies"]:
         strategy_title = strategy["Title"]
         # strategy_description = strategy["Description"]
-
-        if len(selected_strategies) and strategy_title not in selected_strategies:
-            continue
 
         dataPoint_count = 0
         matches = [0] * plot_size
@@ -429,7 +426,11 @@ def plot_strategies_matches(plot_size=50, selected_strategies=[]):
         matches_percent = list(map(lambda x: 100 * x / dataPoint_count, matches_cumulative))
 
         plt.plot(x_values, matches_percent, 'o-')
-        legend.append(strategy_title)
+        if force_strat_title is not None:
+            legend.append(force_strat_title)
+        else:
+            legend.append(strategy_title)
+
 
     assert(saved_matches_total is not None)
     assert(saved_dataPoint_count is not None)
@@ -441,7 +442,9 @@ def plot_strategies_matches(plot_size=50, selected_strategies=[]):
     x_ticks = list(range(1, plot_size+1, 2))
     x_labels = x_ticks[:]
     plt.xticks(x_ticks, x_labels)
-    plt.legend(legend, loc="best")
+    plt.ylim(bottom=0)
+    if show_strat_title:
+        plt.legend(legend, loc="best")
     if async_draw:
         plt.draw()
     else:
@@ -513,6 +516,7 @@ def plot_strategies_charsRecalled(plot_size=50, selected_strategies=[]):
     x_ticks = list(range(1, plot_size+1, 2))
     x_labels = x_ticks[:]
     plt.xticks(x_ticks, x_labels)
+    plt.ylim(bottom=0)
     plt.legend(legend, loc="best")
     if async_draw:
         plt.draw()
@@ -589,6 +593,7 @@ def plot_strategies_charsRecalled_prefix(plot_size=50, selected_strategies=[]):
     x_ticks = list(range(1, plot_size+1, 2))
     x_labels = x_ticks[:]
     plt.xticks(x_ticks, x_labels)
+    plt.ylim(bottom=0)
     plt.legend(legend, loc="best")
     if async_draw:
         plt.draw()
@@ -662,6 +667,7 @@ def plot_strategies_matches_noncummulative(plot_size=50, selected_strategies=["r
     x_ticks = list(range(1, plot_size+1, 2))
     x_labels = x_ticks[:]
     plt.xticks(x_ticks, x_labels)
+    # plt.ylim(bottom=0)
     if show_strat_title:
         plt.legend(legend, loc="best")
     if async_draw:
@@ -736,6 +742,7 @@ def plot_strategies_charsRecalled_noncummulative(plot_size=50, selected_strategi
     x_ticks = list(range(1, plot_size+1, 2))
     x_labels = x_ticks[:]
     plt.xticks(x_ticks, x_labels)
+    # plt.ylim(bottom=0)
     if show_strat_title:
         plt.legend(legend, loc="best")
     if async_draw:
@@ -814,6 +821,7 @@ def plot_strategies_charsRecalled_prefix_noncummulative(plot_size=50, selected_s
     x_ticks = list(range(1, plot_size+1, 2))
     x_labels = x_ticks[:]
     plt.xticks(x_ticks, x_labels)
+    # plt.ylim(bottom=0)
     if show_strat_title:
         plt.legend(legend, loc="best")
     if async_draw:
@@ -888,14 +896,17 @@ print_avg_cmdline_length()
 # plot_cmdLineVocabularySize_cmdLinesEntered()
 # plot_cmdVocabularySize_cmdLinesEntered()
 # 
-# plot_strategies_matches(20)
-# plot_strategies_charsRecalled(20)
-# plot_strategies_charsRecalled_prefix(20)
 recent_strats=("recent", "recent (bash-like)")
+recurrence_strat=("recent (bash-like)",)
+plot_strategies_matches(20)
+plot_strategies_charsRecalled(20)
+plot_strategies_charsRecalled_prefix(20)
 # plot_strategies_charsRecalled_noncummulative(20, selected_strategies=recent_strats)
 plot_strategies_matches_noncummulative(20)
 plot_strategies_charsRecalled_noncummulative(20)
 plot_strategies_charsRecalled_prefix_noncummulative(20)
+plot_strategies_matches(20, selected_strategies=recurrence_strat, show_strat_title=True, force_strat_title="recurrence rate")
+
 # graph_cmdSequences(node_count=33, edge_minValue=0.048)
 # 
 # graph_cmdSequences(node_count=28, edge_minValue=0.06)
