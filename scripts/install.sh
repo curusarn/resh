@@ -128,16 +128,16 @@ update_config() {
     fi
 }
 
-cp conf/config.toml ~/.config/resh.toml >/dev/null 2>/dev/null
 
-# # Do not overwrite if exists
-# if [ ! -f ~/.config/resh.toml ]; then
-#     cp conf/config.toml ~/.config/resh.toml
-# # else 
-#     # echo "Merging config files ..."
-#     # NOTE: This is where we will merge configs when we make changes to the upstream config
-#     # HINT: check which version are we updating FROM and make changes to config based on that 
-# fi
+# Do not overwrite config if it exists
+if [ ! -f ~/.config/resh.toml ]; then
+    echo "Copying config file ..."
+    cp -f conf/config.toml ~/.config/resh.toml
+# else 
+    # echo "Merging config files ..."
+    # NOTE: This is where we will merge configs when we make changes to the upstream config
+    # HINT: check which version are we updating FROM and make changes to config based on that 
+fi
 
 echo "Generating completions ..."
 bin/resh-control completion bash > ~/.resh/bash_completion.d/_reshctl
