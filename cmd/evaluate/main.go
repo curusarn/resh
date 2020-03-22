@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 
 	"github.com/curusarn/resh/pkg/histanal"
-	"github.com/curusarn/resh/pkg/records"
 	"github.com/curusarn/resh/pkg/strat"
 )
 
@@ -109,12 +108,13 @@ func main() {
 	// dynamicDistG.Init()
 	// strategies = append(strategies, &dynamicDistG)
 
-	distanceStaticBest := strat.RecordDistance{
-		MaxDepth:   3000,
-		DistParams: records.DistParams{Pwd: 10, RealPwd: 10, SessionID: 1, Time: 1},
-		Label:      "10*pwd,10*realpwd,session,time",
-	}
-	strategies = append(strategies, &distanceStaticBest)
+	// NOTE: this is the decent one !!!
+	// distanceStaticBest := strat.RecordDistance{
+	// 	MaxDepth:   3000,
+	// 	DistParams: records.DistParams{Pwd: 10, RealPwd: 10, SessionID: 1, Time: 1},
+	// 	Label:      "10*pwd,10*realpwd,session,time",
+	// }
+	// strategies = append(strategies, &distanceStaticBest)
 
 	recentBash := strat.RecentBash{}
 	recentBash.Init()

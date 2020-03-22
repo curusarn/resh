@@ -15,6 +15,7 @@ rcParams['font.family'] = 'serif'
 
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
+import matplotlib.patches as mpatches
 
 PLOT_WIDTH = 10 # inches
 PLOT_HEIGHT = 7 # inches
@@ -27,14 +28,18 @@ DATA_records = []
 DATA_records_by_session = defaultdict(list) 
 DATA_records_by_user = defaultdict(list) 
 for user in data["UsersRecords"]:
+    if user["Devices"] is None:
+        continue
     for device in user["Devices"]:
+        if device["Records"] is None:
+            continue
         for record in device["Records"]:
             if "invalid" in record and record["invalid"]:
                 continue
             
             DATA_records.append(record)
             DATA_records_by_session[record["seqSessionId"]].append(record)
-            DATA_records_by_user[user["Name"]].append(record)
+            DATA_records_by_user[user["Name"] + ":" + device["Name"]].append(record)
 
 DATA_records = list(sorted(DATA_records, key=lambda x: x["realtimeAfterLocal"]))
 
@@ -212,6 +217,283 @@ def plot_cmdVocabularySize_cmdLinesEntered():
         plt.draw()
     else:
         plt.show()
+
+
+def plot_cmdVocabularySize_daily():
+    SECONDS_IN_A_DAY = 86400
+    plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
+    plt.title("Command vocabulary size in days")
+    plt.ylabel("Command vocabulary size")
+    plt.xlabel("Days")
+    legend = []
+
+    # x_count = max(map(lambda x: len(x[1]), DATA_records_by_user.items()))
+    # x_values = range(0, x_count)  
+    for user in DATA_records_by_user.items():
+        new_cmds_after_100 = 0
+        new_cmds_after_200 = 0
+        new_cmds_after_300 = 0
+        cmd_vocabulary = set()
+        y_cmd_count = [0]
+        name, records = user
+
+        cmd_fail_count = 0
+
+        if not len(records):
+            print("ERROR: no records for user {}".format(name))
+            continue
+
+        first_day = records[0]["realtimeAfter"]
+        this_day = first_day
+
+        for record in records:
+            cmd = record["command"]
+            timestamp = record["realtimeAfter"]
+
+            if cmd == "":
+                cmd_fail_count += 1
+                continue
+
+            if timestamp >= this_day + SECONDS_IN_A_DAY:
+                this_day += SECONDS_IN_A_DAY
+                while timestamp >= this_day + SECONDS_IN_A_DAY:
+                    y_cmd_count.append(-10)
+                    this_day += SECONDS_IN_A_DAY
+
+                y_cmd_count.append(len(cmd_vocabulary))
+                cmd_vocabulary = set() # wipes the vocabulary each day
+
+                if len(y_cmd_count) > 100:
+                    new_cmds_after_100+=1
+                if len(y_cmd_count) > 200:
+                    new_cmds_after_200+=1
+                if len(y_cmd_count) > 300:
+                    new_cmds_after_300+=1
+
+                if len(y_cmd_count) == 100:
+                    print("% {}: Cmd adoption rate at 100 days (between 0 and 100 days) = {}".format(name, len(cmd_vocabulary) / (len(y_cmd_count))))
+                if len(y_cmd_count) == 200:
+                    print("% {}: Cmd adoption rate at 200 days days = {}".format(name, len(cmd_vocabulary) / (len(y_cmd_count))))
+                    print("% {}: Cmd adoption rate between 100 and 200 days = {}".format(name, new_cmds_after_100 / (len(y_cmd_count) - 100)))
+                if len(y_cmd_count) == 300:
+                    print("% {}: Cmd adoption rate between 200 and 300 days = {}".format(name, new_cmds_after_200 / (len(y_cmd_count) - 200)))
+
+            if cmd not in cmd_vocabulary:
+                cmd_vocabulary.add(cmd)  
+        
+
+        print("% {}: New cmd adoption rate after 100 days = {}".format(name, new_cmds_after_100 / (len(y_cmd_count) - 100)))
+        print("% {}: New cmd adoption rate after 200 days = {}".format(name, new_cmds_after_200 / (len(y_cmd_count) - 200)))
+        print("% {}: New cmd adoption rate after 300 days = {}".format(name, new_cmds_after_300 / (len(y_cmd_count) - 300)))
+        print("% {}: cmd_fail_count = {}".format(name, cmd_fail_count))
+        x_cmds_entered = range(0, len(y_cmd_count))
+        plt.plot(x_cmds_entered, y_cmd_count, 'o', markersize=2)
+        legend.append(name + " (TODO: sanitize!)")
+
+    # print(cmd_vocabulary)
+
+    plt.legend(legend, loc="best")
+    plt.ylim(bottom=-5)
+
+    if async_draw:
+        plt.draw()
+    else:
+        plt.show()
+
+
+def matplotlib_escape(ss):
+    ss = ss.replace('$', '\\$')
+    return ss
+
+
+def plot_cmdUsage_in_time(sort_cmds=False, num_cmds=None):
+    SECONDS_IN_A_DAY = 86400
+    tab_colors = ("tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:gray")
+    plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
+    plt.title("Command use in time")
+    plt.ylabel("Commands")
+    plt.xlabel("Days")
+    legend_patches = []
+
+    cmd_ids = {}
+    y_labels = []
+
+    all_x_values = []
+    all_y_values = []
+    all_s_values = [] # size
+    all_c_values = [] # color
+
+    x_values = []
+    y_values = []
+    s_values = [] # size
+    c_values = [] # color
+
+    if sort_cmds:
+        cmd_count = defaultdict(int)
+        for user in DATA_records_by_user.items():
+            name, records = user
+            for record in records:
+                cmd = record["command"]
+                cmd_count[cmd] += 1
+
+        sorted_cmds = map(lambda x: x[0], sorted(cmd_count.items(), key=lambda x: x[1], reverse=True))
+
+        for cmd in sorted_cmds:
+            cmd_ids[cmd] = len(cmd_ids)
+            y_labels.append(matplotlib_escape(cmd))
+
+    
+    for user_idx, user in enumerate(DATA_records_by_user.items()):
+        name, records = user
+
+        if not len(records):
+            print("ERROR: no records for user {}".format(name))
+            continue
+
+
+        first_day = records[0]["realtimeAfter"]
+        this_day = first_day
+        day_no = 0 
+        today_cmds = defaultdict(int) 
+
+        for record in records:
+            cmd = record["command"]
+            timestamp = record["realtimeAfter"]
+
+            if cmd == "":
+                print("NOTICE: Empty cmd for {}".format(record["cmdLine"]))
+                continue
+
+            if timestamp >= this_day + SECONDS_IN_A_DAY:
+                for item in today_cmds.items():
+                    cmd, count = item
+                    cmd_id = cmd_ids[cmd]
+                    # skip commands with high ids
+                    if num_cmds is not None and cmd_id >= num_cmds:
+                        continue
+
+                    x_values.append(day_no)
+                    y_values.append(cmd_id)
+                    s_values.append(count)
+                    c_values.append(tab_colors[user_idx])
+
+                today_cmds = defaultdict(int)
+
+                this_day += SECONDS_IN_A_DAY
+                day_no += 1
+                while timestamp >= this_day + SECONDS_IN_A_DAY:
+                    this_day += SECONDS_IN_A_DAY
+                    day_no += 1
+
+            if cmd not in cmd_ids:
+                cmd_ids[cmd] = len(cmd_ids)
+                y_labels.append(matplotlib_escape(cmd))
+
+            today_cmds[cmd] += 1
+
+        all_x_values.extend(x_values)
+        all_y_values.extend(y_values)
+        all_s_values.extend(s_values)
+        all_c_values.extend(c_values)
+        x_values = []
+        y_values = []
+        s_values = []
+        c_values = []
+        legend_patches.append(mpatches.Patch(color=tab_colors[user_idx], label="{} ({}) (TODO: sanitize!)".format(name, user_idx)))
+
+    if num_cmds is not None and len(y_labels) > num_cmds:
+        y_labels = y_labels[:num_cmds]
+    plt.yticks(ticks=range(0, len(y_labels)), labels=y_labels, fontsize=6)
+    plt.scatter(all_x_values, all_y_values, s=all_s_values, c=all_c_values, marker='o')
+    plt.legend(handles=legend_patches, loc="best")
+
+    if async_draw:
+        plt.draw()
+    else:
+        plt.show()
+
+
+# Figure 5.6. Command line vocabulary size vs. the number of commands entered for four typical individuals.
+def plot_cmdVocabularySize_time():
+    SECONDS_IN_A_DAY = 86400
+    plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
+    plt.title("Command vocabulary size growth in time")
+    plt.ylabel("Command vocabulary size")
+    plt.xlabel("Days")
+    legend = []
+
+    # x_count = max(map(lambda x: len(x[1]), DATA_records_by_user.items()))
+    # x_values = range(0, x_count)  
+    for user in DATA_records_by_user.items():
+        new_cmds_after_100 = 0
+        new_cmds_after_200 = 0
+        new_cmds_after_300 = 0
+        cmd_vocabulary = set()
+        y_cmd_count = [0]
+        name, records = user
+
+        cmd_fail_count = 0
+
+        if not len(records):
+            print("ERROR: no records for user {}".format(name))
+            continue
+
+        first_day = records[0]["realtimeAfter"]
+        this_day = first_day
+
+        for record in records:
+            cmd = record["command"]
+            timestamp = record["realtimeAfter"]
+
+            if cmd == "":
+                cmd_fail_count += 1
+                continue
+
+            if timestamp >= this_day + SECONDS_IN_A_DAY:
+                this_day += SECONDS_IN_A_DAY
+                while timestamp >= this_day + SECONDS_IN_A_DAY:
+                    y_cmd_count.append(-10)
+                    this_day += SECONDS_IN_A_DAY
+
+                y_cmd_count.append(len(cmd_vocabulary))
+
+                if len(y_cmd_count) > 100:
+                    new_cmds_after_100+=1
+                if len(y_cmd_count) > 200:
+                    new_cmds_after_200+=1
+                if len(y_cmd_count) > 300:
+                    new_cmds_after_300+=1
+
+                if len(y_cmd_count) == 100:
+                    print("% {}: Cmd adoption rate at 100 days (between 0 and 100 days) = {}".format(name, len(cmd_vocabulary) / (len(y_cmd_count))))
+                if len(y_cmd_count) == 200:
+                    print("% {}: Cmd adoption rate at 200 days days = {}".format(name, len(cmd_vocabulary) / (len(y_cmd_count))))
+                    print("% {}: Cmd adoption rate between 100 and 200 days = {}".format(name, new_cmds_after_100 / (len(y_cmd_count) - 100)))
+                if len(y_cmd_count) == 300:
+                    print("% {}: Cmd adoption rate between 200 and 300 days = {}".format(name, new_cmds_after_200 / (len(y_cmd_count) - 200)))
+
+            if cmd not in cmd_vocabulary:
+                cmd_vocabulary.add(cmd)  
+        
+
+        print("% {}: New cmd adoption rate after 100 days = {}".format(name, new_cmds_after_100 / (len(y_cmd_count) - 100)))
+        print("% {}: New cmd adoption rate after 200 days = {}".format(name, new_cmds_after_200 / (len(y_cmd_count) - 200)))
+        print("% {}: New cmd adoption rate after 300 days = {}".format(name, new_cmds_after_300 / (len(y_cmd_count) - 300)))
+        print("% {}: cmd_fail_count = {}".format(name, cmd_fail_count))
+        x_cmds_entered = range(0, len(y_cmd_count))
+        plt.plot(x_cmds_entered, y_cmd_count, 'o', markersize=2)
+        legend.append(name + " (TODO: sanitize!)")
+
+    # print(cmd_vocabulary)
+
+    plt.legend(legend, loc="best")
+    plt.ylim(bottom=0)
+
+    if async_draw:
+        plt.draw()
+    else:
+        plt.show()
+
 
 # Figure 5.6. Command line vocabulary size vs. the number of commands entered for four typical individuals.
 def plot_cmdLineVocabularySize_cmdLinesEntered():
@@ -601,7 +883,7 @@ def plot_strategies_charsRecalled_prefix(plot_size=50, selected_strategies=[]):
         plt.show()
 
 
-def plot_strategies_matches_noncummulative(plot_size=50, selected_strategies=["recent (bash-like)"], show_strat_title=False):
+def plot_strategies_matches_noncummulative(plot_size=50, selected_strategies=["recent (bash-like)"], show_strat_title=False, force_strat_title=None):
     plt.figure(figsize=(PLOT_WIDTH, PLOT_HEIGHT))
     plt.title("Matches at distance (noncumulative) <{}>".format(datetime.now().strftime('%H:%M:%S')))
     plt.ylabel('%' + " of matches")
@@ -655,7 +937,10 @@ def plot_strategies_matches_noncummulative(plot_size=50, selected_strategies=["r
         matches_percent = list(map(lambda x: 100 * x / dataPoint_count, matches))
 
         plt.plot(x_values, matches_percent, 'o-')
-        legend.append(strategy_title)
+        if force_strat_title is not None:
+            legend.append(force_strat_title)
+        else:
+            legend.append(strategy_title)
 
     assert(saved_matches_total is not None)
     assert(saved_dataPoint_count is not None)
@@ -891,24 +1176,29 @@ def print_avg_cmdline_length():
 # plot_cmdFrq_rank()
 print_top_cmds(30)
 print_top_cmds_by_user(30)
-print_avg_cmdline_length()
+# print_avg_cmdline_length()
 #         
 # plot_cmdLineVocabularySize_cmdLinesEntered()
-# plot_cmdVocabularySize_cmdLinesEntered()
+plot_cmdVocabularySize_cmdLinesEntered()
+plot_cmdVocabularySize_time()
+# plot_cmdVocabularySize_daily()
+plot_cmdUsage_in_time(num_cmds=100)
+plot_cmdUsage_in_time(sort_cmds=True, num_cmds=100)
 # 
 recent_strats=("recent", "recent (bash-like)")
 recurrence_strat=("recent (bash-like)",)
-plot_strategies_matches(20)
-plot_strategies_charsRecalled(20)
-plot_strategies_charsRecalled_prefix(20)
+# plot_strategies_matches(20)
+# plot_strategies_charsRecalled(20)
+# plot_strategies_charsRecalled_prefix(20)
 # plot_strategies_charsRecalled_noncummulative(20, selected_strategies=recent_strats)
-plot_strategies_matches_noncummulative(20)
-plot_strategies_charsRecalled_noncummulative(20)
-plot_strategies_charsRecalled_prefix_noncummulative(20)
-plot_strategies_matches(20, selected_strategies=recurrence_strat, show_strat_title=True, force_strat_title="recurrence rate")
+# plot_strategies_matches_noncummulative(20)
+# plot_strategies_charsRecalled_noncummulative(20)
+# plot_strategies_charsRecalled_prefix_noncummulative(20)
+# plot_strategies_matches(20, selected_strategies=recurrence_strat, show_strat_title=True, force_strat_title="recurrence rate")
+# plot_strategies_matches_noncummulative(20, selected_strategies=recurrence_strat, show_strat_title=True, force_strat_title="recurrence rate")
 
 # graph_cmdSequences(node_count=33, edge_minValue=0.048)
-# 
+
 # graph_cmdSequences(node_count=28, edge_minValue=0.06)
 
 # new improved
