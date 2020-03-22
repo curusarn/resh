@@ -63,6 +63,7 @@ func runReshCli() (string, int) {
 	if config.Debug {
 		debug = true
 		log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+		log.Println("DEBUG is ON")
 	}
 
 	sessionID := flag.String("sessionID", "", "resh generated session id")
@@ -118,6 +119,12 @@ func runReshCli() (string, int) {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding("", gocui.KeyCtrlG, gocui.ModNone, quit); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding("", gocui.KeyCtrlD, gocui.ModNone, quit); err != nil {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyEnter, gocui.ModNone, layout.SelectExecute); err != nil {
@@ -559,20 +566,27 @@ func (m manager) Layout(g *gocui.Gui) error {
 
 	for i, itm := range m.s.data {
 		if i == maxY {
-			log.Println(maxY)
+			if debug {
+				log.Println(maxY)
+			}
 			break
 		}
 		displayStr := itm.display
 		if m.s.highlightedItem == i {
 			// use actual min requried length instead of 420 constant
 			displayStr = doHighlightString(displayStr, 420)
-			log.Println("### HightlightedItem string :", displayStr)
-		} else {
+			if debug {
+				log.Println("### HightlightedItem string :", displayStr)
+			}
+		} else if debug {
 			log.Println(displayStr)
 		}
 		if strings.Contains(displayStr, "\n") {
 			log.Println("display string contained \\n")
 			displayStr = strings.ReplaceAll(displayStr, "\n", "#")
+			if debug {
+				log.Println("display string contained \\n")
+			}
 		}
 		v.WriteString(displayStr + "\n")
 		// if m.s.highlightedItem == i {
