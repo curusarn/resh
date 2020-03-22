@@ -198,7 +198,7 @@ reshctl() {
         if [ "$(resh-config --key BindControlR)" = true ]; then
 			echo ' * future sessions: ENABLED (experimental)'
 		else
-			echo ' * future sessions: DISABLED (recommended)'
+			echo ' * future sessions: DISABLED'
         fi
         if [ "${__RESH_control_R_bind_enabled-0}" != 0 ]; then
             echo ' * this session: ENABLED'
