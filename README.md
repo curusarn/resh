@@ -3,7 +3,7 @@
 
 # Rich Enhanced Shell History
 
-Context-based replacement/enhancement for zsh and bash shell history - :warning: *Work in progress*
+Context-based shell history replacement/enhancement for zsh and bash - :warning: *Work in progress*
 
 ## Motivation
 
