@@ -12,6 +12,7 @@ Context-based replacement/enhancement for zsh and bash shell history - :warning:
 <!-- Better shell history -->
 <!-- Better bash history -->
 <!-- Better zsh history -->
+<!-- PWD Directory -->
 
 
 ## Motivation
