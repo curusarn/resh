@@ -1,9 +1,18 @@
 ![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/curusarn/resh?sort=semver)
 
-
 # Rich Enhanced Shell History
 
 Context-based replacement/enhancement for zsh and bash shell history - :warning: *Work in progress*
+<!-- Contextual shell history -->
+<!-- Contextual bash history -->
+<!-- Contextual zsh history -->
+<!-- Context-based shell history -->
+<!-- Context-based bash history -->
+<!-- Context-based zsh history -->
+<!-- Better shell history -->
+<!-- Better bash history -->
+<!-- Better zsh history -->
+
 
 ## Motivation
 
