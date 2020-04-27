@@ -148,7 +148,9 @@ func (s *sanitizer) sanitizeRecord(record *records.Record) error {
 	record.PwdAfter = s.sanitizePath(record.PwdAfter)
 	record.RealPwdAfter = s.sanitizePath(record.RealPwdAfter)
 	record.GitDir = s.sanitizePath(record.GitDir)
+	record.GitDirAfter = s.sanitizePath(record.GitDirAfter)
 	record.GitRealDir = s.sanitizePath(record.GitRealDir)
+	record.GitRealDirAfter = s.sanitizePath(record.GitRealDirAfter)
 	record.Home = s.sanitizePath(record.Home)
 	record.ShellEnv = s.sanitizePath(record.ShellEnv)
 
@@ -164,6 +166,11 @@ func (s *sanitizer) sanitizeRecord(record *records.Record) error {
 	record.GitOriginRemote, err = s.sanitizeGitURL(record.GitOriginRemote)
 	if err != nil {
 		log.Println("Error while snitizing GitOriginRemote url", record.GitOriginRemote, ":", err)
+		return err
+	}
+	record.GitOriginRemoteAfter, err = s.sanitizeGitURL(record.GitOriginRemoteAfter)
+	if err != nil {
+		log.Println("Error while snitizing GitOriginRemoteAfter url", record.GitOriginRemoteAfter, ":", err)
 		return err
 	}
 
