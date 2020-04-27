@@ -296,8 +296,15 @@ func (i item) toString(length int) string {
 	exitStStr := "EXIT-STATUS: " + strconv.Itoa(i.exitStatus)
 	// x := length - len(exitStStr)
 	exitStStr = highlightExitStatus(exitStStr)
-	str := i.display
-	return str + "        " + exitStStr
+
+	// visually align
+	spaces := "                    " // 20 spaces
+	block := len(spaces)
+	str := i.display + spaces
+	x := len(str) / block * block
+	str = str[:x]
+	return str + exitStStr
+
 	//if len(i.display) < x {
 	//	str := i.display
 	//	//	for len(str) < x {
