@@ -64,7 +64,7 @@ func runServer(config cfg.Config, reshHistoryPath, bashHistoryPath, zshHistoryPa
 	mux.Handle("/inspect", &inspectHandler{sesshistDispatch: sesshistDispatch})
 	mux.Handle("/dump", &dumpHandler{histfileBox: histfileBox})
 
-	server := &http.Server{Addr: ":" + strconv.Itoa(config.Port), Handler: mux}
+	server := &http.Server{Addr: "localhost:" + strconv.Itoa(config.Port), Handler: mux}
 	go server.ListenAndServe()
 
 	// signalhandler - takes over the main goroutine so when signal handler exists the whole program exits
