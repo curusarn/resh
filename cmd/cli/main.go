@@ -202,6 +202,14 @@ func highlightMatch(str string) string {
 	return redBold + cleanHighlight(str) + end
 }
 
+func highlightExitStatus(str string) string {
+	// template "\033[3%d;%dm"
+	// orangeBold := "\033[33;1m"
+	magentaBold := "\033[35;1m"
+	end := "\033[0m"
+	return magentaBold + cleanHighlight(str) + end
+}
+
 func toString(record records.EnrichedRecord, lineLength int) string {
 	dirColWidth := 24 // make this dynamic somehow
 	return leftCutPadString(strings.Replace(record.Pwd, record.Home, "~", 1), dirColWidth) + "   " +
@@ -266,6 +274,7 @@ type item struct {
 	pwd            string
 	pwdTilde       string
 	hits           float64
+	exitStatus     int
 }
 
 func (i item) less(i2 item) bool {
@@ -277,6 +286,26 @@ func (i item) less(i2 item) bool {
 func (i item) key() string {
 	unlikelySeparator := "|||||"
 	return i.cmdLine + unlikelySeparator + i.pwd
+}
+
+func (i item) toString(length int) string {
+	// dots := "…"
+	if i.exitStatus == 0 {
+		return i.display
+	}
+	exitStStr := "EXIT-STATUS: " + strconv.Itoa(i.exitStatus)
+	// x := length - len(exitStStr)
+	exitStStr = highlightExitStatus(exitStStr)
+	str := i.display
+	return str + "        " + exitStStr
+	//if len(i.display) < x {
+	//	str := i.display
+	//	//	for len(str) < x {
+	//	//		str += " "
+	//	//	}
+	//	return str + "        " + exitStStr
+	//}
+	//return i.display[:x] + dots + " " + exitStStr
 }
 
 // func (i item) equals(i2 item) bool {
@@ -295,7 +324,6 @@ func properMatch(str, term, padChar string) bool {
 // newItemFromRecordForQuery creates new item from record based on given query
 //		returns error if the query doesn't match the record
 func newItemFromRecordForQuery(record records.EnrichedRecord, query query, debug bool) (item, error) {
-	// TODO: use color to highlight matches
 	const hitScore = 1.0
 	const hitScoreConsecutive = 0.1
 	const properMatchScore = 0.3
@@ -408,6 +436,7 @@ func newItemFromRecordForQuery(record records.EnrichedRecord, query query, debug
 		pwd:            record.Pwd,
 		pwdTilde:       pwdTilde,
 		hits:           hits,
+		exitStatus:     record.ExitCode,
 	}
 	return it, nil
 }
@@ -571,7 +600,7 @@ func (m manager) Layout(g *gocui.Gui) error {
 			}
 			break
 		}
-		displayStr := itm.display
+		displayStr := itm.toString(maxX - 2)
 		if m.s.highlightedItem == i {
 			// use actual min requried length instead of 420 constant
 			displayStr = doHighlightString(displayStr, 420)
