@@ -215,14 +215,6 @@ You can install `jq` using your favourite package manager or you can use other J
 
 *Recorded metadata will be reduced to only include useful information in the future.*
 
-### Graphs
-
-:clock10: *coming soon-ish (working on other parts of the project atm)*
-
-Sneak peak
-
-![graph of command sequences](img/graph-command-sequences.png)
-
 ## Known issues
 
 ### Q: I use bash on macOS and resh doesn't work
