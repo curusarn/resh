@@ -86,7 +86,6 @@ func runReshCli() (string, int) {
 		log.Println("Error: you need to specify gitOriginRemote")
 	}
 
-	log.Printf("gitRemoteOrigin: %s\n", *gitOriginRemote)
 	g, err := gocui.NewGui(gocui.OutputNormal, false)
 	if err != nil {
 		log.Panicln(err)
@@ -114,7 +113,7 @@ func runReshCli() (string, int) {
 		sessionID:       *sessionID,
 		host:            *host,
 		pwd:             *pwd,
-		gitOriginRemote: *gitOriginRemote,
+		gitOriginRemote: records.NormalizeGitRemote(*gitOriginRemote),
 		config:          config,
 		s:               &st,
 	}

@@ -328,7 +328,7 @@ func GetCommandAndFirstWord(cmdLine string) (string, string, error) {
 	return "ERROR", "ERROR", errors.New("this should not happen - contact developer ;)")
 }
 
-// NormalizeGitRomote func
+// NormalizeGitRemote func
 func NormalizeGitRemote(gitRemote string) string {
 	if strings.HasSuffix(gitRemote, ".git") {
 		return gitRemote[:len(gitRemote)-4]
