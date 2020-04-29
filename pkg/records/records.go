@@ -186,6 +186,7 @@ func Enriched(r Record) EnrichedRecord {
 		// log.Println("Invalid command:", rec)
 		record.Invalid = true
 	}
+	record.GitOriginRemote = NormalizeGitRemote(record.GitOriginRemote)
 	return record
 	// TODO: Detect and mark simple commands r.Simple
 }
@@ -325,6 +326,14 @@ func GetCommandAndFirstWord(cmdLine string) (string, string, error) {
 	}
 	log.Fatal("GetCommandAndFirstWord error: this should not happen!")
 	return "ERROR", "ERROR", errors.New("this should not happen - contact developer ;)")
+}
+
+// NormalizeGitRomote func
+func NormalizeGitRemote(gitRemote string) string {
+	if strings.HasSuffix(gitRemote, ".git") {
+		return gitRemote[:len(gitRemote)-4]
+	}
+	return gitRemote
 }
 
 // DistParams is used to supply params to Enrichedrecords.DistanceTo()
