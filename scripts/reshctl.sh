@@ -108,7 +108,8 @@ __resh_unbind_all() {
 # wrapper for resh-cli for calling resh directly
 resh() {
     local buffer
-    buffer=$(resh-cli --sessionID "$__RESH_SESSION_ID" --pwd "$PWD")
+    local git_remote; git_remote="$(git remote get-url origin 2>/dev/null)"
+    buffer=$(resh-cli --sessionID "$__RESH_SESSION_ID" --host "$HOST" --pwd "$PWD" --gitOriginRemote "$git_remote")
     status_code=$?
     if [ $status_code = 111 ]; then
         # execute

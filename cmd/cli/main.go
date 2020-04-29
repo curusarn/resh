@@ -67,17 +67,26 @@ func runReshCli() (string, int) {
 	}
 
 	sessionID := flag.String("sessionID", "", "resh generated session id")
+	host := flag.String("host", "", "host")
 	pwd := flag.String("pwd", "", "present working directory")
+	gitOriginRemote := flag.String("gitOriginRemote", "DEFAULT", "git origin remote")
 	query := flag.String("query", "", "search query")
 	flag.Parse()
 
 	if *sessionID == "" {
-		fmt.Println("Error: you need to specify sessionId")
+		log.Println("Error: you need to specify sessionId")
+	}
+	if *host == "" {
+		log.Println("Error: you need to specify HOST")
 	}
 	if *pwd == "" {
-		fmt.Println("Error: you need to specify PWD")
+		log.Println("Error: you need to specify PWD")
+	}
+	if *gitOriginRemote == "DEFAULT" {
+		log.Println("Error: you need to specify gitOriginRemote")
 	}
 
+	log.Printf("gitRemoteOrigin: %s\n", *gitOriginRemote)
 	g, err := gocui.NewGui(gocui.OutputNormal, false)
 	if err != nil {
 		log.Panicln(err)
@@ -102,10 +111,12 @@ func runReshCli() (string, int) {
 	}
 
 	layout := manager{
-		sessionID: *sessionID,
-		pwd:       *pwd,
-		config:    config,
-		s:         &st,
+		sessionID:       *sessionID,
+		host:            *host,
+		pwd:             *pwd,
+		gitOriginRemote: *gitOriginRemote,
+		config:          config,
+		s:               &st,
 	}
 	g.SetManager(layout)
 
@@ -169,13 +180,17 @@ func cleanHighlight(str string) string {
 
 	invert := "\033[32;7;1m"
 	end := "\033[0m"
-	blueBold := "\033[34;1m"
-	redBold := "\033[31;1m"
-	repace := []string{invert, end, blueBold, redBold}
+	replace := []string{invert, end}
+	for i := 30; i < 48; i++ {
+		base := prefix + strconv.Itoa(i)
+		normal := base + "m"
+		bold := base + ";1m"
+		replace = append(replace, normal, bold)
+	}
 	if strings.Contains(str, prefix) == false {
 		return str
 	}
-	for _, escSeq := range repace {
+	for _, escSeq := range replace {
 		str = strings.ReplaceAll(str, escSeq, "")
 	}
 	return str
@@ -188,7 +203,14 @@ func highlightSelected(str string) string {
 	return invert + cleanHighlight(str) + end
 }
 
-func highlightMatchAlternative(str string) string {
+func highlightHost(str string) string {
+	// template "\033[3%d;%dm"
+	redNormal := "\033[31m"
+	end := "\033[0m"
+	return redNormal + cleanHighlight(str) + end
+}
+
+func highlightPwd(str string) string {
 	// template "\033[3%d;%dm"
 	blueBold := "\033[34;1m"
 	end := "\033[0m"
@@ -197,17 +219,24 @@ func highlightMatchAlternative(str string) string {
 
 func highlightMatch(str string) string {
 	// template "\033[3%d;%dm"
+	magentaBold := "\033[35;1m"
+	end := "\033[0m"
+	return magentaBold + cleanHighlight(str) + end
+}
+
+func highlightWarn(str string) string {
+	// template "\033[3%d;%dm"
+	// orangeBold := "\033[33;1m"
 	redBold := "\033[31;1m"
 	end := "\033[0m"
 	return redBold + cleanHighlight(str) + end
 }
 
-func highlightExitStatus(str string) string {
+func highlightGit(str string) string {
 	// template "\033[3%d;%dm"
-	// orangeBold := "\033[33;1m"
-	magentaBold := "\033[35;1m"
+	greenBold := "\033[32;1m"
 	end := "\033[0m"
-	return magentaBold + cleanHighlight(str) + end
+	return greenBold + cleanHighlight(str) + end
 }
 
 func toString(record records.EnrichedRecord, lineLength int) string {
@@ -217,8 +246,10 @@ func toString(record records.EnrichedRecord, lineLength int) string {
 }
 
 type query struct {
-	terms []string
-	pwd   string
+	terms           []string
+	host            string
+	pwd             string
+	gitOriginRemote string
 	// pwdTilde string
 }
 
@@ -242,7 +273,7 @@ func filterTerms(terms []string) []string {
 	return newTerms
 }
 
-func newQueryFromString(queryInput string, pwd string) query {
+func newQueryFromString(queryInput string, host string, pwd string, gitOriginRemote string) query {
 	if debug {
 		log.Println("QUERY input = <" + queryInput + ">")
 	}
@@ -263,18 +294,33 @@ func newQueryFromString(queryInput string, pwd string) query {
 		log.Println("QUERY filtered terms =" + logStr)
 		log.Println("QUERY pwd =" + pwd)
 	}
-	return query{terms: terms, pwd: pwd}
+	return query{
+		terms:           terms,
+		host:            host,
+		pwd:             pwd,
+		gitOriginRemote: gitOriginRemote,
+	}
 }
 
 type item struct {
-	// record         records.EnrichedRecord
-	display        string
-	displayNoColor string
-	cmdLine        string
-	pwd            string
-	pwdTilde       string
-	hits           float64
-	exitStatus     int
+	// dateWithColor string
+	// date          string
+
+	// [host:]pwd
+	locationWithColor string
+	location          string
+
+	// [G] [E#]
+	flagsWithColor string
+	flags          string
+
+	cmdLineWithColor string
+	cmdLine          string
+
+	hits float64
+
+	key string
+	// cmdLineRaw string
 }
 
 func (i item) less(i2 item) bool {
@@ -282,37 +328,28 @@ func (i item) less(i2 item) bool {
 	return i.hits > i2.hits
 }
 
-// used for deduplication
-func (i item) key() string {
-	unlikelySeparator := "|||||"
-	return i.cmdLine + unlikelySeparator + i.pwd
-}
-
-func (i item) toString(length int) string {
-	// dots := "…"
-	if i.exitStatus == 0 {
-		return i.display
+func (i item) produceLine(flagLength int) (string, int) {
+	line := ""
+	line += i.locationWithColor
+	line += i.flagsWithColor
+	flags := i.flags
+	if flagLength < len(i.flags) {
+		log.Printf("produceLine can't specify line w/ flags shorter than the actual size. - len(flags) %v, requested %v\n", len(i.flags), flagLength)
 	}
-	exitStStr := "EXIT-STATUS: " + strconv.Itoa(i.exitStatus)
-	// x := length - len(exitStStr)
-	exitStStr = highlightExitStatus(exitStStr)
+	for len(flags) < flagLength {
+		line += " "
+		flags += " "
+	}
+	spacer := "  "
+	if flagLength > 5 {
+		// use shorter spacer
+		// 		because there is likely a long flag like E130 in the view
+		spacer = " "
+	}
+	line += spacer + i.cmdLineWithColor
 
-	// visually align
-	spaces := "                    " // 20 spaces
-	block := len(spaces)
-	str := i.display + spaces
-	x := len(str) / block * block
-	str = str[:x]
-	return str + exitStStr
-
-	//if len(i.display) < x {
-	//	str := i.display
-	//	//	for len(str) < x {
-	//	//		str += " "
-	//	//	}
-	//	return str + "        " + exitStStr
-	//}
-	//return i.display[:x] + dots + " " + exitStStr
+	length := len(i.location) + flagLength + len(spacer) + len(i.cmdLine)
+	return line, length
 }
 
 // func (i item) equals(i2 item) bool {
@@ -335,22 +372,20 @@ func newItemFromRecordForQuery(record records.EnrichedRecord, query query, debug
 	const hitScoreConsecutive = 0.1
 	const properMatchScore = 0.3
 	const actualPwdScore = 0.9
-	const actualPwdScoreExtra = 0.2         // this + hitScore > actualPwdScore
-	const nonZeroExitCodeScorePenalty = 0.8 // this < min(hitScore, actualPwdScore)
+	const nonZeroExitCodeScorePenalty = 0.5
+	const sameGitRepoScore = 0.7
+	// const sameGitRepoScoreExtra = 0.0
+	const differentHostScorePenalty = 0.2
+
+	// nonZeroExitCodeScorePenalty + differentHostScorePenalty
 
 	hits := 0.0
-	if record.ExitCode != 0 {
-		hits -= nonZeroExitCodeScorePenalty
-	}
+	anyHit := false
 	cmd := record.CmdLine
-	pwdTilde := strings.Replace(record.Pwd, record.Home, "~", 1)
-	pwdDisp := leftCutPadString(pwdTilde, 25)
-	pwdRawDisp := leftCutPadString(record.Pwd, 25)
-	var useRawPwd bool
-	var dirHit bool
 	for _, term := range query.terms {
 		termHit := false
 		if strings.Contains(record.CmdLine, term) {
+			anyHit = true
 			if termHit == false {
 				hits += hitScore
 			} else {
@@ -363,87 +398,99 @@ func newItemFromRecordForQuery(record records.EnrichedRecord, query query, debug
 			cmd = strings.ReplaceAll(cmd, term, highlightMatch(term))
 			// NO continue
 		}
-		if strings.Contains(pwdTilde, term) {
-			if termHit == false {
-				hits += hitScore
-			} else {
-				hits += hitScoreConsecutive
-			}
-			termHit = true
-			if properMatch(pwdTilde, term, "/") {
-				hits += properMatchScore
-			}
-			pwdDisp = strings.ReplaceAll(pwdDisp, term, highlightMatch(term))
-			pwdRawDisp = strings.ReplaceAll(pwdRawDisp, term, highlightMatch(term))
-			dirHit = true
-		} else if strings.Contains(record.Pwd, term) {
-			if termHit == false {
-				hits += hitScore
-			} else {
-				hits += hitScoreConsecutive
-			}
-			termHit = true
-			if properMatch(pwdTilde, term, "/") {
-				hits += properMatchScore
-			}
-			pwdRawDisp = strings.ReplaceAll(pwdRawDisp, term, highlightMatch(term))
-			dirHit = true
-			useRawPwd = true
-		}
-		// if strings.Contains(record.GitOriginRemote, term) {
-		// 	hits++
-		// }
 	}
 	// actual pwd matches
-	// only use if there was no directory match on any of the terms
 	// N terms can only produce:
 	//		-> N matches against the command
-	//		-> N matches against the directory
 	//		-> 1 extra match for the actual directory match
-	if record.Pwd == query.pwd {
-		if dirHit {
-			hits += actualPwdScoreExtra
-		} else {
-			hits += actualPwdScore
-		}
-		pwdDisp = highlightMatchAlternative(pwdDisp)
-		// pwdRawDisp = highlightMatchAlternative(pwdRawDisp)
-		useRawPwd = false
+	sameGitRepo := false
+	if query.gitOriginRemote != "" && query.gitOriginRemote == record.GitOriginRemote {
+		sameGitRepo = true
 	}
-	if hits <= 0 {
+
+	samePwd := false
+	if record.Pwd == query.pwd {
+		anyHit = true
+		samePwd = true
+		hits += actualPwdScore
+	} else if sameGitRepo {
+		anyHit = true
+		hits += sameGitRepoScore
+	}
+
+	differentHost := false
+	if record.Host != query.host {
+		differentHost = true
+		hits -= differentHostScorePenalty
+	}
+	errorExitStatus := false
+	if record.ExitCode != 0 {
+		errorExitStatus = true
+		hits -= nonZeroExitCodeScorePenalty
+	}
+	if hits <= 0 && !anyHit {
 		return item{}, errors.New("no match for given record and query")
 	}
-	display := ""
-	// pwd := leftCutPadString("<"+pwdTilde+">", 20)
-	if useRawPwd {
-		display += pwdRawDisp
-	} else {
-		display += pwdDisp
+
+	// KEY for deduplication
+
+	unlikelySeparator := "|||||"
+	key := record.CmdLine + unlikelySeparator + record.Pwd +
+		unlikelySeparator + strconv.Itoa(record.ExitCode) + unlikelySeparator +
+		record.GitOriginRemote + unlikelySeparator + record.Host
+
+	// DISPLAY
+	// DISPLAY > date
+	// TODO
+
+	// DISPLAY > location
+	location := ""
+	locationWithColor := ""
+	if differentHost {
+		location += record.Host + ":"
+		locationWithColor += highlightHost(record.Host) + ":"
 	}
+	const locationLenght = 30
+	pwdLength := locationLenght - len(location)
+	pwdTilde := strings.Replace(record.Pwd, record.Home, "~", 1)
+	location += leftCutPadString(pwdTilde, pwdLength)
+	if samePwd {
+		locationWithColor += highlightPwd(leftCutPadString(pwdTilde, pwdLength))
+	} else {
+		locationWithColor += leftCutPadString(pwdTilde, pwdLength)
+	}
+
+	// DISPLAY > flags
+	flags := ""
+	flagsWithColor := ""
 	if debug {
 		hitsStr := fmt.Sprintf("%.1f", hits)
-		hitsDisp := "  " + hitsStr + "  "
-		display += hitsDisp
-	} else {
-		display += "  "
+		flags += " S" + hitsStr
 	}
+	if sameGitRepo {
+		flags += " G"
+		flagsWithColor += " " + highlightGit("G")
+	}
+	if errorExitStatus {
+		flags += " E" + strconv.Itoa(record.ExitCode)
+		flagsWithColor += " " + highlightWarn("E"+strconv.Itoa(record.ExitCode))
+	}
+
+	// DISPLAY > cmdline
+
 	// cmd := "<" + strings.ReplaceAll(record.CmdLine, "\n", ";") + ">"
-	cmd = strings.ReplaceAll(cmd, "\n", ";")
-	display += cmd
-	// itDummy := item{
-	// 	cmdLine: record.CmdLine,
-	// 	pwd:     record.Pwd,
-	// }
-	// + "   #K:<" + itDummy.key() + ">"
+	cmdLine := strings.ReplaceAll(record.CmdLine, "\n", ";")
+	cmdLineWithColor := strings.ReplaceAll(cmd, "\n", ";")
 
 	it := item{
-		display:        display,
-		displayNoColor: display,
-		cmdLine:        record.CmdLine,
-		pwd:            record.Pwd,
-		pwdTilde:       pwdTilde,
-		hits:           hits,
-		exitStatus:     record.ExitCode,
+		location:          location,
+		locationWithColor: locationWithColor,
+		flags:             flags,
+		flagsWithColor:    flagsWithColor,
+		cmdLine:           cmdLine,
+		cmdLineWithColor:  cmdLineWithColor,
+		hits:              hits,
+		key:               key,
 	}
 	return it, nil
 }
@@ -468,9 +515,11 @@ type state struct {
 }
 
 type manager struct {
-	sessionID string
-	pwd       string
-	config    cfg.Config
+	sessionID       string
+	host            string
+	pwd             string
+	gitOriginRemote string
+	config          cfg.Config
 
 	s *state
 }
@@ -503,7 +552,7 @@ func (m manager) UpdateData(input string) {
 		log.Println("len(fullRecords) =", len(m.s.fullRecords))
 		log.Println("len(data) =", len(m.s.data))
 	}
-	query := newQueryFromString(input, m.pwd)
+	query := newQueryFromString(input, m.host, m.pwd, m.gitOriginRemote)
 	var data []item
 	itemSet := make(map[string]bool)
 	m.s.lock.Lock()
@@ -515,11 +564,11 @@ func (m manager) UpdateData(input string) {
 			// log.Println(" * continue (no match)", rec.Pwd)
 			continue
 		}
-		if itemSet[itm.key()] {
+		if itemSet[itm.key] {
 			// log.Println(" * continue (already present)", itm.key(), itm.pwd)
 			continue
 		}
-		itemSet[itm.key()] = true
+		itemSet[itm.key] = true
 		data = append(data, itm)
 		// log.Println("DATA =", itm.display)
 	}
@@ -600,6 +649,16 @@ func (m manager) Layout(g *gocui.Gui) error {
 	v.Clear()
 	v.Rewind()
 
+	longestFlagsLen := 2 // at least 2
+	for i, itm := range m.s.data {
+		if i == maxY {
+			break
+		}
+		if len(itm.flags) > longestFlagsLen {
+			longestFlagsLen = len(itm.flags)
+		}
+	}
+
 	for i, itm := range m.s.data {
 		if i == maxY {
 			if debug {
@@ -607,10 +666,10 @@ func (m manager) Layout(g *gocui.Gui) error {
 			}
 			break
 		}
-		displayStr := itm.toString(maxX - 2)
+		displayStr, _ := itm.produceLine(longestFlagsLen)
 		if m.s.highlightedItem == i {
 			// use actual min requried length instead of 420 constant
-			displayStr = doHighlightString(displayStr, 420)
+			displayStr = doHighlightString(displayStr, maxX*2)
 			if debug {
 				log.Println("### HightlightedItem string :", displayStr)
 			}
