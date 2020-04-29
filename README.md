@@ -36,8 +36,6 @@ Have you lost your history when reinstalling? I personally think this is unaccep
 Why not synchronize your shell history accross your devices and add some metadata to know where it came from:
 
 - Hostname
-- Username
-- Machine ID
 - OS
 - etc ...
 
@@ -65,8 +63,10 @@ Imagine being able to search your shell history based on both the command itself
 
 - :white_check_mark: Provide an app to search the history (launch it using `resh`)
   - :heavy_check_mark: provide binding for Control+R (enable it using `reshctl enable ctrl_r_binding_global`)
-  - :white_check_mark: allow searchnig by metadata (only command and directory so far)
-  - :x: app contians different search modes
+  - :white_check_mark: use current context when searching (only current directory so far)
+  - :x: allow searching completely without context
+  - :x: allow listing details for individual commands
+  - :x: include a help page with keybindings and onboarding in the app
 
 - :heavy_check_mark: Provide a `reshctl` utility to control and interact with the project
   - :heavy_check_mark: zsh completion
@@ -74,7 +74,7 @@ Imagine being able to search your shell history based on both the command itself
 
 - :x: Synchronize recorded history between devices
 
-- :x: Provide an API to make resh extendable
+- :x: Provide a stable API to make resh extensible
 
 - :heavy_check_mark: Support zsh and bash
 
