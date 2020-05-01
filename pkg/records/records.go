@@ -158,7 +158,7 @@ type CliRecord struct {
 	GitOriginRemote string `json:"gitOriginRemote"`
 	ExitCode        int    `json:"exitCode"`
 
-	RealtimeBeforeLocal float64 `json:"realtimeBeforeLocal"`
+	RealtimeBefore float64 `json:"realtimeBefore"`
 	// RealtimeAfter    float64 `json:"realtimeAfter"`
 	// RealtimeDuration float64 `json:"realtimeDuration"`
 }
@@ -166,14 +166,14 @@ type CliRecord struct {
 // NewCliRecord from EnrichedRecord
 func NewCliRecord(r EnrichedRecord) CliRecord {
 	return CliRecord{
-		SessionID:           r.SessionID,
-		CmdLine:             r.CmdLine,
-		Host:                r.Host,
-		Pwd:                 r.Pwd,
-		Home:                r.Home,
-		GitOriginRemote:     r.GitOriginRemote,
-		ExitCode:            r.ExitCode,
-		RealtimeBeforeLocal: r.RealtimeBeforeLocal,
+		SessionID:       r.SessionID,
+		CmdLine:         r.CmdLine,
+		Host:            r.Host,
+		Pwd:             r.Pwd,
+		Home:            r.Home,
+		GitOriginRemote: r.GitOriginRemote,
+		ExitCode:        r.ExitCode,
+		RealtimeBefore:  r.RealtimeBefore,
 	}
 }
 

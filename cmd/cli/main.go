@@ -430,13 +430,21 @@ func SendCliMsg(m msg.CliMsg, port string) msg.CliResponse {
 func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 	maxX, maxY := g.Size()
 
+	var data []itemColumns
+
+	longestDateLen := 0  // at least 0
 	longestFlagsLen := 2 // at least 2
 	for i, itm := range m.s.data {
 		if i == maxY {
 			break
 		}
-		if len(itm.flags) > longestFlagsLen {
-			longestFlagsLen = len(itm.flags)
+		ic := itm.drawItemColumns()
+		data = append(data, ic)
+		if len(ic.date) > longestDateLen {
+			longestDateLen = len(ic.date)
+		}
+		if len(ic.flags) > longestFlagsLen {
+			longestFlagsLen = len(ic.flags)
 		}
 	}
 
@@ -449,14 +457,14 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 
 	m.s.displayedItemsCount = maxY - topBoxSize - selectedLineCount
 
-	for i, itm := range m.s.data {
+	for i, itm := range data {
 		if i == maxY-topBoxSize-selectedLineCount {
 			if debug {
 				log.Println(maxY)
 			}
 			break
 		}
-		displayStr, _ := itm.produceLine(longestFlagsLen, true)
+		displayStr, _ := itm.produceLine(longestDateLen, longestFlagsLen, true)
 		if m.s.highlightedItem == i {
 			// maxX * 2 because there are escape sequences that make it hard to tell the real string lenght
 			displayStr = doHighlightString(displayStr, maxX*2)

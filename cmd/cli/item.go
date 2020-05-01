@@ -12,6 +12,29 @@ import (
 )
 
 type item struct {
+	realtimeBefore float64
+
+	// [host:]pwd
+	differentHost bool
+	host          string
+	home          string
+	samePwd       bool
+	pwd           string
+
+	// [G] [E#]
+	sameGitRepo bool
+	exitCode    int
+
+	cmdLineWithColor string
+	cmdLine          string
+
+	score float64
+
+	key string
+	// cmdLineRaw string
+}
+
+type itemColumns struct {
 	dateWithColor string
 	date          string
 
@@ -26,7 +49,7 @@ type item struct {
 	cmdLineWithColor string
 	cmdLine          string
 
-	score float64
+	// score float64
 
 	key string
 	// cmdLineRaw string
@@ -37,16 +60,134 @@ func (i item) less(i2 item) bool {
 	return i.score > i2.score
 }
 
-func (i item) produceLine(flagLength int, showDate bool) (string, int) {
+func formatDatetime(tm time.Time) string {
+	tmSince := time.Since(tm)
+	hrs := tmSince.Hours()
+	yrs := int(hrs / (365 * 24))
+	if yrs > 1 {
+		return strconv.Itoa(yrs) + " years ago"
+	}
+	if yrs == 1 {
+		return "1 year ago"
+	}
+	months := int(hrs / (30 * 24))
+	if months > 1 {
+		return strconv.Itoa(months) + " months ago"
+	}
+	if months == 1 {
+		return "1 month ago"
+	}
+	days := int(hrs / 24)
+	if days > 1 {
+		return strconv.Itoa(days) + " days ago"
+	}
+	if days == 1 {
+		return "1 day ago"
+	}
+	hrsInt := int(hrs)
+	if hrsInt > 1 {
+		return strconv.Itoa(hrsInt) + " hours ago"
+	}
+	if hrsInt == 1 {
+		return "1 hour ago"
+	}
+	mins := int(hrs * 60)
+	if mins > 1 {
+		return strconv.Itoa(mins) + " mins ago"
+	}
+	if mins == 1 {
+		return "1 min ago"
+	}
+	secs := int(hrs * 60 * 60)
+	if secs > 1 {
+		return strconv.Itoa(secs) + " secs ago"
+	}
+	if secs == 1 {
+		return "1 sec ago"
+	}
+	return "now"
+}
+
+func (i item) drawItemColumns() itemColumns {
+
+	// DISPLAY
+	// DISPLAY > date
+	secs := int64(i.realtimeBefore)
+	nsecs := int64((i.realtimeBefore - float64(secs)) * 1e9)
+	tm := time.Unix(secs, nsecs)
+	//date := tm.Format("2006-01-02 15:04 ")
+	// dateLength := len("12 months ago ") // longest date
+	date := formatDatetime(tm) + " "
+	// for len(date) < dateLength {
+	// 	date = " " + date
+	// }
+	dateWithColor := highlightDate(date)
+
+	// DISPLAY > location
+	location := ""
+	locationWithColor := ""
+	if i.differentHost {
+		location += i.host + ":"
+		locationWithColor += highlightHost(i.host) + ":"
+	}
+	const locationLenght = 30
+	// const locationLenght = 20 // small screenshots
+	pwdLength := locationLenght - len(location)
+	pwdTilde := strings.Replace(i.pwd, i.home, "~", 1)
+	location += leftCutPadString(pwdTilde, pwdLength)
+	if i.samePwd {
+		locationWithColor += highlightPwd(leftCutPadString(pwdTilde, pwdLength))
+	} else {
+		locationWithColor += leftCutPadString(pwdTilde, pwdLength)
+	}
+
+	// DISPLAY > flags
+	flags := ""
+	flagsWithColor := ""
+	if debug {
+		hitsStr := fmt.Sprintf("%.1f", i.score)
+		flags += " S" + hitsStr
+	}
+	if i.sameGitRepo {
+		flags += " G"
+		flagsWithColor += " " + highlightGit("G")
+	}
+	if i.exitCode != 0 {
+		flags += " E" + strconv.Itoa(i.exitCode)
+		flagsWithColor += " " + highlightWarn("E"+strconv.Itoa(i.exitCode))
+	}
+	// NOTE: you can debug arbitrary metadata like this
+	// flags += " <" + record.GitOriginRemote + ">"
+	// flagsWithColor += " <" + record.GitOriginRemote + ">"
+	return itemColumns{
+		date:              date,
+		dateWithColor:     dateWithColor,
+		location:          location,
+		locationWithColor: locationWithColor,
+		flags:             flags,
+		flagsWithColor:    flagsWithColor,
+		cmdLine:           i.cmdLine,
+		cmdLineWithColor:  i.cmdLineWithColor,
+		// score:             i.score,
+		key: i.key,
+	}
+}
+
+func (ic itemColumns) produceLine(dateLength int, flagLength int, showDate bool) (string, int) {
 	line := ""
 	if showDate {
-		line += i.dateWithColor
+		date := ic.date
+		for len(date) < dateLength {
+			line += " "
+			date += " "
+		}
+		line += ic.dateWithColor
 	}
-	line += i.locationWithColor
-	line += i.flagsWithColor
-	flags := i.flags
-	if flagLength < len(i.flags) {
-		log.Printf("produceLine can't specify line w/ flags shorter than the actual size. - len(flags) %v, requested %v\n", len(i.flags), flagLength)
+	line += ic.locationWithColor
+	line += ic.flagsWithColor
+	flags := ic.flags
+	if flagLength < len(ic.flags) {
+		log.Printf("produceLine can't specify line w/ flags shorter than the actual size. - len(flags) %v, requested %v\n", len(ic.flags), flagLength)
 	}
 	for len(flags) < flagLength {
 		line += " "
@@ -58,9 +199,9 @@ func (i item) produceLine(flagLength int, showDate bool) (string, int) {
 		// 		because there is likely a long flag like E130 in the view
 		spacer = " "
 	}
-	line += spacer + i.cmdLineWithColor
+	line += spacer + ic.cmdLineWithColor
 
-	length := len(i.location) + flagLength + len(spacer) + len(i.cmdLine)
+	length := len(ic.location) + flagLength + len(spacer) + len(ic.cmdLine)
 	return line, length
 }
 
@@ -153,9 +294,9 @@ func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool
 		differentHost = true
 		score -= differentHostScorePenalty
 	}
-	errorExitStatus := false
+	// errorExitStatus := false
 	if record.ExitCode != 0 {
-		errorExitStatus = true
+		// errorExitStatus = true
 		score -= nonZeroExitCodeScorePenalty
 	}
 	if score <= 0 && !anyHit {
@@ -169,51 +310,6 @@ func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool
 		record.GitOriginRemote + unlikelySeparator + record.Host
 	// + strconv.Itoa(record.ExitCode) + unlikelySeparator
 
-	// DISPLAY
-	// DISPLAY > date
-	secs := int64(record.RealtimeBeforeLocal)
-	nsecs := int64((record.RealtimeBeforeLocal - float64(secs)) * 1e9)
-	tm := time.Unix(secs, nsecs)
-	date := tm.Format("2006-01-02_15:04 ")
-	dateWithColor := highlightDate(date)
-
-	// DISPLAY > location
-	location := ""
-	locationWithColor := ""
-	if differentHost {
-		location += record.Host + ":"
-		locationWithColor += highlightHost(record.Host) + ":"
-	}
-	const locationLenght = 30
-	// const locationLenght = 20 // small screenshots
-	pwdLength := locationLenght - len(location)
-	pwdTilde := strings.Replace(record.Pwd, record.Home, "~", 1)
-	location += leftCutPadString(pwdTilde, pwdLength)
-	if samePwd {
-		locationWithColor += highlightPwd(leftCutPadString(pwdTilde, pwdLength))
-	} else {
-		locationWithColor += leftCutPadString(pwdTilde, pwdLength)
-	}
-
-	// DISPLAY > flags
-	flags := ""
-	flagsWithColor := ""
-	if debug {
-		hitsStr := fmt.Sprintf("%.1f", score)
-		flags += " S" + hitsStr
-	}
-	if sameGitRepo {
-		flags += " G"
-		flagsWithColor += " " + highlightGit("G")
-	}
-	if errorExitStatus {
-		flags += " E" + strconv.Itoa(record.ExitCode)
-		flagsWithColor += " " + highlightWarn("E"+strconv.Itoa(record.ExitCode))
-	}
-	// NOTE: you can debug arbitrary metadata like this
-	// flags += " <" + record.GitOriginRemote + ">"
-	// flagsWithColor += " <" + record.GitOriginRemote + ">"
-
 	// DISPLAY > cmdline
 
 	// cmd := "<" + strings.ReplaceAll(record.CmdLine, "\n", ";") + ">"
@@ -221,16 +317,20 @@ func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool
 	cmdLineWithColor := strings.ReplaceAll(cmd, "\n", ";")
 
 	it := item{
-		date:              date,
-		dateWithColor:     dateWithColor,
-		location:          location,
-		locationWithColor: locationWithColor,
-		flags:             flags,
-		flagsWithColor:    flagsWithColor,
-		cmdLine:           cmdLine,
-		cmdLineWithColor:  cmdLineWithColor,
-		score:             score,
-		key:               key,
+		realtimeBefore: record.RealtimeBefore,
+
+		differentHost: differentHost,
+		host:          record.Host,
+		home:          record.Home,
+		samePwd:       samePwd,
+		pwd:           record.Pwd,
+
+		sameGitRepo:      sameGitRepo,
+		exitCode:         record.ExitCode,
+		cmdLine:          cmdLine,
+		cmdLineWithColor: cmdLineWithColor,
+		score:            score,
+		key:              key,
 	}
 	return it, nil
 }
