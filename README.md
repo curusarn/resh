@@ -73,7 +73,9 @@ Imagine being able to search your shell history based on both the command itself
   - :heavy_check_mark: zsh completion
   - :heavy_check_mark: bash completion
 
-- :x: Synchronize recorded history between devices
+- :x: Multi-device history
+  - :x: Synchronize recorded history between devices
+  - :x: Allow proxying history when ssh'ing to remote servers
 
 - :x: Provide a stable API to make resh extensible
 
