@@ -63,10 +63,11 @@ Imagine being able to search your shell history based on both the command itself
 
 - :white_check_mark: Provide an app to search the history (launch it using `resh`)
   - :heavy_check_mark: provide binding for Control+R (enable it using `reshctl enable ctrl_r_binding_global`)
-  - :white_check_mark: use current context when searching (only current directory so far)
-  - :x: allow searching completely without context
+  - :heavy_check_mark: use current context when searching
+  - :heavy_check_mark: allow searching completely without context
   - :x: allow listing details for individual commands
   - :x: include a help page with keybindings and onboarding in the app
+  - :x: allow explicitly searching by metadata
 
 - :heavy_check_mark: Provide a `reshctl` utility to control and interact with the project
   - :heavy_check_mark: zsh completion
