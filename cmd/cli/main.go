@@ -156,11 +156,12 @@ func runReshCli() (string, int) {
 }
 
 type state struct {
-	lock            sync.Mutex
-	cliRecords      []records.CliRecord
-	data            []item
-	rawData         []rawItem
-	highlightedItem int
+	lock                sync.Mutex
+	cliRecords          []records.CliRecord
+	data                []item
+	rawData             []rawItem
+	highlightedItem     int
+	displayedItemsCount int
 
 	rawMode bool
 
@@ -316,10 +317,9 @@ func (m manager) Edit(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier)
 }
 
 func (m manager) Next(g *gocui.Gui, v *gocui.View) error {
-	_, y := g.Size()
 	m.s.lock.Lock()
 	defer m.s.lock.Unlock()
-	if m.s.highlightedItem < y {
+	if m.s.highlightedItem < m.s.displayedItemsCount-1 {
 		m.s.highlightedItem++
 	}
 	return nil
@@ -447,6 +447,8 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 	selectedCommand := m.s.data[m.s.highlightedItem].cmdLine
 	var selectedLineCount int = len(selectedCommand)/(printedLineLength) + 1
 
+	m.s.displayedItemsCount = maxY - topBoxSize - selectedLineCount
+
 	for i, itm := range m.s.data {
 		if i == maxY-topBoxSize-selectedLineCount {
 			if debug {
@@ -509,6 +511,8 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 
 func (m manager) rawMode(g *gocui.Gui, v *gocui.View) error {
 	maxX, maxY := g.Size()
+	topBoxSize := 3
+	m.s.displayedItemsCount = maxY - topBoxSize
 
 	for i, itm := range m.s.rawData {
 		if i == maxY {
