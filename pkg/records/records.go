@@ -169,16 +169,11 @@ func (r EnrichedRecord) ToString() (string, error) {
 // Enriched - returnd enriched record
 func Enriched(r Record) EnrichedRecord {
 	record := EnrichedRecord{Record: r}
+	// normlize git remote
+	record.GitOriginRemote = NormalizeGitRemote(record.GitOriginRemote)
+	record.GitOriginRemoteAfter = NormalizeGitRemote(record.GitOriginRemoteAfter)
 	// Get command/first word from commandline
 	var err error
-	record.Command, record.FirstWord, err = GetCommandAndFirstWord(r.CmdLine)
-	if err != nil {
-		record.Errors = append(record.Errors, "GetCommandAndFirstWord error:"+err.Error())
-		// rec, _ := record.ToString()
-		// log.Println("Invalid command:", rec)
-		record.Invalid = true
-		return record
-	}
 	err = r.Validate()
 	if err != nil {
 		record.Errors = append(record.Errors, "Validate error:"+err.Error())
@@ -186,9 +181,14 @@ func Enriched(r Record) EnrichedRecord {
 		// log.Println("Invalid command:", rec)
 		record.Invalid = true
 	}
-	record.GitOriginRemote = NormalizeGitRemote(record.GitOriginRemote)
+	record.Command, record.FirstWord, err = GetCommandAndFirstWord(r.CmdLine)
+	if err != nil {
+		record.Errors = append(record.Errors, "GetCommandAndFirstWord error:"+err.Error())
+		// rec, _ := record.ToString()
+		// log.Println("Invalid command:", rec)
+		record.Invalid = true // should this be really invalid ?
+	}
 	return record
-	// TODO: Detect and mark simple commands r.Simple
 }
 
 // Merge two records (part1 - collect + part2 - postcollect)

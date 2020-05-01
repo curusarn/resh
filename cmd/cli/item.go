@@ -202,6 +202,9 @@ func newItemFromRecordForQuery(record records.EnrichedRecord, query query, debug
 		flags += " E" + strconv.Itoa(record.ExitCode)
 		flagsWithColor += " " + highlightWarn("E"+strconv.Itoa(record.ExitCode))
 	}
+	// NOTE: you can debug arbitrary metadata like this
+	// flags += " <" + record.GitOriginRemote + ">"
+	// flagsWithColor += " <" + record.GitOriginRemote + ">"
 
 	// DISPLAY > cmdline
 
