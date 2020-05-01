@@ -6,13 +6,14 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/curusarn/resh/pkg/records"
 )
 
 type item struct {
-	// dateWithColor string
-	// date          string
+	dateWithColor string
+	date          string
 
 	// [host:]pwd
 	locationWithColor string
@@ -36,8 +37,11 @@ func (i item) less(i2 item) bool {
 	return i.score > i2.score
 }
 
-func (i item) produceLine(flagLength int) (string, int) {
+func (i item) produceLine(flagLength int, showDate bool) (string, int) {
 	line := ""
+	if showDate {
+		line += i.dateWithColor
+	}
 	line += i.locationWithColor
 	line += i.flagsWithColor
 	flags := i.flags
@@ -167,7 +171,11 @@ func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool
 
 	// DISPLAY
 	// DISPLAY > date
-	// TODO
+	secs := int64(record.RealtimeBeforeLocal)
+	nsecs := int64((record.RealtimeBeforeLocal - float64(secs)) * 1e9)
+	tm := time.Unix(secs, nsecs)
+	date := tm.Format("2006-01-02_15:04 ")
+	dateWithColor := highlightDate(date)
 
 	// DISPLAY > location
 	location := ""
@@ -213,6 +221,8 @@ func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool
 	cmdLineWithColor := strings.ReplaceAll(cmd, "\n", ";")
 
 	it := item{
+		date:              date,
+		dateWithColor:     dateWithColor,
 		location:          location,
 		locationWithColor: locationWithColor,
 		flags:             flags,

@@ -456,7 +456,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 			}
 			break
 		}
-		displayStr, _ := itm.produceLine(longestFlagsLen)
+		displayStr, _ := itm.produceLine(longestFlagsLen, true)
 		if m.s.highlightedItem == i {
 			// maxX * 2 because there are escape sequences that make it hard to tell the real string lenght
 			displayStr = doHighlightString(displayStr, maxX*2)

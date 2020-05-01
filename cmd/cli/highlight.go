@@ -41,6 +41,13 @@ func highlightSelected(str string) string {
 	return invert + cleanHighlight(str) + end
 }
 
+func highlightDate(str string) string {
+	// template "\033[3%d;%dm"
+	yellowNormal := "\033[33m"
+	end := "\033[0m"
+	return yellowNormal + cleanHighlight(str) + end
+}
+
 func highlightHost(str string) string {
 	// template "\033[3%d;%dm"
 	redNormal := "\033[31m"
