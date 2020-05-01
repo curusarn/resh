@@ -440,8 +440,15 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 		}
 	}
 
+	// status line
+	topBoxSize := 3 // size of the query box up top
+	realLineLength := maxX - 2
+	printedLineLength := maxX - 4
+	selectedCommand := m.s.data[m.s.highlightedItem].cmdLine
+	var selectedLineCount int = len(selectedCommand)/(printedLineLength) + 1
+
 	for i, itm := range m.s.data {
-		if i == maxY {
+		if i == maxY-topBoxSize-selectedLineCount {
 			if debug {
 				log.Println(maxY)
 			}
@@ -449,7 +456,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 		}
 		displayStr, _ := itm.produceLine(longestFlagsLen)
 		if m.s.highlightedItem == i {
-			// use actual min requried length instead of 420 constant
+			// maxX * 2 because there are escape sequences that make it hard to tell the real string lenght
 			displayStr = doHighlightString(displayStr, maxX*2)
 			if debug {
 				log.Println("### HightlightedItem string :", displayStr)
@@ -468,6 +475,30 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 		// if m.s.highlightedItem == i {
 		// 	v.SetHighlight(m.s.highlightedItem, true)
 		// }
+	}
+	// status line
+	var idxSt, idxEnd int
+	var nextLine bool
+	tab := "    "
+	tabSize := len(tab)
+	for idxSt < len(selectedCommand) {
+		idxEnd = idxSt + printedLineLength
+		if nextLine {
+			idxEnd -= tabSize
+		}
+
+		if idxEnd > len(selectedCommand) {
+			idxEnd = len(selectedCommand)
+		}
+		str := selectedCommand[idxSt:idxEnd]
+
+		indent := " "
+		if nextLine {
+			indent += tab
+		}
+		v.WriteString(highlightStatus(rightCutPadString(indent+str, realLineLength)) + "\n")
+		idxSt += printedLineLength
+		nextLine = true
 	}
 	if debug {
 		log.Println("len(data) =", len(m.s.data))

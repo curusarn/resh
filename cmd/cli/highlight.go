@@ -27,6 +27,12 @@ func cleanHighlight(str string) string {
 	return str
 }
 
+func highlightStatus(str string) string {
+	invert := "\033[7;1m"
+	end := "\033[0m"
+	return invert + cleanHighlight(str) + end
+}
+
 func highlightSelected(str string) string {
 	// template "\033[3%d;%dm"
 	// invertGreen := "\033[32;7;1m"
