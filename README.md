@@ -135,14 +135,13 @@ reshctl update
 
 ### RESH CLI tool
 
-RESH CLI searches your history by commands and directories.  
+RESH CLI searches your history by commands. It uses host, directories, git remote, and exit status to show you relevant results first.  
 
-Directories are not in regular shell history. Because of that RESH CLI will only search shell history recorded by this project.
-This means that you should install this project now and try out RESH CLI in a month or so.
+All this context is not in the regular shell history. RESH CLI will only search shell history that was recorded after you install this project. 
 
-*Please remember that RESH CLI is an early prototype.*
+*Please remember that RESH CLI is a prototype.*
 
-![resh cli](img/screen-resh-cli.png)
+![resh cli](img/screen-resh-cli-v2-6.png)
 
 RESH CLI tool can be bound to ctrl+R or executed directly.
 
