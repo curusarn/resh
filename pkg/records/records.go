@@ -147,6 +147,35 @@ type SlimRecord struct {
 
 }
 
+// CliRecord used for sending records to RESH-CLI
+type CliRecord struct {
+	SessionID string `json:"sessionId"`
+
+	CmdLine         string `json:"cmdLine"`
+	Host            string `json:"host"`
+	Pwd             string `json:"pwd"`
+	Home            string `json:"home"` // helps us to collapse /home/user to tilde
+	GitOriginRemote string `json:"gitOriginRemote"`
+	ExitCode        int    `json:"exitCode"`
+
+	// RealtimeBefore   float64 `json:"realtimeBefore"`
+	// RealtimeAfter    float64 `json:"realtimeAfter"`
+	// RealtimeDuration float64 `json:"realtimeDuration"`
+}
+
+// NewCliRecord from EnrichedRecord
+func NewCliRecord(r EnrichedRecord) CliRecord {
+	return CliRecord{
+		SessionID:       r.SessionID,
+		CmdLine:         r.CmdLine,
+		Host:            r.Host,
+		Pwd:             r.Pwd,
+		Home:            r.Home,
+		GitOriginRemote: r.GitOriginRemote,
+		ExitCode:        r.ExitCode,
+	}
+}
+
 // Convert from FallbackRecord to Record
 func Convert(r *FallbackRecord) Record {
 	return Record{

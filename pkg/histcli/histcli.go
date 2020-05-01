@@ -7,7 +7,7 @@ import (
 // Histcli is a dump of history preprocessed for resh cli purposes
 type Histcli struct {
 	// list of records
-	List []records.EnrichedRecord
+	List []records.CliRecord
 }
 
 // New Histcli
@@ -18,6 +18,7 @@ func New() Histcli {
 // AddRecord to the histcli
 func (h *Histcli) AddRecord(record records.Record) {
 	enriched := records.Enriched(record)
+	cli := records.NewCliRecord(enriched)
 
-	h.List = append(h.List, enriched)
+	h.List = append(h.List, cli)
 }
