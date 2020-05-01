@@ -176,7 +176,7 @@ func newItemFromRecordForQuery(record records.EnrichedRecord, query query, debug
 		location += record.Host + ":"
 		locationWithColor += highlightHost(record.Host) + ":"
 	}
-	const locationLenght = 35
+	const locationLenght = 30
 	// const locationLenght = 20 // small screenshots
 	pwdLength := locationLenght - len(location)
 	pwdTilde := strings.Replace(record.Pwd, record.Home, "~", 1)
