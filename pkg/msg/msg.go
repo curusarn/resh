@@ -2,15 +2,15 @@ package msg
 
 import "github.com/curusarn/resh/pkg/records"
 
-// DumpMsg struct
-type DumpMsg struct {
+// CliMsg struct
+type CliMsg struct {
 	SessionID string `json:"sessionID"`
 	PWD       string `json:"pwd"`
 }
 
-// DumpResponse struct
-type DumpResponse struct {
-	FullRecords []records.EnrichedRecord `json:"fullRecords"`
+// CliResponse struct
+type CliResponse struct {
+	CliRecords []records.CliRecord `json:"cliRecords"`
 }
 
 // InspectMsg struct

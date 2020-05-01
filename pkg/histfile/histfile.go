@@ -27,7 +27,7 @@ type Histfile struct {
 	bashCmdLines histlist.Histlist
 	zshCmdLines  histlist.Histlist
 
-	fullRecords histcli.Histcli
+	cliRecords histcli.Histcli
 }
 
 // New creates new histfile and runs its gorutines
@@ -41,7 +41,7 @@ func New(input chan records.Record, sessionsToDrop chan string,
 		historyPath:  reshHistoryPath,
 		bashCmdLines: histlist.New(),
 		zshCmdLines:  histlist.New(),
-		fullRecords:  histcli.New(),
+		cliRecords:   histcli.New(),
 	}
 	go hf.loadHistory(bashHistoryPath, zshHistoryPath, maxInitHistSize, minInitHistSizeKB)
 	go hf.writer(input, signals, shutdownDone)
@@ -53,7 +53,7 @@ func New(input chan records.Record, sessionsToDrop chan string,
 func (h *Histfile) loadFullRecords(recs []records.Record) {
 	for i := len(recs) - 1; i >= 0; i-- {
 		rec := recs[i]
-		h.fullRecords.AddRecord(rec)
+		h.cliRecords.AddRecord(rec)
 	}
 }
 
@@ -178,7 +178,7 @@ func (h *Histfile) mergeAndWriteRecord(part1, part2 records.Record) {
 		cmdLine := part1.CmdLine
 		h.bashCmdLines.AddCmdLine(cmdLine)
 		h.zshCmdLines.AddCmdLine(cmdLine)
-		h.fullRecords.AddRecord(part1)
+		h.cliRecords.AddRecord(part1)
 	}()
 
 	writeRecord(part1, h.historyPath)
@@ -224,10 +224,10 @@ func (h *Histfile) GetRecentCmdLines(shell string, limit int) histlist.Histlist 
 	return hl
 }
 
-// DumpRecords returns enriched records
-func (h *Histfile) DumpRecords() histcli.Histcli {
+// DumpCliRecords returns enriched records
+func (h *Histfile) DumpCliRecords() histcli.Histcli {
 	// don't forget locks in the future
-	return h.fullRecords
+	return h.cliRecords
 }
 
 func loadCmdLines(recs []records.Record) histlist.Histlist {

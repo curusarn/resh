@@ -96,15 +96,15 @@ func runReshCli() (string, int) {
 	// g.SelBgColor = gocui.ColorGreen
 	g.Highlight = true
 
-	mess := msg.DumpMsg{
+	mess := msg.CliMsg{
 		SessionID: *sessionID,
 		PWD:       *pwd,
 	}
-	resp := SendDumpMsg(mess, strconv.Itoa(config.Port))
+	resp := SendCliMsg(mess, strconv.Itoa(config.Port))
 
 	st := state{
 		// lock sync.Mutex
-		fullRecords:  resp.FullRecords,
+		cliRecords:   resp.CliRecords,
 		initialQuery: *query,
 	}
 
@@ -157,7 +157,7 @@ func runReshCli() (string, int) {
 
 type state struct {
 	lock            sync.Mutex
-	fullRecords     []records.EnrichedRecord
+	cliRecords      []records.CliRecord
 	data            []item
 	rawData         []rawItem
 	highlightedItem int
@@ -210,7 +210,7 @@ type dedupRecord struct {
 func (m manager) UpdateData(input string) {
 	if debug {
 		log.Println("EDIT start")
-		log.Println("len(fullRecords) =", len(m.s.fullRecords))
+		log.Println("len(fullRecords) =", len(m.s.cliRecords))
 		log.Println("len(data) =", len(m.s.data))
 	}
 	query := newQueryFromString(input, m.host, m.pwd, m.gitOriginRemote)
@@ -218,7 +218,7 @@ func (m manager) UpdateData(input string) {
 	itemSet := make(map[string]int)
 	m.s.lock.Lock()
 	defer m.s.lock.Unlock()
-	for _, rec := range m.s.fullRecords {
+	for _, rec := range m.s.cliRecords {
 		itm, err := newItemFromRecordForQuery(rec, query, m.config.Debug)
 		if err != nil {
 			// records didn't match the query
@@ -254,7 +254,7 @@ func (m manager) UpdateData(input string) {
 	}
 	m.s.highlightedItem = 0
 	if debug {
-		log.Println("len(fullRecords) =", len(m.s.fullRecords))
+		log.Println("len(fullRecords) =", len(m.s.cliRecords))
 		log.Println("len(data) =", len(m.s.data))
 		log.Println("EDIT end")
 	}
@@ -263,7 +263,7 @@ func (m manager) UpdateData(input string) {
 func (m manager) UpdateRawData(input string) {
 	if debug {
 		log.Println("EDIT start")
-		log.Println("len(fullRecords) =", len(m.s.fullRecords))
+		log.Println("len(fullRecords) =", len(m.s.cliRecords))
 		log.Println("len(data) =", len(m.s.data))
 	}
 	query := getRawTermsFromString(input)
@@ -271,7 +271,7 @@ func (m manager) UpdateRawData(input string) {
 	itemSet := make(map[string]bool)
 	m.s.lock.Lock()
 	defer m.s.lock.Unlock()
-	for _, rec := range m.s.fullRecords {
+	for _, rec := range m.s.cliRecords {
 		itm, err := newRawItemFromRecordForQuery(rec, query, m.config.Debug)
 		if err != nil {
 			// records didn't match the query
@@ -301,7 +301,7 @@ func (m manager) UpdateRawData(input string) {
 	}
 	m.s.highlightedItem = 0
 	if debug {
-		log.Println("len(fullRecords) =", len(m.s.fullRecords))
+		log.Println("len(fullRecords) =", len(m.s.cliRecords))
 		log.Println("len(data) =", len(m.s.data))
 		log.Println("EDIT end")
 	}
@@ -393,8 +393,8 @@ func quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
 
-// SendDumpMsg to daemon
-func SendDumpMsg(m msg.DumpMsg, port string) msg.DumpResponse {
+// SendCliMsg to daemon
+func SendCliMsg(m msg.CliMsg, port string) msg.CliResponse {
 	recJSON, err := json.Marshal(m)
 	if err != nil {
 		log.Fatal("send err 1", err)
@@ -419,7 +419,7 @@ func SendDumpMsg(m msg.DumpMsg, port string) msg.DumpResponse {
 		log.Fatal("read response error")
 	}
 	// log.Println(string(body))
-	response := msg.DumpResponse{}
+	response := msg.CliResponse{}
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		log.Fatal("unmarshal resp error: ", err)

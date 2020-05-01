@@ -93,7 +93,7 @@ func properMatch(str, term, padChar string) bool {
 
 // newItemFromRecordForQuery creates new item from record based on given query
 //		returns error if the query doesn't match the record
-func newItemFromRecordForQuery(record records.EnrichedRecord, query query, debug bool) (item, error) {
+func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool) (item, error) {
 	const hitScore = 1.0
 	const hitScoreConsecutive = 0.1
 	const properMatchScore = 0.3
@@ -237,7 +237,7 @@ type rawItem struct {
 
 // newRawItemFromRecordForQuery creates new item from record based on given query
 //		returns error if the query doesn't match the record
-func newRawItemFromRecordForQuery(record records.EnrichedRecord, terms []string, debug bool) (rawItem, error) {
+func newRawItemFromRecordForQuery(record records.CliRecord, terms []string, debug bool) (rawItem, error) {
 	const hitScore = 1.0
 	const hitScoreConsecutive = 0.1
 	const properMatchScore = 0.3
