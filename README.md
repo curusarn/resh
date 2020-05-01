@@ -145,7 +145,11 @@ All this context is not in the regular shell history. RESH CLI will only search 
 
 ![resh cli](img/screen-resh-cli-v2-6.png)
 
-RESH CLI tool can be bound to ctrl+R or executed directly.
+Without query RESH CLI shows you the latest history based on current context (host, directory, git).
+
+![resh cli](img/screen-resh-cli-v2-6-no-query.png)
+
+RESH CLI tool can be bound to ctrl+R (recommended) or executed directly.
 
 Enable/disable ctrl+R binding for THIS shell session:
 
