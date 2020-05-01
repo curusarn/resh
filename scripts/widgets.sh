@@ -100,7 +100,8 @@ __resh_widget_control_R() {
     __RESH_HIST_RECALL_ACTIONS="$__RESH_HIST_RECALL_ACTIONS|||control_R:$BUFFER"
 
     local status_code
-    BUFFER=$(resh-cli --sessionID "$__RESH_SESSION_ID" --pwd "$PWD" --query "$BUFFER")
+    local git_remote; git_remote="$(git remote get-url origin 2>/dev/null)"
+    BUFFER=$(resh-cli --sessionID "$__RESH_SESSION_ID" --host "$HOST" --pwd "$PWD" --gitOriginRemote "$git_remote" --query "$BUFFER")
     status_code=$?
     if [ $status_code = 111 ]; then
         # execute
