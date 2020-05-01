@@ -25,7 +25,7 @@ type item struct {
 	cmdLineWithColor string
 	cmdLine          string
 
-	hits float64
+	score float64
 
 	key string
 	// cmdLineRaw string
@@ -33,7 +33,7 @@ type item struct {
 
 func (i item) less(i2 item) bool {
 	// reversed order
-	return i.hits > i2.hits
+	return i.score > i2.score
 }
 
 func (i item) produceLine(flagLength int) (string, int) {
@@ -105,7 +105,7 @@ func newItemFromRecordForQuery(record records.EnrichedRecord, query query, debug
 
 	// nonZeroExitCodeScorePenalty + differentHostScorePenalty
 
-	hits := 0.0
+	score := 0.0
 	anyHit := false
 	cmd := record.CmdLine
 	for _, term := range query.terms {
@@ -113,13 +113,13 @@ func newItemFromRecordForQuery(record records.EnrichedRecord, query query, debug
 		if strings.Contains(record.CmdLine, term) {
 			anyHit = true
 			if termHit == false {
-				hits += hitScore
+				score += hitScore
 			} else {
-				hits += hitScoreConsecutive
+				score += hitScoreConsecutive
 			}
 			termHit = true
 			if properMatch(cmd, term, " ") {
-				hits += properMatchScore
+				score += properMatchScore
 			}
 			cmd = strings.ReplaceAll(cmd, term, highlightMatch(term))
 			// NO continue
@@ -138,32 +138,32 @@ func newItemFromRecordForQuery(record records.EnrichedRecord, query query, debug
 	if record.Pwd == query.pwd {
 		anyHit = true
 		samePwd = true
-		hits += actualPwdScore
+		score += actualPwdScore
 	} else if sameGitRepo {
 		anyHit = true
-		hits += sameGitRepoScore
+		score += sameGitRepoScore
 	}
 
 	differentHost := false
 	if record.Host != query.host {
 		differentHost = true
-		hits -= differentHostScorePenalty
+		score -= differentHostScorePenalty
 	}
 	errorExitStatus := false
 	if record.ExitCode != 0 {
 		errorExitStatus = true
-		hits -= nonZeroExitCodeScorePenalty
+		score -= nonZeroExitCodeScorePenalty
 	}
-	if hits <= 0 && !anyHit {
+	if score <= 0 && !anyHit {
 		return item{}, errors.New("no match for given record and query")
 	}
 
 	// KEY for deduplication
 
 	unlikelySeparator := "|||||"
-	key := record.CmdLine + unlikelySeparator + record.Pwd +
-		unlikelySeparator + strconv.Itoa(record.ExitCode) + unlikelySeparator +
+	key := record.CmdLine + unlikelySeparator + record.Pwd + unlikelySeparator +
 		record.GitOriginRemote + unlikelySeparator + record.Host
+	// + strconv.Itoa(record.ExitCode) + unlikelySeparator
 
 	// DISPLAY
 	// DISPLAY > date
@@ -176,7 +176,8 @@ func newItemFromRecordForQuery(record records.EnrichedRecord, query query, debug
 		location += record.Host + ":"
 		locationWithColor += highlightHost(record.Host) + ":"
 	}
-	const locationLenght = 30
+	const locationLenght = 35
+	// const locationLenght = 20 // small screenshots
 	pwdLength := locationLenght - len(location)
 	pwdTilde := strings.Replace(record.Pwd, record.Home, "~", 1)
 	location += leftCutPadString(pwdTilde, pwdLength)
@@ -190,7 +191,7 @@ func newItemFromRecordForQuery(record records.EnrichedRecord, query query, debug
 	flags := ""
 	flagsWithColor := ""
 	if debug {
-		hitsStr := fmt.Sprintf("%.1f", hits)
+		hitsStr := fmt.Sprintf("%.1f", score)
 		flags += " S" + hitsStr
 	}
 	if sameGitRepo {
@@ -215,7 +216,7 @@ func newItemFromRecordForQuery(record records.EnrichedRecord, query query, debug
 		flagsWithColor:    flagsWithColor,
 		cmdLine:           cmdLine,
 		cmdLineWithColor:  cmdLineWithColor,
-		hits:              hits,
+		score:             score,
 		key:               key,
 	}
 	return it, nil

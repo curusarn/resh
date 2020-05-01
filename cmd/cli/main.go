@@ -92,7 +92,7 @@ func runReshCli() (string, int) {
 	defer g.Close()
 
 	g.Cursor = true
-	g.SelFgColor = gocui.ColorGreen
+	// g.SelFgColor = gocui.ColorGreen
 	// g.SelBgColor = gocui.ColorGreen
 	g.Highlight = true
 
@@ -202,6 +202,11 @@ func (m manager) SelectPaste(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+type dedupRecord struct {
+	dataIndex int
+	score     float32
+}
+
 func (m manager) UpdateData(input string) {
 	if debug {
 		log.Println("EDIT start")
@@ -210,7 +215,7 @@ func (m manager) UpdateData(input string) {
 	}
 	query := newQueryFromString(input, m.host, m.pwd, m.gitOriginRemote)
 	var data []item
-	itemSet := make(map[string]bool)
+	itemSet := make(map[string]int)
 	m.s.lock.Lock()
 	defer m.s.lock.Unlock()
 	for _, rec := range m.s.fullRecords {
@@ -220,19 +225,25 @@ func (m manager) UpdateData(input string) {
 			// log.Println(" * continue (no match)", rec.Pwd)
 			continue
 		}
-		if itemSet[itm.key] {
-			// log.Println(" * continue (already present)", itm.key(), itm.pwd)
+		if idx, ok := itemSet[itm.key]; ok {
+			// duplicate found
+			if data[idx].score >= itm.score {
+				// skip duplicate item
+				continue
+			}
+			// update duplicate item
+			data[idx] = itm
 			continue
 		}
-		itemSet[itm.key] = true
+		// add new item
+		itemSet[itm.key] = len(data)
 		data = append(data, itm)
-		// log.Println("DATA =", itm.display)
 	}
 	if debug {
 		log.Println("len(tmpdata) =", len(data))
 	}
 	sort.SliceStable(data, func(p, q int) bool {
-		return data[p].hits > data[q].hits
+		return data[p].score > data[q].score
 	})
 	m.s.data = nil
 	for _, itm := range data {
@@ -348,9 +359,9 @@ func (m manager) Layout(g *gocui.Gui) error {
 	v.Editable = true
 	v.Editor = m
 	if m.s.rawMode {
-		v.Title = " RESH CLI - NON-CONTEXTUAL \"RAW\" MODE "
+		v.Title = " RESH CLI - NON-CONTEXTUAL \"RAW\" MODE - (CTRL+R to switch BACK) "
 	} else {
-		v.Title = " RESH CLI - CONTEXTUAL MODE "
+		v.Title = " RESH CLI - CONTEXTUAL MODE - (CTRL+R to switch to RAW MODE) "
 	}
 
 	g.SetCurrentView("input")

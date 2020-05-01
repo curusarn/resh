@@ -77,3 +77,12 @@ func doHighlightString(str string, minLength int) string {
 	}
 	return highlightSelected(str)
 }
+
+// EXTRAS
+
+func highlightModeTitle(str string) string {
+	// template "\033[3%d;%dm"
+	greenNormal := "\033[32;1m"
+	end := "\033[0m"
+	return greenNormal + cleanHighlight(str) + end
+}
