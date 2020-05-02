@@ -64,46 +64,46 @@ func formatDatetime(tm time.Time) string {
 	tmSince := time.Since(tm)
 	hrs := tmSince.Hours()
 	yrs := int(hrs / (365 * 24))
-	if yrs > 1 {
+	if yrs > 0 {
+		if yrs == 1 {
+			return "1 year ago"
+		}
 		return strconv.Itoa(yrs) + " years ago"
 	}
-	if yrs == 1 {
-		return "1 year ago"
-	}
 	months := int(hrs / (30 * 24))
-	if months > 1 {
+	if months > 0 {
+		if months == 1 {
+			return "1 month ago"
+		}
 		return strconv.Itoa(months) + " months ago"
 	}
-	if months == 1 {
-		return "1 month ago"
-	}
 	days := int(hrs / 24)
-	if days > 1 {
+	if days > 0 {
+		if days == 1 {
+			return "1 day ago"
+		}
 		return strconv.Itoa(days) + " days ago"
 	}
-	if days == 1 {
-		return "1 day ago"
-	}
 	hrsInt := int(hrs)
-	if hrsInt > 1 {
+	if hrsInt > 0 {
+		if hrsInt == 1 {
+			return "1 hour ago"
+		}
 		return strconv.Itoa(hrsInt) + " hours ago"
 	}
-	if hrsInt == 1 {
-		return "1 hour ago"
-	}
 	mins := int(hrs * 60)
-	if mins > 1 {
+	if mins > 0 {
+		if mins == 1 {
+			return "1 min ago"
+		}
 		return strconv.Itoa(mins) + " mins ago"
 	}
-	if mins == 1 {
-		return "1 min ago"
-	}
 	secs := int(hrs * 60 * 60)
-	if secs > 1 {
+	if secs > 0 {
+		if secs == 1 {
+			return "1 sec ago"
+		}
 		return strconv.Itoa(secs) + " secs ago"
-	}
-	if secs == 1 {
-		return "1 sec ago"
 	}
 	return "now"
 }
