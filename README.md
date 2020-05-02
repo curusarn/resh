@@ -54,20 +54,20 @@ Imagine being able to search your shell history based on both the command itself
 - :heavy_check_mark: Record shell history with metadata
   - :heavy_check_mark: save it as JSON to `~/.resh_history.json`
 
-- :white_check_mark: Provide bindings for arrow keys
-  - :heavy_check_mark: imitate default behaviour
-  - :heavy_check_mark: save additional metadata (e.g. command was recalled using arrow keys)
-  - :x: use the context (metadata) when searching
-  - :heavy_check_mark: zsh
-  - :white_check_mark: bash *(performance issues)*
-
-- :white_check_mark: Provide an app to search the history (launch it using `resh`)
+- :white_check_mark: Provide an app to search the history
   - :heavy_check_mark: provide binding for Control+R (enable it using `reshctl enable ctrl_r_binding_global`)
   - :heavy_check_mark: use current context when searching
   - :heavy_check_mark: allow searching completely without context
   - :x: allow listing details for individual commands
   - :x: include a help page with keybindings and onboarding in the app
   - :x: allow explicitly searching by metadata
+
+- :white_check_mark: Provide bindings for arrow keys
+  - :heavy_check_mark: imitate default behaviour
+  - :heavy_check_mark: save additional metadata (e.g. command was recalled using arrow keys)
+  - :x: use the context (metadata) when searching
+  - :heavy_check_mark: zsh
+  - :white_check_mark: bash *(performance issues)*
 
 - :heavy_check_mark: Provide a `reshctl` utility to control and interact with the project
   - :heavy_check_mark: zsh completion
