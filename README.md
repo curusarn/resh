@@ -112,19 +112,6 @@ curl -fsSL https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawins
 1. Run `git clone https://github.com/curusarn/resh.git && cd resh`
 2. Run `scripts/rawinstall.sh`
 
-## Data sanitization and analysis
-
-In order to be able to develop a good history tool I will need to get some insight into real life shell and shell history usage patterns.
-
-This project is also my Master thesis so I need to be a bit scientific and base my design decisions on evidence/data.
-
-Running `reshctl sanitize` creates a sanitized version of recorded history.  
-In sanitized history, all sensitive information is replaced with its SHA256 hashes.
-
-If you tried sanitizing your history and you think the result is not sanitized enough then please create an issue or message me.
-
-If you would consider supporting my research/thesis by sending me a sanitized version of your history then please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98
-
 ## Examples
 
 ### Update
@@ -141,7 +128,7 @@ RESH CLI searches your history by commands. It uses host, directories, git remot
 
 All this context is not in the regular shell history. RESH CLI will only search shell history that was recorded after you install this project. 
 
-*Please remember that RESH CLI is a prototype.*
+*I use RESH CLI everyday but please remember that it is still a prototype.*
 
 ![resh cli](img/screen-resh-cli-v2-6.png)
 
@@ -220,6 +207,19 @@ You can install `jq` using your favourite package manager or you can use other J
 ![screenshot](img/screen.png)
 
 *Recorded metadata will be reduced to only include useful information in the future.*
+
+## Data sanitization and analysis
+
+In order to be able to develop a good history tool I will need to get some insight into real life shell and shell history usage patterns.
+
+This project is also my Master thesis so I need to be a bit scientific and base my design decisions on evidence/data.
+
+Running `reshctl sanitize` creates a sanitized version of recorded history.  
+In sanitized history, all sensitive information is replaced with its SHA256 hashes.
+
+If you tried sanitizing your history and you think the result is not sanitized enough then please create an issue or message me.
+
+If you would consider supporting my research/thesis by sending me a sanitized version of your history then please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98
 
 ## Known issues
 
