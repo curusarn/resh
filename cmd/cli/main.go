@@ -133,21 +133,23 @@ func runReshCli() (string, int) {
 	if err := g.SetKeybinding("", gocui.KeyCtrlP, gocui.ModNone, layout.Prev); err != nil {
 		log.Panicln(err)
 	}
+
+	if err := g.SetKeybinding("", gocui.KeyArrowRight, gocui.ModNone, layout.SelectPaste); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding("", gocui.KeyEnter, gocui.ModNone, layout.SelectExecute); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding("", gocui.KeyCtrlG, gocui.ModNone, layout.AbortPaste); err != nil {
+		log.Panicln(err)
+	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlD, gocui.ModNone, quit); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("", gocui.KeyEnter, gocui.ModNone, layout.SelectExecute); err != nil {
-		log.Panicln(err)
-	}
-	if err := g.SetKeybinding("", gocui.KeyArrowRight, gocui.ModNone, layout.SelectPaste); err != nil {
-		log.Panicln(err)
-	}
-	if err := g.SetKeybinding("", gocui.KeyCtrlG, gocui.ModNone, layout.AbortPaste); err != nil {
-		log.Panicln(err)
-	}
+
 	if err := g.SetKeybinding("", gocui.KeyCtrlR, gocui.ModNone, layout.SwitchModes); err != nil {
 		log.Panicln(err)
 	}
@@ -439,14 +441,18 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 	printedLineLength := maxX - 4
 	selectedCommand := m.s.data[m.s.highlightedItem].cmdLine
 	var statusLineHeight int = len(selectedCommand)/(printedLineLength) + 1
-	statusLineHeight++ // help line
 
-	m.s.displayedItemsCount = maxY - topBoxHeight - statusLineHeight
+	helpLineHeight := 1
+	const helpLine = "HELP: type to search, UP/DOWN to select, RIGHT to edit, ENTER to execute, CTRL+G to abort, CTRL+C/D to quit; " +
+		"TIP: when resh-cli is launched command line is used as initial search query"
+
+	mainViewHeight := maxY - topBoxHeight - statusLineHeight - helpLineHeight
+	m.s.displayedItemsCount = mainViewHeight
 
 	var index int
 	for index < len(data) {
 		itm := data[index]
-		if index == maxY-topBoxHeight-statusLineHeight {
+		if index == mainViewHeight {
 			// page is full
 			break
 		}
@@ -472,7 +478,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 		index++
 	}
 	// push the status line to the bottom of the page
-	for index < maxY-topBoxHeight-statusLineHeight {
+	for index < mainViewHeight {
 		v.WriteString("\n")
 		index++
 	}
@@ -500,7 +506,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 		idxSt += printedLineLength
 		nextLine = true
 	}
-	v.WriteString("HELP: type to search, UP/DOWN to select, RIGHT to edit, ENTER to execute, CTRL+G to abort, CTRL+C/D to quit")
+	v.WriteString(helpLine)
 	if debug {
 		log.Println("len(data) =", len(m.s.data))
 		log.Println("highlightedItem =", m.s.highlightedItem)
