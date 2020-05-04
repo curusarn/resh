@@ -434,18 +434,19 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 		m.s.highlightedItem = len(m.s.data) - 1
 	}
 	// status line
-	topBoxSize := 3 // size of the query box up top
+	topBoxHeight := 3 // size of the query box up top
 	realLineLength := maxX - 2
 	printedLineLength := maxX - 4
 	selectedCommand := m.s.data[m.s.highlightedItem].cmdLine
-	var selectedLineCount int = len(selectedCommand)/(printedLineLength) + 1
+	var statusLineHeight int = len(selectedCommand)/(printedLineLength) + 1
+	statusLineHeight++ // help line
 
-	m.s.displayedItemsCount = maxY - topBoxSize - selectedLineCount
+	m.s.displayedItemsCount = maxY - topBoxHeight - statusLineHeight
 
 	var index int
 	for index < len(data) {
 		itm := data[index]
-		if index == maxY-topBoxSize-selectedLineCount {
+		if index == maxY-topBoxHeight-statusLineHeight {
 			// page is full
 			break
 		}
@@ -471,7 +472,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 		index++
 	}
 	// push the status line to the bottom of the page
-	for index < maxY-topBoxSize-selectedLineCount {
+	for index < maxY-topBoxHeight-statusLineHeight {
 		v.WriteString("\n")
 		index++
 	}
@@ -499,6 +500,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 		idxSt += printedLineLength
 		nextLine = true
 	}
+	v.WriteString("HELP: type to search, UP/DOWN to select, RIGHT to edit, ENTER to execute, CTRL+G to abort, CTRL+C/D to quit")
 	if debug {
 		log.Println("len(data) =", len(m.s.data))
 		log.Println("highlightedItem =", m.s.highlightedItem)
