@@ -412,10 +412,13 @@ func quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
 
-func getHeader() itemColumns {
+func getHeader(compactRendering bool) itemColumns {
 	date := "TIME "
 	host := "HOST:"
 	dir := "DIRECTORY"
+	if compactRendering {
+		dir = "DIR"
+	}
 	flags := " FLAGS"
 	cmdLine := "COMMAND-LINE"
 	return itemColumns{
@@ -434,12 +437,19 @@ func getHeader() itemColumns {
 	}
 }
 
+const smallTerminalTresholdWidth = 110
+
 func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 	maxX, maxY := g.Size()
 
+	compactRenderingMode := false
+	if maxX < smallTerminalTresholdWidth {
+		compactRenderingMode = true
+	}
+
 	data := []itemColumns{}
 
-	header := getHeader()
+	header := getHeader(compactRenderingMode)
 	longestDateLen := len(header.date)
 	longestLocationLen := len(header.host) + len(header.pwdTilde)
 	longestFlagsLen := 2
@@ -447,7 +457,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 		if i == maxY {
 			break
 		}
-		ic := itm.drawItemColumns()
+		ic := itm.drawItemColumns(compactRenderingMode)
 		data = append(data, ic)
 		if len(ic.date) > longestDateLen {
 			longestDateLen = len(ic.date)
@@ -459,8 +469,9 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 			longestFlagsLen = len(ic.flags)
 		}
 	}
-	if longestLocationLen > maxX/5 {
-		longestLocationLen = maxX / 5
+	maxLocationLen := maxX/7 + 8
+	if longestLocationLen > maxLocationLen {
+		longestLocationLen = maxLocationLen
 	}
 
 	if m.s.highlightedItem >= len(m.s.data) {
@@ -498,7 +509,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 		displayStr, _ := itm.produceLine(longestDateLen, longestLocationLen, longestFlagsLen, true)
 		if m.s.highlightedItem == index {
 			// maxX * 2 because there are escape sequences that make it hard to tell the real string lenght
-			displayStr = doHighlightString(displayStr, maxX*2)
+			displayStr = doHighlightString(displayStr, maxX*3)
 			if debug {
 				log.Println("### HightlightedItem string :", displayStr)
 			}

@@ -65,68 +65,20 @@ func (i item) less(i2 item) bool {
 	// reversed order
 	return i.score > i2.score
 }
-
-func formatDatetime(tm time.Time) string {
-	tmSince := time.Since(tm)
-	hrs := tmSince.Hours()
-	yrs := int(hrs / (365 * 24))
-	if yrs > 0 {
-		if yrs == 1 {
-			return "1 year ago"
-		}
-		return strconv.Itoa(yrs) + " years ago"
-	}
-	months := int(hrs / (30 * 24))
-	if months > 0 {
-		if months == 1 {
-			return "1 month ago"
-		}
-		return strconv.Itoa(months) + " months ago"
-	}
-	days := int(hrs / 24)
-	if days > 0 {
-		if days == 1 {
-			return "1 day ago"
-		}
-		return strconv.Itoa(days) + " days ago"
-	}
-	hrsInt := int(hrs)
-	if hrsInt > 0 {
-		if hrsInt == 1 {
-			return "1 hour ago"
-		}
-		return strconv.Itoa(hrsInt) + " hours ago"
-	}
-	mins := int(hrs * 60)
-	if mins > 0 {
-		if mins == 1 {
-			return "1 min ago"
-		}
-		return strconv.Itoa(mins) + " mins ago"
-	}
-	secs := int(hrs * 60 * 60)
-	if secs > 0 {
-		if secs == 1 {
-			return "1 sec ago"
-		}
-		return strconv.Itoa(secs) + " secs ago"
-	}
-	return "now"
-}
-
-func (i item) drawItemColumns() itemColumns {
+func (i item) drawItemColumns(compactRendering bool) itemColumns {
 
 	// DISPLAY
 	// DISPLAY > date
 	secs := int64(i.realtimeBefore)
 	nsecs := int64((i.realtimeBefore - float64(secs)) * 1e9)
 	tm := time.Unix(secs, nsecs)
-	//date := tm.Format("2006-01-02 15:04 ")
-	// dateLength := len("12 months ago ") // longest date
-	date := formatDatetime(tm) + " "
-	// for len(date) < dateLength {
-	// 	date = " " + date
-	// }
+
+	var date string
+	if compactRendering {
+		date = formatTimeRelativeShort(tm) + " "
+	} else {
+		date = formatTimeRelativeLong(tm) + " "
+	}
 	dateWithColor := highlightDate(date)
 
 	// DISPLAY > location
