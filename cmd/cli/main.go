@@ -468,6 +468,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 	}
 	// status line
 	topBoxHeight := 3 // size of the query box up top
+	topBoxHeight++    // headers
 	realLineLength := maxX - 2
 	printedLineLength := maxX - 4
 	selectedCommand := m.s.data[m.s.highlightedItem].cmdLine
