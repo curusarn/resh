@@ -136,9 +136,6 @@ func runReshCli() (string, int) {
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("", gocui.KeyCtrlG, gocui.ModNone, quit); err != nil {
-		log.Panicln(err)
-	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlD, gocui.ModNone, quit); err != nil {
 		log.Panicln(err)
 	}
@@ -146,6 +143,9 @@ func runReshCli() (string, int) {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyArrowRight, gocui.ModNone, layout.SelectPaste); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding("", gocui.KeyCtrlG, gocui.ModNone, layout.AbortPaste); err != nil {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlR, gocui.ModNone, layout.SwitchModes); err != nil {
@@ -203,6 +203,17 @@ func (m manager) SelectPaste(g *gocui.Gui, v *gocui.View) error {
 	defer m.s.lock.Unlock()
 	if m.s.highlightedItem < len(m.s.data) {
 		m.s.output = m.s.data[m.s.highlightedItem].cmdLine
+		m.s.exitCode = 0 // success
+		return gocui.ErrQuit
+	}
+	return nil
+}
+
+func (m manager) AbortPaste(g *gocui.Gui, v *gocui.View) error {
+	m.s.lock.Lock()
+	defer m.s.lock.Unlock()
+	if m.s.highlightedItem < len(m.s.data) {
+		m.s.output = v.Buffer()
 		m.s.exitCode = 0 // success
 		return gocui.ErrQuit
 	}
@@ -398,41 +409,6 @@ func (m manager) Layout(g *gocui.Gui) error {
 func quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
-
-// SendCliMsg to daemon
-func SendCliMsg(m msg.CliMsg, port string) msg.CliResponse {
-	recJSON, err := json.Marshal(m)
-	if err != nil {
-		log.Fatal("send err 1", err)
-	}
-
-	req, err := http.NewRequest("POST", "http://localhost:"+port+"/dump",
-		bytes.NewBuffer(recJSON))
-	if err != nil {
-		log.Fatal("send err 2", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal("resh-daemon is not running :(")
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal("read response error")
-	}
-	// log.Println(string(body))
-	response := msg.CliResponse{}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		log.Fatal("unmarshal resp error: ", err)
-	}
-	return response
-}
-
 func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 	maxX, maxY := g.Size()
 
@@ -569,4 +545,38 @@ func (m manager) rawMode(g *gocui.Gui, v *gocui.View) error {
 		log.Println("highlightedItem =", m.s.highlightedItem)
 	}
 	return nil
+}
+
+// SendCliMsg to daemon
+func SendCliMsg(m msg.CliMsg, port string) msg.CliResponse {
+	recJSON, err := json.Marshal(m)
+	if err != nil {
+		log.Fatal("send err 1", err)
+	}
+
+	req, err := http.NewRequest("POST", "http://localhost:"+port+"/dump",
+		bytes.NewBuffer(recJSON))
+	if err != nil {
+		log.Fatal("send err 2", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal("resh-daemon is not running :(")
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal("read response error")
+	}
+	// log.Println(string(body))
+	response := msg.CliResponse{}
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		log.Fatal("unmarshal resp error: ", err)
+	}
+	return response
 }
