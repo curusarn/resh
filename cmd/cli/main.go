@@ -124,7 +124,13 @@ func runReshCli() (string, int) {
 	if err := g.SetKeybinding("", gocui.KeyArrowDown, gocui.ModNone, layout.Next); err != nil {
 		log.Panicln(err)
 	}
+	if err := g.SetKeybinding("", gocui.KeyCtrlN, gocui.ModNone, layout.Next); err != nil {
+		log.Panicln(err)
+	}
 	if err := g.SetKeybinding("", gocui.KeyArrowUp, gocui.ModNone, layout.Prev); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding("", gocui.KeyCtrlP, gocui.ModNone, layout.Prev); err != nil {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
@@ -448,6 +454,9 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 		}
 	}
 
+	if m.s.highlightedItem >= len(m.s.data) {
+		m.s.highlightedItem = len(m.s.data) - 1
+	}
 	// status line
 	topBoxSize := 3 // size of the query box up top
 	realLineLength := maxX - 2
@@ -457,15 +466,16 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 
 	m.s.displayedItemsCount = maxY - topBoxSize - selectedLineCount
 
-	for i, itm := range data {
-		if i == maxY-topBoxSize-selectedLineCount {
-			if debug {
-				log.Println(maxY)
-			}
+	var index int
+	for index < len(data) {
+		itm := data[index]
+		if index == maxY-topBoxSize-selectedLineCount {
+			// page is full
 			break
 		}
+
 		displayStr, _ := itm.produceLine(longestDateLen, longestFlagsLen, true)
-		if m.s.highlightedItem == i {
+		if m.s.highlightedItem == index {
 			// maxX * 2 because there are escape sequences that make it hard to tell the real string lenght
 			displayStr = doHighlightString(displayStr, maxX*2)
 			if debug {
@@ -482,9 +492,12 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 			}
 		}
 		v.WriteString(displayStr + "\n")
-		// if m.s.highlightedItem == i {
-		// 	v.SetHighlight(m.s.highlightedItem, true)
-		// }
+		index++
+	}
+	// push the status line to the bottom of the page
+	for index < maxY-topBoxSize-selectedLineCount {
+		v.WriteString("\n")
+		index++
 	}
 	// status line
 	var idxSt, idxEnd int
