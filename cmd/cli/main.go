@@ -411,13 +411,38 @@ func (m manager) Layout(g *gocui.Gui) error {
 func quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
+
+func getHeader() itemColumns {
+	date := "TIME "
+	host := "HOST:"
+	dir := "DIRECTORY"
+	flags := " FLAGS"
+	cmdLine := "COMMAND-LINE"
+	return itemColumns{
+		date:             date,
+		dateWithColor:    date,
+		host:             host,
+		hostWithColor:    host,
+		pwdTilde:         dir,
+		samePwd:          false,
+		flags:            flags,
+		flagsWithColor:   flags,
+		cmdLine:          cmdLine,
+		cmdLineWithColor: cmdLine,
+		// score:             i.score,
+		key: "_HEADERS_",
+	}
+}
+
 func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 	maxX, maxY := g.Size()
 
-	var data []itemColumns
+	data := []itemColumns{}
 
-	longestDateLen := 0  // at least 0
-	longestFlagsLen := 2 // at least 2
+	header := getHeader()
+	longestDateLen := len(header.date)
+	longestLocationLen := len(header.host) + len(header.pwdTilde)
+	longestFlagsLen := 2
 	for i, itm := range m.s.data {
 		if i == maxY {
 			break
@@ -427,9 +452,15 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 		if len(ic.date) > longestDateLen {
 			longestDateLen = len(ic.date)
 		}
+		if len(ic.host)+len(ic.pwdTilde) > longestLocationLen {
+			longestLocationLen = len(ic.host) + len(ic.pwdTilde)
+		}
 		if len(ic.flags) > longestFlagsLen {
 			longestFlagsLen = len(ic.flags)
 		}
+	}
+	if longestLocationLen > maxX/5 {
+		longestLocationLen = maxX / 5
 	}
 
 	if m.s.highlightedItem >= len(m.s.data) {
@@ -449,6 +480,12 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 	mainViewHeight := maxY - topBoxHeight - statusLineHeight - helpLineHeight
 	m.s.displayedItemsCount = mainViewHeight
 
+	// header
+	// header := getHeader()
+	dispStr, _ := header.produceLine(longestDateLen, longestLocationLen, longestFlagsLen, true)
+	dispStr = doHighlightHeader(dispStr, maxX*2)
+	v.WriteString(dispStr + "\n")
+
 	var index int
 	for index < len(data) {
 		itm := data[index]
@@ -457,7 +494,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 			break
 		}
 
-		displayStr, _ := itm.produceLine(longestDateLen, longestFlagsLen, true)
+		displayStr, _ := itm.produceLine(longestDateLen, longestLocationLen, longestFlagsLen, true)
 		if m.s.highlightedItem == index {
 			// maxX * 2 because there are escape sequences that make it hard to tell the real string lenght
 			displayStr = doHighlightString(displayStr, maxX*2)

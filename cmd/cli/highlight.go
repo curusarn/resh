@@ -27,6 +27,13 @@ func cleanHighlight(str string) string {
 	return str
 }
 
+func highlightHeader(str string) string {
+	underline := "\033[4m"
+	end := "\033[0m"
+	// no clean highlight
+	return underline + str + end
+}
+
 func highlightStatus(str string) string {
 	invert := "\033[7;1m"
 	end := "\033[0m"
@@ -82,6 +89,13 @@ func highlightGit(str string) string {
 	greenBold := "\033[32;1m"
 	end := "\033[0m"
 	return greenBold + cleanHighlight(str) + end
+}
+
+func doHighlightHeader(str string, minLength int) string {
+	if len(str) < minLength {
+		str = str + strings.Repeat(" ", minLength-len(str))
+	}
+	return highlightHeader(str)
 }
 
 func doHighlightString(str string, minLength int) string {

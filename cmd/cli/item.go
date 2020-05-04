@@ -11,6 +11,8 @@ import (
 	"github.com/curusarn/resh/pkg/records"
 )
 
+const itemLocationLenght = 30
+
 type item struct {
 	realtimeBefore float64
 
@@ -39,8 +41,12 @@ type itemColumns struct {
 	date          string
 
 	// [host:]pwd
-	locationWithColor string
-	location          string
+	hostWithColor string
+	host          string
+	pwdTilde      string
+	samePwd       bool
+	//locationWithColor string
+	//location          string
 
 	// [G] [E#]
 	flagsWithColor string
@@ -124,22 +130,15 @@ func (i item) drawItemColumns() itemColumns {
 	dateWithColor := highlightDate(date)
 
 	// DISPLAY > location
-	location := ""
-	locationWithColor := ""
+	// DISPLAY > location > host
+	host := ""
+	hostWithColor := ""
 	if i.differentHost {
-		location += i.host + ":"
-		locationWithColor += highlightHost(i.host) + ":"
+		host += i.host + ":"
+		hostWithColor += highlightHost(i.host) + ":"
 	}
-	const locationLenght = 30
-	// const locationLenght = 20 // small screenshots
-	pwdLength := locationLenght - len(location)
+	// DISPLAY > location > directory
 	pwdTilde := strings.Replace(i.pwd, i.home, "~", 1)
-	location += leftCutPadString(pwdTilde, pwdLength)
-	if i.samePwd {
-		locationWithColor += highlightPwd(leftCutPadString(pwdTilde, pwdLength))
-	} else {
-		locationWithColor += leftCutPadString(pwdTilde, pwdLength)
-	}
 
 	// DISPLAY > flags
 	flags := ""
@@ -160,20 +159,22 @@ func (i item) drawItemColumns() itemColumns {
 	// flags += " <" + record.GitOriginRemote + ">"
 	// flagsWithColor += " <" + record.GitOriginRemote + ">"
 	return itemColumns{
-		date:              date,
-		dateWithColor:     dateWithColor,
-		location:          location,
-		locationWithColor: locationWithColor,
-		flags:             flags,
-		flagsWithColor:    flagsWithColor,
-		cmdLine:           i.cmdLine,
-		cmdLineWithColor:  i.cmdLineWithColor,
+		date:             date,
+		dateWithColor:    dateWithColor,
+		host:             host,
+		hostWithColor:    hostWithColor,
+		pwdTilde:         pwdTilde,
+		samePwd:          i.samePwd,
+		flags:            flags,
+		flagsWithColor:   flagsWithColor,
+		cmdLine:          i.cmdLine,
+		cmdLineWithColor: i.cmdLineWithColor,
 		// score:             i.score,
 		key: i.key,
 	}
 }
 
-func (ic itemColumns) produceLine(dateLength int, flagLength int, showDate bool) (string, int) {
+func (ic itemColumns) produceLine(dateLength int, locationLength int, flagLength int, showDate bool) (string, int) {
 	line := ""
 	if showDate {
 		date := ic.date
@@ -181,9 +182,18 @@ func (ic itemColumns) produceLine(dateLength int, flagLength int, showDate bool)
 			line += " "
 			date += " "
 		}
+		// TODO: use strings.Repeat
 		line += ic.dateWithColor
 	}
-	line += ic.locationWithColor
+	// LOCATION
+	locationWithColor := ic.hostWithColor
+	pwdLength := locationLength - len(ic.host)
+	if ic.samePwd {
+		locationWithColor += highlightPwd(leftCutPadString(ic.pwdTilde, pwdLength))
+	} else {
+		locationWithColor += leftCutPadString(ic.pwdTilde, pwdLength)
+	}
+	line += locationWithColor
 	line += ic.flagsWithColor
 	flags := ic.flags
 	if flagLength < len(ic.flags) {
@@ -201,7 +211,7 @@ func (ic itemColumns) produceLine(dateLength int, flagLength int, showDate bool)
 	}
 	line += spacer + ic.cmdLineWithColor
 
-	length := len(ic.location) + flagLength + len(spacer) + len(ic.cmdLine)
+	length := dateLength + locationLength + flagLength + len(spacer) + len(ic.cmdLine)
 	return line, length
 }
 
