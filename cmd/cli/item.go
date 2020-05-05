@@ -126,7 +126,7 @@ func (i item) drawItemColumns(compactRendering bool) itemColumns {
 	}
 }
 
-func (ic itemColumns) produceLine(dateLength int, locationLength int, flagLength int, showDate bool) (string, int) {
+func (ic itemColumns) produceLine(dateLength int, locationLength int, flagLength int, header bool, showDate bool) (string, int) {
 	line := ""
 	if showDate {
 		date := ic.date
@@ -156,7 +156,7 @@ func (ic itemColumns) produceLine(dateLength int, locationLength int, flagLength
 		flags += " "
 	}
 	spacer := "  "
-	if flagLength > 5 {
+	if flagLength > 5 || header {
 		// use shorter spacer
 		// 		because there is likely a long flag like E130 in the view
 		spacer = " "

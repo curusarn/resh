@@ -453,12 +453,17 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 	longestDateLen := len(header.date)
 	longestLocationLen := len(header.host) + len(header.pwdTilde)
 	longestFlagsLen := 2
+	maxPossibleMainViewHeight := maxY - 3 - 1 - 1 - 1 // - top box - header - status - help
 	for i, itm := range m.s.data {
 		if i == maxY {
 			break
 		}
 		ic := itm.drawItemColumns(compactRenderingMode)
 		data = append(data, ic)
+		if i > maxPossibleMainViewHeight {
+			// do not stretch columns because of results that will end up outside of the page
+			continue
+		}
 		if len(ic.date) > longestDateLen {
 			longestDateLen = len(ic.date)
 		}
@@ -494,7 +499,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 
 	// header
 	// header := getHeader()
-	dispStr, _ := header.produceLine(longestDateLen, longestLocationLen, longestFlagsLen, true)
+	dispStr, _ := header.produceLine(longestDateLen, longestLocationLen, longestFlagsLen, true, true)
 	dispStr = doHighlightHeader(dispStr, maxX*2)
 	v.WriteString(dispStr + "\n")
 
@@ -506,7 +511,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 			break
 		}
 
-		displayStr, _ := itm.produceLine(longestDateLen, longestLocationLen, longestFlagsLen, true)
+		displayStr, _ := itm.produceLine(longestDateLen, longestLocationLen, longestFlagsLen, false, true)
 		if m.s.highlightedItem == index {
 			// maxX * 2 because there are escape sequences that make it hard to tell the real string lenght
 			displayStr = doHighlightString(displayStr, maxX*3)
