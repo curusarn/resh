@@ -55,28 +55,30 @@ Imagine being able to search your shell history based on both the command itself
   - :heavy_check_mark: save it as JSON to `~/.resh_history.json`
 
 - :white_check_mark: Provide an app to search the history
-  - :heavy_check_mark: provide binding for Control+R (enable it using `reshctl enable ctrl_r_binding_global`)
-  - :heavy_check_mark: use current context when searching (host, directory, git, exit status)
+  - :heavy_check_mark: launch with CTRL+R (enable it using `reshctl enable ctrl_r_binding_global`)
+  - :heavy_check_mark: search by keywords
+  - :heavy_check_mark: relevant results show up first based on context (host, directory, git, exit status)
   - :heavy_check_mark: allow searching completely without context ("raw" mode)
+  - :white_check_mark: include a help page with keybindings and onboarding in the app
   - :x: import and search history from before RESH was installed
   - :x: allow listing details for individual commands
-  - :x: include a help page with keybindings and onboarding in the app
   - :x: allow explicitly searching by metadata
 
 - :white_check_mark: Provide bindings for arrow keys
   - :heavy_check_mark: imitate default behaviour
   - :heavy_check_mark: save additional metadata (e.g. command was recalled using arrow keys)
-  - :x: use the context (metadata) when searching
+  - :x: use arrow down for easy sequence repeating
   - :heavy_check_mark: zsh
   - :white_check_mark: bash *(performance issues)*
 
 - :heavy_check_mark: Provide a `reshctl` utility to control and interact with the project
+  - :heavy_check_mark: turn on/off resh key bindings
   - :heavy_check_mark: zsh completion
   - :heavy_check_mark: bash completion
 
 - :x: Multi-device history
   - :x: Synchronize recorded history between devices
-  - :x: Allow proxying history when ssh'ing to remote servers
+  - :x: Allow proxying history when ssh'ing into remote servers
 
 - :x: Provide a stable API to make resh extensible
 
