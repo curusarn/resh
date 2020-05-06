@@ -23,6 +23,7 @@ type BaseRecord struct {
 	Shell     string `json:"shell"`
 	Uname     string `json:"uname"`
 	SessionID string `json:"sessionId"`
+	RecordID  string `json:"recordId"`
 
 	// posix
 	Home  string `json:"home"`
@@ -231,6 +232,9 @@ func (r *Record) Merge(r2 Record) error {
 	}
 	if r.CmdLine != r2.CmdLine {
 		return errors.New("Records to merge are not parts of the same records - r1:" + r.CmdLine + " r2:" + r2.CmdLine)
+	}
+	if r.RecordID != r2.RecordID {
+		return errors.New("Records to merge do not have the same ID - r1:" + r.RecordID + " r2:" + r2.RecordID)
 	}
 	// r.RealtimeBefore != r2.RealtimeBefore - can't be used because of bash-preexec runs when it's not supposed to
 	r.ExitCode = r2.ExitCode

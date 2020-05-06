@@ -44,6 +44,8 @@ func main() {
 	cmdLine := flag.String("cmdLine", "", "command line")
 	exitCode := flag.Int("exitCode", -1, "exit code")
 	sessionID := flag.String("sessionId", "", "resh generated session id")
+	recordID := flag.String("recordId", "", "resh generated record id")
+
 	shlvl := flag.Int("shlvl", -1, "$SHLVL")
 	shell := flag.String("shell", "", "actual shell")
 
@@ -118,6 +120,7 @@ func main() {
 			CmdLine:   *cmdLine,
 			ExitCode:  *exitCode,
 			SessionID: *sessionID,
+			RecordID:  *recordID,
 			Shlvl:     *shlvl,
 			Shell:     *shell,
 
