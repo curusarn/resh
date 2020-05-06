@@ -150,6 +150,7 @@ type SlimRecord struct {
 
 // CliRecord used for sending records to RESH-CLI
 type CliRecord struct {
+	IsRaw     bool   `json:"isRaw"`
 	SessionID string `json:"sessionId"`
 
 	CmdLine         string `json:"cmdLine"`
@@ -164,9 +165,18 @@ type CliRecord struct {
 	// RealtimeDuration float64 `json:"realtimeDuration"`
 }
 
+// NewCliRecordFromCmdLine from EnrichedRecord
+func NewCliRecordFromCmdLine(cmdLine string) CliRecord {
+	return CliRecord{
+		IsRaw:   true,
+		CmdLine: cmdLine,
+	}
+}
+
 // NewCliRecord from EnrichedRecord
 func NewCliRecord(r EnrichedRecord) CliRecord {
 	return CliRecord{
+		IsRaw:           false,
 		SessionID:       r.SessionID,
 		CmdLine:         r.CmdLine,
 		Host:            r.Host,

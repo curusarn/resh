@@ -14,6 +14,8 @@ import (
 const itemLocationLenght = 30
 
 type item struct {
+	isRaw bool
+
 	realtimeBefore float64
 
 	// [host:]pwd
@@ -65,7 +67,23 @@ func (i item) less(i2 item) bool {
 	// reversed order
 	return i.score > i2.score
 }
+
 func (i item) drawItemColumns(compactRendering bool) itemColumns {
+	if i.isRaw {
+		notAvailable := "n/a"
+		return itemColumns{
+			date:          notAvailable + " ",
+			dateWithColor: notAvailable + " ",
+			// dateWithColor:    highlightDate(notAvailable) + " ",
+			host:             "",
+			hostWithColor:    "",
+			pwdTilde:         notAvailable,
+			cmdLine:          i.cmdLine,
+			cmdLineWithColor: i.cmdLineWithColor,
+			// score:             i.score,
+			key: i.key,
+		}
+	}
 
 	// DISPLAY
 	// DISPLAY > date
@@ -80,7 +98,6 @@ func (i item) drawItemColumns(compactRendering bool) itemColumns {
 		date = formatTimeRelativeLong(tm) + " "
 	}
 	dateWithColor := highlightDate(date)
-
 	// DISPLAY > location
 	// DISPLAY > location > host
 	host := ""
@@ -232,6 +249,31 @@ func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool
 			// NO continue
 		}
 	}
+	// DISPLAY > cmdline
+
+	// cmd := "<" + strings.ReplaceAll(record.CmdLine, "\n", ";") + ">"
+	cmdLine := strings.ReplaceAll(record.CmdLine, "\n", ";")
+	cmdLineWithColor := strings.ReplaceAll(cmd, "\n", ";")
+
+	// KEY for deduplication
+
+	key := record.CmdLine
+	// NOTE: since we import standard history we need a compatible key without metadata
+	/*
+		unlikelySeparator := "|||||"
+		key := record.CmdLine + unlikelySeparator + record.Pwd + unlikelySeparator +
+		record.GitOriginRemote + unlikelySeparator + record.Host
+	*/
+	if record.IsRaw {
+		return item{
+			isRaw: true,
+
+			cmdLine:          cmdLine,
+			cmdLineWithColor: cmdLineWithColor,
+			score:            score,
+			key:              key,
+		}, nil
+	}
 	// actual pwd matches
 	// N terms can only produce:
 	//		-> N matches against the command
@@ -264,19 +306,6 @@ func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool
 	if score <= 0 && !anyHit {
 		return item{}, errors.New("no match for given record and query")
 	}
-
-	// KEY for deduplication
-
-	unlikelySeparator := "|||||"
-	key := record.CmdLine + unlikelySeparator + record.Pwd + unlikelySeparator +
-		record.GitOriginRemote + unlikelySeparator + record.Host
-	// + strconv.Itoa(record.ExitCode) + unlikelySeparator
-
-	// DISPLAY > cmdline
-
-	// cmd := "<" + strings.ReplaceAll(record.CmdLine, "\n", ";") + ">"
-	cmdLine := strings.ReplaceAll(record.CmdLine, "\n", ";")
-	cmdLineWithColor := strings.ReplaceAll(cmd, "\n", ";")
 
 	it := item{
 		realtimeBefore: record.RealtimeBefore,

@@ -50,7 +50,13 @@ func New(input chan records.Record, sessionsToDrop chan string,
 }
 
 // load records from resh history, reverse, enrich and save
-func (h *Histfile) loadFullRecords(recs []records.Record) {
+func (h *Histfile) loadCliRecords(recs []records.Record) {
+	for _, cmdline := range h.bashCmdLines.List {
+		h.cliRecords.AddCmdLine(cmdline)
+	}
+	for _, cmdline := range h.zshCmdLines.List {
+		h.cliRecords.AddCmdLine(cmdline)
+	}
 	for i := len(recs) - 1; i >= 0; i-- {
 		rec := recs[i]
 		h.cliRecords.AddRecord(rec)
@@ -82,7 +88,7 @@ func (h *Histfile) loadHistory(bashHistoryPath, zshHistoryPath string, maxInitHi
 	}
 	log.Println("histfile: Loading resh history from file ...")
 	history := records.LoadFromFile(h.historyPath, math.MaxInt32)
-	go h.loadFullRecords(history)
+	go h.loadCliRecords(history)
 	// NOTE: keeping this weird interface for now because we might use it in the future
 	//			when we only load bash or zsh history
 	reshCmdLines := loadCmdLines(history)
