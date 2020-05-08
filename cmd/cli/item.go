@@ -228,6 +228,7 @@ func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool
 	// const sameGitRepoScoreExtra = 0.0
 	const differentHostScorePenalty = 0.2
 
+	const timeScoreCoef = 1e-13
 	// nonZeroExitCodeScorePenalty + differentHostScorePenalty
 
 	score := 0.0
@@ -307,6 +308,7 @@ func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool
 	if score <= 0 && !anyHit {
 		return item{}, errors.New("no match for given record and query")
 	}
+	score += record.RealtimeBefore * timeScoreCoef
 
 	it := item{
 		realtimeBefore: record.RealtimeBefore,
