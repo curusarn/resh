@@ -115,6 +115,7 @@ func (i item) drawItemColumns(compactRendering bool) itemColumns {
 	if debug {
 		hitsStr := fmt.Sprintf("%.1f", i.score)
 		flags += " S" + hitsStr
+		flagsWithColor += " S" + hitsStr
 	}
 	if i.sameGitRepo {
 		flags += " G"
@@ -218,12 +219,12 @@ func properMatch(str, term, padChar string) bool {
 // newItemFromRecordForQuery creates new item from record based on given query
 //		returns error if the query doesn't match the record
 func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool) (item, error) {
-	const hitScore = 1.0
+	const hitScore = 1.2
 	const hitScoreConsecutive = 0.1
 	const properMatchScore = 0.3
 	const actualPwdScore = 0.9
-	const nonZeroExitCodeScorePenalty = 0.5
-	const sameGitRepoScore = 0.7
+	const nonZeroExitCodeScorePenalty = 0.4
+	const sameGitRepoScore = 0.6
 	// const sameGitRepoScoreExtra = 0.0
 	const differentHostScorePenalty = 0.2
 
