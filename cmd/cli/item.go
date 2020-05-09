@@ -110,7 +110,7 @@ func (i item) drawStatusLine(compactRendering bool, printedLineLength, realLineL
 	pwdTilde := strings.Replace(i.pwd, i.home, "~", 1)
 
 	separator := "    "
-	stLine := timeString + separator + pwdTilde + separator + i.cmdLine
+	stLine := timeString + separator + i.host + ":" + pwdTilde + separator + i.cmdLine
 	return splitStatusLineToLines(stLine, printedLineLength, realLineLength)
 }
 
