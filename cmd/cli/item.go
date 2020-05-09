@@ -99,7 +99,7 @@ func splitStatusLineToLines(statusLine string, printedLineLength, realLineLength
 
 func (i item) drawStatusLine(compactRendering bool, printedLineLength, realLineLength int) []string {
 	if i.isRaw {
-		return splitStatusLineToLines(" "+i.cmdLine, printedLineLength, realLineLength)
+		return splitStatusLineToLines(i.cmdLine, printedLineLength, realLineLength)
 	}
 	secs := int64(i.realtimeBefore)
 	nsecs := int64((i.realtimeBefore - float64(secs)) * 1e9)
