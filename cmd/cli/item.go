@@ -68,6 +68,52 @@ func (i item) less(i2 item) bool {
 	return i.score > i2.score
 }
 
+func splitStatusLineToLines(statusLine string, printedLineLength, realLineLength int) []string {
+	var statusLineSlice []string
+	// status line
+	var idxSt, idxEnd int
+	var nextLine bool
+	tab := "    "
+	tabSize := len(tab)
+	for idxSt < len(statusLine) {
+		idxEnd = idxSt + printedLineLength
+		if nextLine {
+			idxEnd -= tabSize
+		}
+
+		if idxEnd > len(statusLine) {
+			idxEnd = len(statusLine)
+		}
+		str := statusLine[idxSt:idxEnd]
+
+		indent := " "
+		if nextLine {
+			indent += tab
+		}
+		statusLineSlice = append(statusLineSlice, highlightStatus(rightCutPadString(indent+str, realLineLength))+"\n")
+		idxSt += printedLineLength
+		nextLine = true
+	}
+	return statusLineSlice
+}
+
+func (i item) drawStatusLine(compactRendering bool, printedLineLength, realLineLength int) []string {
+	if i.isRaw {
+		return splitStatusLineToLines(" "+i.cmdLine, printedLineLength, realLineLength)
+	}
+	secs := int64(i.realtimeBefore)
+	nsecs := int64((i.realtimeBefore - float64(secs)) * 1e9)
+	tm := time.Unix(secs, nsecs)
+	const timeFormat = "2006-01-02 15:04:05"
+	timeString := tm.Format(timeFormat)
+
+	pwdTilde := strings.Replace(i.pwd, i.home, "~", 1)
+
+	separator := "    "
+	stLine := timeString + separator + pwdTilde + separator + i.cmdLine
+	return splitStatusLineToLines(stLine, printedLineLength, realLineLength)
+}
+
 func (i item) drawItemColumns(compactRendering bool) itemColumns {
 	if i.isRaw {
 		notAvailable := "n/a"

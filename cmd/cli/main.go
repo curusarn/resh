@@ -487,8 +487,8 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 	topBoxHeight++    // headers
 	realLineLength := maxX - 2
 	printedLineLength := maxX - 4
-	selectedCommand := m.s.data[m.s.highlightedItem].cmdLine
-	var statusLineHeight int = len(selectedCommand)/(printedLineLength) + 1
+	statusLine := m.s.data[m.s.highlightedItem].drawStatusLine(compactRenderingMode, printedLineLength, realLineLength)
+	var statusLineHeight int = len(statusLine) + 1 // help line
 
 	helpLineHeight := 1
 	const helpLine = "HELP: type to search, UP/DOWN to select, RIGHT to edit, ENTER to execute, CTRL+G to abort, CTRL+C/D to quit; " +
@@ -536,29 +536,8 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 		v.WriteString("\n")
 		index++
 	}
-	// status line
-	var idxSt, idxEnd int
-	var nextLine bool
-	tab := "    "
-	tabSize := len(tab)
-	for idxSt < len(selectedCommand) {
-		idxEnd = idxSt + printedLineLength
-		if nextLine {
-			idxEnd -= tabSize
-		}
-
-		if idxEnd > len(selectedCommand) {
-			idxEnd = len(selectedCommand)
-		}
-		str := selectedCommand[idxSt:idxEnd]
-
-		indent := " "
-		if nextLine {
-			indent += tab
-		}
-		v.WriteString(highlightStatus(rightCutPadString(indent+str, realLineLength)) + "\n")
-		idxSt += printedLineLength
-		nextLine = true
+	for _, line := range statusLine {
+		v.WriteString(line)
 	}
 	v.WriteString(helpLine)
 	if debug {
