@@ -265,14 +265,24 @@ func properMatch(str, term, padChar string) bool {
 // newItemFromRecordForQuery creates new item from record based on given query
 //		returns error if the query doesn't match the record
 func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool) (item, error) {
-	const hitScore = 1.2
-	const hitScoreConsecutive = 0.1
-	const properMatchScore = 0.3
-	const actualPwdScore = 0.9
-	const nonZeroExitCodeScorePenalty = 0.4
-	const sameGitRepoScore = 0.6
-	// const sameGitRepoScoreExtra = 0.0
-	const differentHostScorePenalty = 0.2
+	// Use numbers that won't add up to same score for any number of query words
+	const hitScore = 1.307
+	const properMatchScore = 0.603
+	const hitScoreConsecutive = 0.002
+
+	// Host penalty
+	var actualPwdScore = 0.9
+	var sameGitRepoScore = 0.8
+	var nonZeroExitCodeScorePenalty = 0.4
+	var differentHostScorePenalty = 0.2
+
+	reduceHostPenalty := false
+	if reduceHostPenalty {
+		actualPwdScore = 0.9
+		sameGitRepoScore = 0.7
+		nonZeroExitCodeScorePenalty = 0.4
+		differentHostScorePenalty = 0.1
+	}
 
 	const timeScoreCoef = 1e-13
 	// nonZeroExitCodeScorePenalty + differentHostScorePenalty
@@ -286,7 +296,8 @@ func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool
 			anyHit = true
 			if termHit == false {
 				score += hitScore
-			} else {
+			} else if len(term) > 1 {
+				// only count consecutive matches for queries longer than 1
 				score += hitScoreConsecutive
 			}
 			termHit = true
@@ -294,7 +305,6 @@ func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool
 				score += properMatchScore
 			}
 			cmd = strings.ReplaceAll(cmd, term, highlightMatch(term))
-			// NO continue
 		}
 	}
 	// DISPLAY > cmdline
