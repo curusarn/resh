@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"sort"
 	"strings"
 )
 
@@ -54,6 +55,7 @@ func newQueryFromString(queryInput string, host string, pwd string, gitOriginRem
 		log.Println("QUERY filtered terms =" + logStr)
 		log.Println("QUERY pwd =" + pwd)
 	}
+	sort.SliceStable(terms, func(i, j int) bool { return len(terms[i]) < len(terms[j]) })
 	return query{
 		terms:           terms,
 		host:            host,
