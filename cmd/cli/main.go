@@ -491,7 +491,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 	var statusLineHeight int = len(statusLine)
 
 	helpLineHeight := 1
-	const helpLine = "HELP: type to search, UP/DOWN to select, RIGHT to edit, ENTER to execute, CTRL+G to abort, CTRL+C/D to quit; " +
+	const helpLine = "HELP: type to search, UP/DOWN or CTRL+P/N to select, RIGHT to edit, ENTER to execute, CTRL+G to abort, CTRL+C/D to quit; " +
 		"FLAGS: G = this git repo, E# = exit status #"
 		// "TIP: when resh-cli is launched command line is used as initial search query"
 
