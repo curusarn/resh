@@ -378,9 +378,9 @@ func (m manager) Layout(g *gocui.Gui) error {
 	v.Editable = true
 	v.Editor = m
 	if m.s.rawMode {
-		v.Title = " RESH CLI - NON-CONTEXTUAL \"RAW\" MODE - (CTRL+R to switch BACK) "
+		v.Title = " RESH SEARCH - NON-CONTEXTUAL \"RAW\" MODE - (CTRL+R to switch BACK) "
 	} else {
-		v.Title = " RESH CLI - CONTEXTUAL MODE - (CTRL+R to switch to RAW MODE) "
+		v.Title = " RESH SEARCH - CONTEXTUAL MODE - (CTRL+R to switch to RAW MODE) "
 	}
 
 	g.SetCurrentView("input")
@@ -488,11 +488,12 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 	realLineLength := maxX - 2
 	printedLineLength := maxX - 4
 	statusLine := m.s.data[m.s.highlightedItem].drawStatusLine(compactRenderingMode, printedLineLength, realLineLength)
-	var statusLineHeight int = len(statusLine) + 1 // help line
+	var statusLineHeight int = len(statusLine)
 
 	helpLineHeight := 1
 	const helpLine = "HELP: type to search, UP/DOWN to select, RIGHT to edit, ENTER to execute, CTRL+G to abort, CTRL+C/D to quit; " +
-		"TIP: when resh-cli is launched command line is used as initial search query"
+		"FLAGS: G = this git repo, E# = exit status #"
+		// "TIP: when resh-cli is launched command line is used as initial search query"
 
 	mainViewHeight := maxY - topBoxHeight - statusLineHeight - helpLineHeight
 	m.s.displayedItemsCount = mainViewHeight
@@ -605,7 +606,7 @@ func SendCliMsg(m msg.CliMsg, port string) msg.CliResponse {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal("resh-daemon is not running :(")
+		log.Fatal("resh-daemon is not running - try restarting this terminal")
 	}
 
 	defer resp.Body.Close()

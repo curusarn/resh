@@ -1,7 +1,0 @@
-port = 2627 
-sesswatchPeriodSeconds = 120 
-sesshistInitHistorySize = 1000
-debug = true 
-bindArrowKeysBash = false
-bindArrowKeysZsh = true
-bindControlR = true

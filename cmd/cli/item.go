@@ -267,7 +267,7 @@ func properMatch(str, term, padChar string) bool {
 func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool) (item, error) {
 	// Use numbers that won't add up to same score for any number of query words
 	const hitScore = 1.307
-	const properMatchScore = 0.603
+	const properMatchScore = 0.503
 	const hitScoreConsecutive = 0.002
 
 	// Host penalty

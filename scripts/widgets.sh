@@ -101,7 +101,7 @@ __resh_widget_control_R() {
 
     local status_code
     local git_remote; git_remote="$(git remote get-url origin 2>/dev/null)"
-    BUFFER=$(resh-cli --sessionID "$__RESH_SESSION_ID" --host "$HOST" --pwd "$PWD" --gitOriginRemote "$git_remote" --query "$BUFFER")
+    BUFFER=$(resh-cli --sessionID "$__RESH_SESSION_ID" --host "$__RESH_HOST" --pwd "$PWD" --gitOriginRemote "$git_remote" --query "$BUFFER")
     status_code=$?
     if [ $status_code = 111 ]; then
         # execute
@@ -123,7 +123,7 @@ __resh_widget_control_R() {
         BUFFER="$PREVBUFFER"
     else
         echo "$BUFFER" >| ~/.resh/cli_last_run_out.txt
-        echo "# RESH cli failed - sorry for the inconvinience (error output was saved to ~/.resh/cli_last_run_out.txt)" 
+        echo "# RESH SEARCH APP failed - sorry for the inconvinience (error output was saved to ~/.resh/cli_last_run_out.txt)" 
         BUFFER="$PREVBUFFER"
     fi
     CURSOR=${#BUFFER}

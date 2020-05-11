@@ -43,15 +43,11 @@ func Execute(ver, com string) status.Code {
 
 	rootCmd.AddCommand(enableCmd)
 	enableCmd.AddCommand(enableArrowKeyBindingsCmd)
-	enableCmd.AddCommand(enableArrowKeyBindingsGlobalCmd)
 	enableCmd.AddCommand(enableControlRBindingCmd)
-	enableCmd.AddCommand(enableControlRBindingGlobalCmd)
 
 	rootCmd.AddCommand(disableCmd)
 	disableCmd.AddCommand(disableArrowKeyBindingsCmd)
-	disableCmd.AddCommand(disableArrowKeyBindingsGlobalCmd)
 	disableCmd.AddCommand(disableControlRBindingCmd)
-	disableCmd.AddCommand(disableControlRBindingGlobalCmd)
 
 	rootCmd.AddCommand(completionCmd)
 	completionCmd.AddCommand(completionBashCmd)

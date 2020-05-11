@@ -59,17 +59,18 @@ Imagine being able to search your shell history based on both the command itself
   - :heavy_check_mark: search by keywords
   - :heavy_check_mark: relevant results show up first based on context (host, directory, git, exit status)
   - :heavy_check_mark: allow searching completely without context ("raw" mode)
-  - :white_check_mark: include a help page with keybindings and onboarding in the app
-  - :x: import and search history from before RESH was installed
+  - :heavy_check_mark: import and search history from before RESH was installed
+  - :white_check_mark: include a help with keybindings
   - :x: allow listing details for individual commands
   - :x: allow explicitly searching by metadata
 
 - :white_check_mark: Provide bindings for arrow keys
-  - :heavy_check_mark: imitate default behaviour
-  - :heavy_check_mark: save additional metadata (e.g. command was recalled using arrow keys)
+  - :heavy_check_mark: imitate default behaviour (serve recent history)
+  - :heavy_check_mark: built-in prefix search 
+  - :heavy_check_mark: serve fully dedupicated history
   - :x: use arrow down for easy sequence repeating
   - :heavy_check_mark: zsh
-  - :white_check_mark: bash *(performance issues)*
+  - :white_check_mark: bash *(off by deafult because of bash performance issues)*
 
 - :heavy_check_mark: Provide a `reshctl` utility to control and interact with the project
   - :heavy_check_mark: turn on/off resh key bindings
@@ -125,47 +126,47 @@ Check for updates and update
 reshctl update
 ```
 
-### RESH CLI tool
+### RESH SEARCH application
 
-RESH CLI searches your history by commands. It uses host, directories, git remote, and exit status to show you relevant results first.  
+RESH SEARCH app searches your history by commands. It uses host, directories, git remote, and exit status to show you relevant results first.  
 
-All this context is not in the regular shell history. RESH CLI will only search shell history that was recorded after you install this project. 
+All this context is not in the regular shell history. RESH records shell history with context to use it when searching.
 
-*I use RESH CLI everyday but please remember that it is still a prototype.*
+At first, the search application will look something like this. Some history with context and most of it without. As you can see, you can still search the history just fine.
 
-![resh cli](img/screen-resh-cli-v2-6.png)
+![resh search app](img/screen-resh-cli-v2-7-init.png)
 
-Without query, RESH CLI shows you the latest history based on the current context (host, directory, git).
+Eventually most of your history will have context and RESH SEARCH app will get more useful.
 
-![resh cli](img/screen-resh-cli-v2-6-no-query.png)
+![resh search app](img/screen-resh-cli-v2-7.png)
 
-RESH CLI tool can be bound to ctrl+R (recommended) or executed directly.
+Without a query, RESH SEARCH app shows you the latest history based on the current context (host, directory, git).
 
-Enable/disable ctrl+R binding for THIS shell session:
+![resh search app](img/screen-resh-cli-v2-7-no-query.png)
+
+RESH SEARCH app replaces the standard reverse search - launch it using Ctrl+R.
+
+Enable/disable the Ctrl+R keybinding:
 
 ```sh
 reshctl enable ctrl_r_binding
 reshctl disable ctrl_r_binding
 ```
 
-Enable/disable for FUTURE shell sessions:
-
-```sh
-reshctl enable ctrl_r_binding_global
-reshctl disable ctrl_r_binding_global
-```
-
-Run the RESH CLI tool as a one-off:
+You can also run the RESH SEARCH app directly as a one-off:
 
 ```sh
 resh
 ```
 
+NOTE: One feature is not available when running RESH SEARCH app directly  - arrow right won't paste the selected command onto the command line for editing.
+
 ### Arrow key bindings
 
 Resh provides arrow key bindings.
 
-These bindings do regular stepping through history and prefix search.
+These bindings provide regular stepping through history and prefix search.
+They also fully deduplicate the served history.
 
 They allow resh to record bindings usage metadata.
 
@@ -175,20 +176,12 @@ They allow resh to record bindings usage metadata.
 
 Arrow key bindings are enabled by default in zsh and they are disabled by default in bash because there are some performance issues.
 
-Enable/disable arrow key bindings for THIS shell session:
+Enable/disable arrow key bindings:
 
 ```sh
 reshctl enable arrow_key_bindings
 
 reshctl disable arrow_key_bindings
-```
-
-Enable/disable for FUTURE shell sessions:
-
-```sh
-reshctl enable arrow_key_bindings_global
-
-reshctl disable arrow_key_bindings_global
 ```
 
 See what your current setting is:

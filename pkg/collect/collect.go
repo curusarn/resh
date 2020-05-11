@@ -36,7 +36,7 @@ func SendRecallRequest(r records.SlimRecord, port string) (string, bool) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal("resh-daemon is not running :(")
+		log.Fatal("resh-daemon is not running - try restarting this terminal")
 	}
 
 	defer resp.Body.Close()
@@ -71,7 +71,7 @@ func SendRecord(r records.Record, port, path string) {
 	client := &http.Client{}
 	_, err = client.Do(req)
 	if err != nil {
-		log.Fatal("resh-daemon is not running :(")
+		log.Fatal("resh-daemon is not running - try restarting this terminal")
 	}
 }
 

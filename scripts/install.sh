@@ -193,64 +193,67 @@ fi
 __resh_run_daemon
 
 
-
-echo "
-##########################################################
-#                                                        #
-#    SUCCESS - thank you for trying out this project!    #
-#                                                        #
-##########################################################
-
- HISTORY
-     Your resh history will be recorded to '~/.resh_history.json'
-     Look at it using e.g. following command (you might need to install jq)
-      $ tail -f ~/.resh_history.json | jq
-
-     Your default shell history will stay intact.
-
- SANITIZATION
-     In sanitized history, all sensitive information is replaced with its SHA256 hashes.
-     To get a sanitized version of your shell history run:
-      $ reshctl sanitize
-
-     If you would consider supporting my research/thesis by giving me a sanitized version of your history then
-     please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98
-
- ARROW KEY BINDINGS
-     Regular stepping through history and prefix search. There might be more features in the future.
-     They are enabled by default in zsh (and disabled in bash). 
-     Enable/disable them using reshctl command: 
-      $ reshctl enable ... / reshctl disable ...
-
- RESH CLI - SEARCH THE RECORDED HISTORY
-     RESH CLI searches your history by commands and directories.
-
-     Directories are not in regular shell history. Because of that RESH CLI will only search shell history recorded by this project.
-     This means that you can enable RESH CLI now and use it as your history grows or you can wait for a little bit.
-
-     Please remember that RESH CLI is still an early prototype.
-
-     RESH CLI tool can be bound to ctrl+R (recommended) or executed directly.
-
-     Enable/disable ctrl+R binding for THIS shell session:
-      $ reshctl enable ctrl_r_binding
-      $ reshctl disable ctrl_r_binding
-
-     Enable/disable for FUTURE shell sessions:
-      $ reshctl enable ctrl_r_binding_global
-      $ reshctl disable ctrl_r_binding_global
-
-     Run the RESH CLI tool as a one-off:
-      $ resh
-
- CHECK FOR UPDATES
-     To check for (and install) updates use:
-      $ reshctl update
- 
- WARNING 
-     It's recommended to RESTART all open terminal windows
- 
- ISSUES & FEEDBACK
-     Please report issues to: https://github.com/curusarn/resh/issues
-     Feedback and suggestions are also very welcome!
+info="---- Scroll down using arrow keys ----
+#####################################
+#      ____  _____ ____  _   _      #
+#     |  _ \| ____/ ___|| | | |     #
+#     | |_) |  _| \___ \| |_| |     #
+#     |  _ <| |___ ___) |  _  |     #
+#     |_| \_\_____|____/|_| |_|     #
+#    Rich Enhanced Shell History    #
+#####################################
 "
+
+info="$info
+RESH SEARCH APPLICATION = Redesigned reverse search that actually works
+
+    >>> Launch RESH SEARCH app by pressing CTRL+R <<<
+    (you will need to restart your teminal first)
+     
+    Search your history by commands. 
+    Host, directories, git remote, and exit status is used to display relevant results first.
+
+    At first, the search application will use the standard shell history without context. 
+    All history recorded from now on will have context which will by the RESH SEARCH app.
+
+    Enable/disable Ctrl+R binding using reshctl command:
+     $ reshctl enable ctrl_r_binding
+     $ reshctl disable ctrl_r_binding
+
+ARROW KEY BINDINGS = Slightly better arrow key bindings for zsh
+
+    Arrow keys behave as you are used to. Plus prefix search and the history is fully deduplicated.
+    They are enabled by default in zsh (and disabled in bash because they are slow in bash). 
+
+    Enable/disable arrow key bindings using reshctl command: 
+     $ reshctl enable arrow_key_bindings
+     $ reshctl disable arrow_key_bindings
+
+CHECK FOR UPDATES
+    To check for (and install) updates use reshctl command:
+     $ reshctl update
+
+HISTORY
+    Your resh history will be recorded to '~/.resh_history.json'
+    Look at it using e.g. following command (you might need to install jq)
+     $ tail -f ~/.resh_history.json | jq
+
+ISSUES & FEEDBACK
+    Please report issues to: https://github.com/curusarn/resh/issues
+    Feedback and suggestions are very welcome!
+"
+if [ -z "${__RESH_VERSION:-}" ]; then info="$info
+
+##############################################################
+#                                                            #
+#    Finish the installation by RESTARTING this terminal!    #
+#                                                            #
+##############################################################
+"
+fi
+
+info="$info
+---- Close this by pressing Q ----" 
+
+
+echo "$info" | less

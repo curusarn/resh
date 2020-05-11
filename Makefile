@@ -8,10 +8,8 @@ GOFLAGS=-ldflags "-X main.version=${VERSION} -X main.commit=${REVISION}"
 build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect bin/resh-daemon\
  bin/resh-evaluate bin/resh-sanitize bin/resh-control bin/resh-config bin/resh-inspect bin/resh-cli
 
-install: build conf/config-dev.toml
+install: build
 	scripts/install.sh
-	# Dev config
-	# cp -f conf/config-dev.toml ~/.config/resh.toml
 
 test_go:
 	# Running tests

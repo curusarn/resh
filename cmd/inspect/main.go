@@ -66,7 +66,7 @@ func SendInspectMsg(m msg.InspectMsg, port string) msg.MultiResponse {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal("resh-daemon is not running :(")
+		log.Fatal("resh-daemon is not running - try restarting this terminal")
 	}
 
 	defer resp.Body.Close()

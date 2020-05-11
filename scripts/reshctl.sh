@@ -32,7 +32,7 @@ __resh_nop() {
 
 __resh_bind_control_R() {
     if [ "${__RESH_control_R_bind_enabled-0}" != 0 ]; then
-        echo "Error: Can't enable control R binding because it is already enabled!"
+        echo "Error: Can't enable Ctrl+R binding because it is already enabled!"
         return 1 
     fi
     bindfunc --revert '\C-r' __resh_widget_control_R_compat
@@ -83,11 +83,11 @@ __resh_unbind_arrows() {
 
 __resh_unbind_control_R() {
     if [ "${__RESH_control_R_bind_enabled-0}" != 1 ]; then
-        echo "Error: Can't disable control R binding because it is not enabled!"
+        echo "Error: Can't disable Ctrl+R binding because it is not enabled!"
         return 1 
     fi
     if [ -z "${__RESH_bindfunc_revert_control_R_bind+x}" ]; then
-        echo "Warn: Couldn't revert control R binding because 'revert command' is empty."
+        echo "Warn: Couldn't revert Ctrl+R binding because 'revert command' is empty."
     else
         eval "$__RESH_bindfunc_revert_control_R_bind"
     fi
@@ -109,7 +109,7 @@ __resh_unbind_all() {
 resh() {
     local buffer
     local git_remote; git_remote="$(git remote get-url origin 2>/dev/null)"
-    buffer=$(resh-cli --sessionID "$__RESH_SESSION_ID" --host "$HOST" --pwd "$PWD" --gitOriginRemote "$git_remote")
+    buffer=$(resh-cli --sessionID "$__RESH_SESSION_ID" --host "$__RESH_HOST" --pwd "$PWD" --gitOriginRemote "$git_remote")
     status_code=$?
     if [ $status_code = 111 ]; then
         # execute
