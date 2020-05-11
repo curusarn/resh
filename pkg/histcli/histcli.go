@@ -22,3 +22,10 @@ func (h *Histcli) AddRecord(record records.Record) {
 
 	h.List = append(h.List, cli)
 }
+
+// AddCmdLine to the histcli
+func (h *Histcli) AddCmdLine(cmdline string) {
+	cli := records.NewCliRecordFromCmdLine(cmdline)
+
+	h.List = append(h.List, cli)
+}

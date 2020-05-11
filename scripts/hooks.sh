@@ -9,6 +9,7 @@ __resh_reset_variables() {
     __RESH_HIST_RECALL_ACTIONS=""
     __RESH_HIST_NO_PREFIX_MODE=0
     __RESH_HIST_RECALL_STRATEGY=""
+    __RESH_RECORD_ID=$(__resh_get_uuid)
 }
 
 __resh_preexec() {
@@ -81,6 +82,7 @@ __resh_collect() {
                     -shell "$__RESH_SHELL" \
                     -uname "$__RESH_UNAME" \
                     -sessionId "$__RESH_SESSION_ID" \
+                    -recordId "$__RESH_RECORD_ID" \
                     -cols "$__RESH_COLS" \
                     -home "$__RESH_HOME" \
                     -lang "$__RESH_LANG" \
@@ -157,6 +159,7 @@ __resh_precmd() {
                         -realtimeBefore "$__RESH_RT_BEFORE" \
                         -exitCode "$__RESH_EXIT_CODE" \
                         -sessionId "$__RESH_SESSION_ID" \
+                        -recordId "$__RESH_RECORD_ID" \
                         -shell "$__RESH_SHELL" \
                         -shlvl "$__RESH_SHLVL" \
                         -pwdAfter "$__RESH_PWD_AFTER" \

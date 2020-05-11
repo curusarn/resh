@@ -124,24 +124,32 @@ func runReshCli() (string, int) {
 	if err := g.SetKeybinding("", gocui.KeyArrowDown, gocui.ModNone, layout.Next); err != nil {
 		log.Panicln(err)
 	}
+	if err := g.SetKeybinding("", gocui.KeyCtrlN, gocui.ModNone, layout.Next); err != nil {
+		log.Panicln(err)
+	}
 	if err := g.SetKeybinding("", gocui.KeyArrowUp, gocui.ModNone, layout.Prev); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
+	if err := g.SetKeybinding("", gocui.KeyCtrlP, gocui.ModNone, layout.Prev); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("", gocui.KeyCtrlG, gocui.ModNone, quit); err != nil {
-		log.Panicln(err)
-	}
-	if err := g.SetKeybinding("", gocui.KeyCtrlD, gocui.ModNone, quit); err != nil {
+
+	if err := g.SetKeybinding("", gocui.KeyArrowRight, gocui.ModNone, layout.SelectPaste); err != nil {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyEnter, gocui.ModNone, layout.SelectExecute); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("", gocui.KeyArrowRight, gocui.ModNone, layout.SelectPaste); err != nil {
+	if err := g.SetKeybinding("", gocui.KeyCtrlG, gocui.ModNone, layout.AbortPaste); err != nil {
 		log.Panicln(err)
 	}
+	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding("", gocui.KeyCtrlD, gocui.ModNone, quit); err != nil {
+		log.Panicln(err)
+	}
+
 	if err := g.SetKeybinding("", gocui.KeyCtrlR, gocui.ModNone, layout.SwitchModes); err != nil {
 		log.Panicln(err)
 	}
@@ -156,11 +164,12 @@ func runReshCli() (string, int) {
 }
 
 type state struct {
-	lock            sync.Mutex
-	cliRecords      []records.CliRecord
-	data            []item
-	rawData         []rawItem
-	highlightedItem int
+	lock                sync.Mutex
+	cliRecords          []records.CliRecord
+	data                []item
+	rawData             []rawItem
+	highlightedItem     int
+	displayedItemsCount int
 
 	rawMode bool
 
@@ -196,6 +205,17 @@ func (m manager) SelectPaste(g *gocui.Gui, v *gocui.View) error {
 	defer m.s.lock.Unlock()
 	if m.s.highlightedItem < len(m.s.data) {
 		m.s.output = m.s.data[m.s.highlightedItem].cmdLine
+		m.s.exitCode = 0 // success
+		return gocui.ErrQuit
+	}
+	return nil
+}
+
+func (m manager) AbortPaste(g *gocui.Gui, v *gocui.View) error {
+	m.s.lock.Lock()
+	defer m.s.lock.Unlock()
+	if m.s.highlightedItem < len(m.s.data) {
+		m.s.output = v.Buffer()
 		m.s.exitCode = 0 // success
 		return gocui.ErrQuit
 	}
@@ -316,10 +336,9 @@ func (m manager) Edit(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier)
 }
 
 func (m manager) Next(g *gocui.Gui, v *gocui.View) error {
-	_, y := g.Size()
 	m.s.lock.Lock()
 	defer m.s.lock.Unlock()
-	if m.s.highlightedItem < y {
+	if m.s.highlightedItem < m.s.displayedItemsCount-1 {
 		m.s.highlightedItem++
 	}
 	return nil
@@ -393,64 +412,109 @@ func quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
 
-// SendCliMsg to daemon
-func SendCliMsg(m msg.CliMsg, port string) msg.CliResponse {
-	recJSON, err := json.Marshal(m)
-	if err != nil {
-		log.Fatal("send err 1", err)
+func getHeader(compactRendering bool) itemColumns {
+	date := "TIME "
+	host := "HOST:"
+	dir := "DIRECTORY"
+	if compactRendering {
+		dir = "DIR"
 	}
-
-	req, err := http.NewRequest("POST", "http://localhost:"+port+"/dump",
-		bytes.NewBuffer(recJSON))
-	if err != nil {
-		log.Fatal("send err 2", err)
+	flags := " FLAGS"
+	cmdLine := "COMMAND-LINE"
+	return itemColumns{
+		date:             date,
+		dateWithColor:    date,
+		host:             host,
+		hostWithColor:    host,
+		pwdTilde:         dir,
+		samePwd:          false,
+		flags:            flags,
+		flagsWithColor:   flags,
+		cmdLine:          cmdLine,
+		cmdLineWithColor: cmdLine,
+		// score:             i.score,
+		key: "_HEADERS_",
 	}
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal("resh-daemon is not running :(")
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal("read response error")
-	}
-	// log.Println(string(body))
-	response := msg.CliResponse{}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		log.Fatal("unmarshal resp error: ", err)
-	}
-	return response
 }
+
+const smallTerminalTresholdWidth = 110
 
 func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 	maxX, maxY := g.Size()
 
-	longestFlagsLen := 2 // at least 2
-	for i, itm := range m.s.data {
-		if i == maxY {
-			break
-		}
-		if len(itm.flags) > longestFlagsLen {
-			longestFlagsLen = len(itm.flags)
-		}
+	compactRenderingMode := false
+	if maxX < smallTerminalTresholdWidth {
+		compactRenderingMode = true
 	}
 
+	data := []itemColumns{}
+
+	header := getHeader(compactRenderingMode)
+	longestDateLen := len(header.date)
+	longestLocationLen := len(header.host) + len(header.pwdTilde)
+	longestFlagsLen := 2
+	maxPossibleMainViewHeight := maxY - 3 - 1 - 1 - 1 // - top box - header - status - help
 	for i, itm := range m.s.data {
 		if i == maxY {
-			if debug {
-				log.Println(maxY)
-			}
 			break
 		}
-		displayStr, _ := itm.produceLine(longestFlagsLen)
-		if m.s.highlightedItem == i {
-			// use actual min requried length instead of 420 constant
-			displayStr = doHighlightString(displayStr, maxX*2)
+		ic := itm.drawItemColumns(compactRenderingMode)
+		data = append(data, ic)
+		if i > maxPossibleMainViewHeight {
+			// do not stretch columns because of results that will end up outside of the page
+			continue
+		}
+		if len(ic.date) > longestDateLen {
+			longestDateLen = len(ic.date)
+		}
+		if len(ic.host)+len(ic.pwdTilde) > longestLocationLen {
+			longestLocationLen = len(ic.host) + len(ic.pwdTilde)
+		}
+		if len(ic.flags) > longestFlagsLen {
+			longestFlagsLen = len(ic.flags)
+		}
+	}
+	maxLocationLen := maxX/7 + 8
+	if longestLocationLen > maxLocationLen {
+		longestLocationLen = maxLocationLen
+	}
+
+	if m.s.highlightedItem >= len(m.s.data) {
+		m.s.highlightedItem = len(m.s.data) - 1
+	}
+	// status line
+	topBoxHeight := 3 // size of the query box up top
+	topBoxHeight++    // headers
+	realLineLength := maxX - 2
+	printedLineLength := maxX - 4
+	statusLine := m.s.data[m.s.highlightedItem].drawStatusLine(compactRenderingMode, printedLineLength, realLineLength)
+	var statusLineHeight int = len(statusLine) + 1 // help line
+
+	helpLineHeight := 1
+	const helpLine = "HELP: type to search, UP/DOWN to select, RIGHT to edit, ENTER to execute, CTRL+G to abort, CTRL+C/D to quit; " +
+		"TIP: when resh-cli is launched command line is used as initial search query"
+
+	mainViewHeight := maxY - topBoxHeight - statusLineHeight - helpLineHeight
+	m.s.displayedItemsCount = mainViewHeight
+
+	// header
+	// header := getHeader()
+	dispStr, _ := header.produceLine(longestDateLen, longestLocationLen, longestFlagsLen, true, true)
+	dispStr = doHighlightHeader(dispStr, maxX*2)
+	v.WriteString(dispStr + "\n")
+
+	var index int
+	for index < len(data) {
+		itm := data[index]
+		if index == mainViewHeight {
+			// page is full
+			break
+		}
+
+		displayStr, _ := itm.produceLine(longestDateLen, longestLocationLen, longestFlagsLen, false, true)
+		if m.s.highlightedItem == index {
+			// maxX * 2 because there are escape sequences that make it hard to tell the real string lenght
+			displayStr = doHighlightString(displayStr, maxX*3)
 			if debug {
 				log.Println("### HightlightedItem string :", displayStr)
 			}
@@ -465,10 +529,17 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 			}
 		}
 		v.WriteString(displayStr + "\n")
-		// if m.s.highlightedItem == i {
-		// 	v.SetHighlight(m.s.highlightedItem, true)
-		// }
+		index++
 	}
+	// push the status line to the bottom of the page
+	for index < mainViewHeight {
+		v.WriteString("\n")
+		index++
+	}
+	for _, line := range statusLine {
+		v.WriteString(line)
+	}
+	v.WriteString(helpLine)
 	if debug {
 		log.Println("len(data) =", len(m.s.data))
 		log.Println("highlightedItem =", m.s.highlightedItem)
@@ -478,6 +549,8 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 
 func (m manager) rawMode(g *gocui.Gui, v *gocui.View) error {
 	maxX, maxY := g.Size()
+	topBoxSize := 3
+	m.s.displayedItemsCount = maxY - topBoxSize
 
 	for i, itm := range m.s.rawData {
 		if i == maxY {
@@ -513,4 +586,38 @@ func (m manager) rawMode(g *gocui.Gui, v *gocui.View) error {
 		log.Println("highlightedItem =", m.s.highlightedItem)
 	}
 	return nil
+}
+
+// SendCliMsg to daemon
+func SendCliMsg(m msg.CliMsg, port string) msg.CliResponse {
+	recJSON, err := json.Marshal(m)
+	if err != nil {
+		log.Fatal("send err 1", err)
+	}
+
+	req, err := http.NewRequest("POST", "http://localhost:"+port+"/dump",
+		bytes.NewBuffer(recJSON))
+	if err != nil {
+		log.Fatal("send err 2", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal("resh-daemon is not running :(")
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal("read response error")
+	}
+	// log.Println(string(body))
+	response := msg.CliResponse{}
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		log.Fatal("unmarshal resp error: ", err)
+	}
+	return response
 }

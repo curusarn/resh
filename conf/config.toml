@@ -4,4 +4,4 @@ sesshistInitHistorySize = 1000
 debug = false 
 bindArrowKeysBash = false
 bindArrowKeysZsh = true
-bindControlR = false
+bindControlR = true

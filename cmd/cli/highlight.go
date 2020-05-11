@@ -27,12 +27,32 @@ func cleanHighlight(str string) string {
 	return str
 }
 
+func highlightHeader(str string) string {
+	underline := "\033[4m"
+	end := "\033[0m"
+	// no clean highlight
+	return underline + str + end
+}
+
+func highlightStatus(str string) string {
+	invert := "\033[7;1m"
+	end := "\033[0m"
+	return invert + cleanHighlight(str) + end
+}
+
 func highlightSelected(str string) string {
 	// template "\033[3%d;%dm"
 	// invertGreen := "\033[32;7;1m"
 	invert := "\033[7;1m"
 	end := "\033[0m"
 	return invert + cleanHighlight(str) + end
+}
+
+func highlightDate(str string) string {
+	// template "\033[3%d;%dm"
+	yellowNormal := "\033[33m"
+	end := "\033[0m"
+	return yellowNormal + cleanHighlight(str) + end
 }
 
 func highlightHost(str string) string {
@@ -69,6 +89,13 @@ func highlightGit(str string) string {
 	greenBold := "\033[32;1m"
 	end := "\033[0m"
 	return greenBold + cleanHighlight(str) + end
+}
+
+func doHighlightHeader(str string, minLength int) string {
+	if len(str) < minLength {
+		str = str + strings.Repeat(" ", minLength-len(str))
+	}
+	return highlightHeader(str)
 }
 
 func doHighlightString(str string, minLength int) string {

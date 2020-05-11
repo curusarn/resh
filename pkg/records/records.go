@@ -23,6 +23,7 @@ type BaseRecord struct {
 	Shell     string `json:"shell"`
 	Uname     string `json:"uname"`
 	SessionID string `json:"sessionId"`
+	RecordID  string `json:"recordId"`
 
 	// posix
 	Home  string `json:"home"`
@@ -149,6 +150,7 @@ type SlimRecord struct {
 
 // CliRecord used for sending records to RESH-CLI
 type CliRecord struct {
+	IsRaw     bool   `json:"isRaw"`
 	SessionID string `json:"sessionId"`
 
 	CmdLine         string `json:"cmdLine"`
@@ -158,14 +160,23 @@ type CliRecord struct {
 	GitOriginRemote string `json:"gitOriginRemote"`
 	ExitCode        int    `json:"exitCode"`
 
-	// RealtimeBefore   float64 `json:"realtimeBefore"`
+	RealtimeBefore float64 `json:"realtimeBefore"`
 	// RealtimeAfter    float64 `json:"realtimeAfter"`
 	// RealtimeDuration float64 `json:"realtimeDuration"`
+}
+
+// NewCliRecordFromCmdLine from EnrichedRecord
+func NewCliRecordFromCmdLine(cmdLine string) CliRecord {
+	return CliRecord{
+		IsRaw:   true,
+		CmdLine: cmdLine,
+	}
 }
 
 // NewCliRecord from EnrichedRecord
 func NewCliRecord(r EnrichedRecord) CliRecord {
 	return CliRecord{
+		IsRaw:           false,
 		SessionID:       r.SessionID,
 		CmdLine:         r.CmdLine,
 		Host:            r.Host,
@@ -173,6 +184,7 @@ func NewCliRecord(r EnrichedRecord) CliRecord {
 		Home:            r.Home,
 		GitOriginRemote: r.GitOriginRemote,
 		ExitCode:        r.ExitCode,
+		RealtimeBefore:  r.RealtimeBefore,
 	}
 }
 
@@ -230,6 +242,9 @@ func (r *Record) Merge(r2 Record) error {
 	}
 	if r.CmdLine != r2.CmdLine {
 		return errors.New("Records to merge are not parts of the same records - r1:" + r.CmdLine + " r2:" + r2.CmdLine)
+	}
+	if r.RecordID != r2.RecordID {
+		return errors.New("Records to merge do not have the same ID - r1:" + r.RecordID + " r2:" + r2.RecordID)
 	}
 	// r.RealtimeBefore != r2.RealtimeBefore - can't be used because of bash-preexec runs when it's not supposed to
 	r.ExitCode = r2.ExitCode

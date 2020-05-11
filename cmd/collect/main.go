@@ -53,6 +53,7 @@ func main() {
 	shell := flag.String("shell", "", "actual shell")
 	uname := flag.String("uname", "", "uname")
 	sessionID := flag.String("sessionId", "", "resh generated session id")
+	recordID := flag.String("recordId", "", "resh generated record id")
 
 	// recall metadata
 	recallActions := flag.String("recall-actions", "", "recall actions that took place before executing the command")
@@ -195,6 +196,7 @@ func main() {
 				Shell:     *shell,
 				Uname:     *uname,
 				SessionID: *sessionID,
+				RecordID:  *recordID,
 
 				// posix
 				Home:  *home,
