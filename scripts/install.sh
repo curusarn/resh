@@ -257,3 +257,10 @@ info="$info
 
 
 echo "$info" | less
+
+echo
+echo "All done!"
+echo "Thank you for using RESH"
+echo "Issues go here: https://github.com/curusarn/resh/issues"
+echo "Do not forget to restart your terminal"
+# echo "Ctrl+R launches the RESH SEARCH app"
