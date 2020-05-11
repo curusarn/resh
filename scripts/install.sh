@@ -254,7 +254,7 @@ info="$info
 ---- Close this by pressing Q ----" 
 
 
-echo "$info" | less
+echo "$info" | ${PAGER:-less}
 
 echo
 echo "All done!"
