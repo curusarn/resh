@@ -32,7 +32,7 @@ __resh_nop() {
 
 __resh_bind_control_R() {
     if [ "${__RESH_control_R_bind_enabled-0}" != 0 ]; then
-        echo "Error: Can't enable Ctrl+R binding because it is already enabled!"
+        echo "RESH SEARCH app Ctrl+R binding is already enabled!"
         return 1 
     fi
     bindfunc --revert '\C-r' __resh_widget_control_R_compat
@@ -55,7 +55,7 @@ __resh_bind_control_R() {
 
 __resh_unbind_arrows() {
     if [ "${__RESH_arrow_keys_bind_enabled-0}" != 1 ]; then
-        echo "Error: Can't disable arrow key bindings because they are not enabled!"
+        echo "RESH arrow key bindings are already disabled!"
         return 1 
     fi
 
@@ -83,7 +83,7 @@ __resh_unbind_arrows() {
 
 __resh_unbind_control_R() {
     if [ "${__RESH_control_R_bind_enabled-0}" != 1 ]; then
-        echo "Error: Can't disable Ctrl+R binding because it is not enabled!"
+        echo "RESH SEARCH app Ctrl+R binding is already disabled!"
         return 1 
     fi
     if [ -z "${__RESH_bindfunc_revert_control_R_bind+x}" ]; then
