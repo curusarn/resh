@@ -2,7 +2,7 @@
 
 # Rich Enhanced Shell History
 
-Context-based replacement/enhancement for zsh and bash shell history - :warning: *Work in progress*
+Context-based replacement/enhancement for zsh and bash shell history
 <!-- Contextual shell history -->
 <!-- Contextual bash history -->
 <!-- Contextual zsh history -->
