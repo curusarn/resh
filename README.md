@@ -163,14 +163,6 @@ reshctl disable ctrl_r_binding
 - Ctrl+G to abort and paste the current query onto the command line
 - Ctrl+R to switch between RAW and NORMAL mode
 
-### Try out RESH SEARCH application without keybinding
-
-You can also run the RESH SEARCH app directly as a one-off:
-```sh
-resh
-```
-NOTE: One feature is not available when running RESH SEARCH app directly  - arrow right won't paste the selected command onto the command line for editing.
-
 ### Arrow key bindings
 
 Resh provides arrow key bindings.
