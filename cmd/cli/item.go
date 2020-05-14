@@ -266,10 +266,12 @@ func properMatch(str, term, padChar string) bool {
 //		returns error if the query doesn't match the record
 func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool) (item, error) {
 	// Use numbers that won't add up to same score for any number of query words
-	const hitScore = 1.307
-	const properMatchScore = 0.503
+	// query score weigth 1.3
+	const hitScore = 1.307         // 1 * 1.3
+	const properMatchScore = 0.433 // 1/3 * 1.3
 	const hitScoreConsecutive = 0.002
 
+	// context score weigth 1
 	// Host penalty
 	var actualPwdScore = 0.9
 	var sameGitRepoScore = 0.8
@@ -284,23 +286,17 @@ func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool
 		differentHostScorePenalty = 0.1
 	}
 
-	const timeScoreCoef = 1e-13
+	const timeScoreWeigth = 1e-13
 	// nonZeroExitCodeScorePenalty + differentHostScorePenalty
 
 	score := 0.0
 	anyHit := false
 	cmd := record.CmdLine
 	for _, term := range query.terms {
-		termHit := false
-		if strings.Contains(record.CmdLine, term) {
+		c := strings.Count(record.CmdLine, term)
+		if c > 0 {
 			anyHit = true
-			if termHit == false {
-				score += hitScore
-			} else if len(term) > 1 {
-				// only count consecutive matches for queries longer than 1
-				score += hitScoreConsecutive
-			}
-			termHit = true
+			score += hitScore + hitScoreConsecutive*float64(c)
 			if properMatch(cmd, term, " ") {
 				score += properMatchScore
 			}
@@ -364,7 +360,7 @@ func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool
 	if score <= 0 && !anyHit {
 		return item{}, errors.New("no match for given record and query")
 	}
-	score += record.RealtimeBefore * timeScoreCoef
+	score += record.RealtimeBefore * timeScoreWeigth
 
 	it := item{
 		realtimeBefore: record.RealtimeBefore,
