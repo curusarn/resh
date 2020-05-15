@@ -266,10 +266,10 @@ func properMatch(str, term, padChar string) bool {
 //		returns error if the query doesn't match the record
 func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool) (item, error) {
 	// Use numbers that won't add up to same score for any number of query words
-	// query score weigth 1.3
-	const hitScore = 1.307         // 1 * 1.3
-	const properMatchScore = 0.433 // 1/3 * 1.3
-	const hitScoreConsecutive = 0.002
+	// query score weigth 1.51
+	const hitScore = 1.517              // 1 * 1.51
+	const properMatchScore = 0.501      // 0.33 * 1.51
+	const hitScoreConsecutive = 0.00302 // 0.002 * 1.51
 
 	// context score weigth 1
 	// Host penalty
@@ -286,7 +286,7 @@ func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool
 		differentHostScorePenalty = 0.1
 	}
 
-	const timeScoreWeigth = 1e-13
+	const timeScoreCoef = 1e-13
 	// nonZeroExitCodeScorePenalty + differentHostScorePenalty
 
 	score := 0.0
@@ -360,7 +360,7 @@ func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool
 	if score <= 0 && !anyHit {
 		return item{}, errors.New("no match for given record and query")
 	}
-	score += record.RealtimeBefore * timeScoreWeigth
+	score += record.RealtimeBefore * timeScoreCoef
 
 	it := item{
 		realtimeBefore: record.RealtimeBefore,
