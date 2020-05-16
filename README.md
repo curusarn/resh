@@ -39,7 +39,7 @@ Why not synchronize your shell history accross your devices and add some metadat
 - OS
 - etc ...
 
-Imagine being able to search your shell history by command and all getting relevant results based the additional context.
+Imagine being able to search your shell history by command and getting relevant results based the additional context.
 
 ## What this project does
 
