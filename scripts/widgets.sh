@@ -119,8 +119,6 @@ __resh_widget_control_R() {
             # set chained keyseq to nothing
             bind -x '"\u[32~": __resh_nop'
         fi
-    elif [ $status_code = 130 ]; then
-        BUFFER="$PREVBUFFER"
     else
         echo "$BUFFER" >| ~/.resh/cli_last_run_out.txt
         echo "# RESH SEARCH APP failed - sorry for the inconvinience (error output was saved to ~/.resh/cli_last_run_out.txt)" 
