@@ -1,7 +1,6 @@
-package main
+package searchapp
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -13,7 +12,8 @@ import (
 
 const itemLocationLenght = 30
 
-type item struct {
+// Item holds item info for normal mode
+type Item struct {
 	isRaw bool
 
 	realtimeBefore float64
@@ -29,43 +29,44 @@ type item struct {
 	sameGitRepo bool
 	exitCode    int
 
-	cmdLineWithColor string
-	cmdLine          string
+	CmdLineWithColor string
+	CmdLine          string
 
-	score float64
+	Score float64
 
-	key string
+	Key string
 	// cmdLineRaw string
 }
 
-type itemColumns struct {
-	dateWithColor string
-	date          string
+// ItemColumns holds rendered columns
+type ItemColumns struct {
+	DateWithColor string
+	Date          string
 
 	// [host:]pwd
-	hostWithColor string
-	host          string
-	pwdTilde      string
+	HostWithColor string
+	Host          string
+	PwdTilde      string
 	samePwd       bool
 	//locationWithColor string
 	//location          string
 
 	// [G] [E#]
-	flagsWithColor string
-	flags          string
+	FlagsWithColor string
+	Flags          string
 
-	cmdLineWithColor string
-	cmdLine          string
+	CmdLineWithColor string
+	CmdLine          string
 
 	// score float64
 
-	key string
+	Key string
 	// cmdLineRaw string
 }
 
-func (i item) less(i2 item) bool {
+func (i Item) less(i2 Item) bool {
 	// reversed order
-	return i.score > i2.score
+	return i.Score > i2.Score
 }
 
 func splitStatusLineToLines(statusLine string, printedLineLength, realLineLength int) []string {
@@ -97,9 +98,10 @@ func splitStatusLineToLines(statusLine string, printedLineLength, realLineLength
 	return statusLineSlice
 }
 
-func (i item) drawStatusLine(compactRendering bool, printedLineLength, realLineLength int) []string {
+// DrawStatusLine ...
+func (i Item) DrawStatusLine(compactRendering bool, printedLineLength, realLineLength int) []string {
 	if i.isRaw {
-		return splitStatusLineToLines(i.cmdLine, printedLineLength, realLineLength)
+		return splitStatusLineToLines(i.CmdLine, printedLineLength, realLineLength)
 	}
 	secs := int64(i.realtimeBefore)
 	nsecs := int64((i.realtimeBefore - float64(secs)) * 1e9)
@@ -110,24 +112,30 @@ func (i item) drawStatusLine(compactRendering bool, printedLineLength, realLineL
 	pwdTilde := strings.Replace(i.pwd, i.home, "~", 1)
 
 	separator := "    "
-	stLine := timeString + separator + i.host + ":" + pwdTilde + separator + i.cmdLine
+	stLine := timeString + separator + i.host + ":" + pwdTilde + separator + i.CmdLine
 	return splitStatusLineToLines(stLine, printedLineLength, realLineLength)
 }
 
-func (i item) drawItemColumns(compactRendering bool) itemColumns {
+// GetEmptyStatusLine .
+func GetEmptyStatusLine(printedLineLength, realLineLength int) []string {
+	return splitStatusLineToLines("- no result selected -", printedLineLength, realLineLength)
+}
+
+// DrawItemColumns ...
+func (i Item) DrawItemColumns(compactRendering bool, debug bool) ItemColumns {
 	if i.isRaw {
 		notAvailable := "n/a"
-		return itemColumns{
-			date:          notAvailable + " ",
-			dateWithColor: notAvailable + " ",
+		return ItemColumns{
+			Date:          notAvailable + " ",
+			DateWithColor: notAvailable + " ",
 			// dateWithColor:    highlightDate(notAvailable) + " ",
-			host:             "",
-			hostWithColor:    "",
-			pwdTilde:         notAvailable,
-			cmdLine:          i.cmdLine,
-			cmdLineWithColor: i.cmdLineWithColor,
+			Host:             "",
+			HostWithColor:    "",
+			PwdTilde:         notAvailable,
+			CmdLine:          i.CmdLine,
+			CmdLineWithColor: i.CmdLineWithColor,
 			// score:             i.score,
-			key: i.key,
+			Key: i.Key,
 		}
 	}
 
@@ -159,7 +167,7 @@ func (i item) drawItemColumns(compactRendering bool) itemColumns {
 	flags := ""
 	flagsWithColor := ""
 	if debug {
-		hitsStr := fmt.Sprintf("%.1f", i.score)
+		hitsStr := fmt.Sprintf("%.1f", i.Score)
 		flags += " S" + hitsStr
 		flagsWithColor += " S" + hitsStr
 	}
@@ -174,46 +182,47 @@ func (i item) drawItemColumns(compactRendering bool) itemColumns {
 	// NOTE: you can debug arbitrary metadata like this
 	// flags += " <" + record.GitOriginRemote + ">"
 	// flagsWithColor += " <" + record.GitOriginRemote + ">"
-	return itemColumns{
-		date:             date,
-		dateWithColor:    dateWithColor,
-		host:             host,
-		hostWithColor:    hostWithColor,
-		pwdTilde:         pwdTilde,
+	return ItemColumns{
+		Date:             date,
+		DateWithColor:    dateWithColor,
+		Host:             host,
+		HostWithColor:    hostWithColor,
+		PwdTilde:         pwdTilde,
 		samePwd:          i.samePwd,
-		flags:            flags,
-		flagsWithColor:   flagsWithColor,
-		cmdLine:          i.cmdLine,
-		cmdLineWithColor: i.cmdLineWithColor,
+		Flags:            flags,
+		FlagsWithColor:   flagsWithColor,
+		CmdLine:          i.CmdLine,
+		CmdLineWithColor: i.CmdLineWithColor,
 		// score:             i.score,
-		key: i.key,
+		Key: i.Key,
 	}
 }
 
-func (ic itemColumns) produceLine(dateLength int, locationLength int, flagLength int, header bool, showDate bool) (string, int) {
+// ProduceLine ...
+func (ic ItemColumns) ProduceLine(dateLength int, locationLength int, flagLength int, header bool, showDate bool) (string, int) {
 	line := ""
 	if showDate {
-		date := ic.date
+		date := ic.Date
 		for len(date) < dateLength {
 			line += " "
 			date += " "
 		}
 		// TODO: use strings.Repeat
-		line += ic.dateWithColor
+		line += ic.DateWithColor
 	}
 	// LOCATION
-	locationWithColor := ic.hostWithColor
-	pwdLength := locationLength - len(ic.host)
+	locationWithColor := ic.HostWithColor
+	pwdLength := locationLength - len(ic.Host)
 	if ic.samePwd {
-		locationWithColor += highlightPwd(leftCutPadString(ic.pwdTilde, pwdLength))
+		locationWithColor += highlightPwd(leftCutPadString(ic.PwdTilde, pwdLength))
 	} else {
-		locationWithColor += leftCutPadString(ic.pwdTilde, pwdLength)
+		locationWithColor += leftCutPadString(ic.PwdTilde, pwdLength)
 	}
 	line += locationWithColor
-	line += ic.flagsWithColor
-	flags := ic.flags
-	if flagLength < len(ic.flags) {
-		log.Printf("produceLine can't specify line w/ flags shorter than the actual size. - len(flags) %v, requested %v\n", len(ic.flags), flagLength)
+	line += ic.FlagsWithColor
+	flags := ic.Flags
+	if flagLength < len(ic.Flags) {
+		log.Printf("produceLine can't specify line w/ flags shorter than the actual size. - len(flags) %v, requested %v\n", len(ic.Flags), flagLength)
 	}
 	for len(flags) < flagLength {
 		line += " "
@@ -225,9 +234,9 @@ func (ic itemColumns) produceLine(dateLength int, locationLength int, flagLength
 		// 		because there is likely a long flag like E130 in the view
 		spacer = " "
 	}
-	line += spacer + ic.cmdLineWithColor
+	line += spacer + ic.CmdLineWithColor
 
-	length := dateLength + locationLength + flagLength + len(spacer) + len(ic.cmdLine)
+	length := dateLength + locationLength + flagLength + len(spacer) + len(ic.CmdLine)
 	return line, length
 }
 
@@ -262,9 +271,9 @@ func properMatch(str, term, padChar string) bool {
 	return false
 }
 
-// newItemFromRecordForQuery creates new item from record based on given query
+// NewItemFromRecordForQuery creates new item from record based on given query
 //		returns error if the query doesn't match the record
-func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool) (item, error) {
+func NewItemFromRecordForQuery(record records.CliRecord, query Query, debug bool) (Item, error) {
 	// Use numbers that won't add up to same score for any number of query words
 	// query score weigth 1.51
 	const hitScore = 1.517              // 1 * 1.51
@@ -319,13 +328,13 @@ func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool
 		record.GitOriginRemote + unlikelySeparator + record.Host
 	*/
 	if record.IsRaw {
-		return item{
+		return Item{
 			isRaw: true,
 
-			cmdLine:          cmdLine,
-			cmdLineWithColor: cmdLineWithColor,
-			score:            score,
-			key:              key,
+			CmdLine:          cmdLine,
+			CmdLineWithColor: cmdLineWithColor,
+			Score:            score,
+			Key:              key,
 		}, nil
 	}
 	// actual pwd matches
@@ -357,12 +366,13 @@ func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool
 		// errorExitStatus = true
 		score -= nonZeroExitCodeScorePenalty
 	}
-	if score <= 0 && !anyHit {
-		return item{}, errors.New("no match for given record and query")
-	}
+	_ = anyHit
+	// if score <= 0 && !anyHit {
+	//	return Item{}, errors.New("no match for given record and query")
+	// }
 	score += record.RealtimeBefore * timeScoreCoef
 
-	it := item{
+	it := Item{
 		realtimeBefore: record.RealtimeBefore,
 
 		differentHost: differentHost,
@@ -373,52 +383,73 @@ func newItemFromRecordForQuery(record records.CliRecord, query query, debug bool
 
 		sameGitRepo:      sameGitRepo,
 		exitCode:         record.ExitCode,
-		cmdLine:          cmdLine,
-		cmdLineWithColor: cmdLineWithColor,
-		score:            score,
-		key:              key,
+		CmdLine:          cmdLine,
+		CmdLineWithColor: cmdLineWithColor,
+		Score:            score,
+		Key:              key,
 	}
 	return it, nil
 }
 
-type rawItem struct {
-	cmdLineWithColor string
-	cmdLine          string
+// GetHeader returns header columns
+func GetHeader(compactRendering bool) ItemColumns {
+	date := "TIME "
+	host := "HOST:"
+	dir := "DIRECTORY"
+	if compactRendering {
+		dir = "DIR"
+	}
+	flags := " FLAGS"
+	cmdLine := "COMMAND-LINE"
+	return ItemColumns{
+		Date:             date,
+		DateWithColor:    date,
+		Host:             host,
+		HostWithColor:    host,
+		PwdTilde:         dir,
+		samePwd:          false,
+		Flags:            flags,
+		FlagsWithColor:   flags,
+		CmdLine:          cmdLine,
+		CmdLineWithColor: cmdLine,
+		// score:             i.score,
+		Key: "_HEADERS_",
+	}
+}
 
-	hits float64
+// RawItem is item for raw mode
+type RawItem struct {
+	CmdLineWithColor string
+	CmdLine          string
 
-	key string
+	Score float64
+
+	Key string
 	// cmdLineRaw string
 }
 
-// newRawItemFromRecordForQuery creates new item from record based on given query
+// NewRawItemFromRecordForQuery creates new item from record based on given query
 //		returns error if the query doesn't match the record
-func newRawItemFromRecordForQuery(record records.CliRecord, terms []string, debug bool) (rawItem, error) {
+func NewRawItemFromRecordForQuery(record records.CliRecord, terms []string, debug bool) (RawItem, error) {
 	const hitScore = 1.0
-	const hitScoreConsecutive = 0.1
+	const hitScoreConsecutive = 0.01
 	const properMatchScore = 0.3
 
-	hits := 0.0
-	anyHit := false
+	const timeScoreCoef = 1e-13
+
+	score := 0.0
 	cmd := record.CmdLine
 	for _, term := range terms {
-		termHit := false
-		if strings.Contains(record.CmdLine, term) {
-			anyHit = true
-			if termHit == false {
-				hits += hitScore
-			} else {
-				hits += hitScoreConsecutive
-			}
-			termHit = true
+		c := strings.Count(record.CmdLine, term)
+		if c > 0 {
+			score += hitScore + hitScoreConsecutive*float64(c)
 			if properMatch(cmd, term, " ") {
-				hits += properMatchScore
+				score += properMatchScore
 			}
 			cmd = strings.ReplaceAll(cmd, term, highlightMatch(term))
-			// NO continue
 		}
 	}
-	_ = anyHit
+	score += record.RealtimeBefore * timeScoreCoef
 	// KEY for deduplication
 	key := record.CmdLine
 
@@ -428,11 +459,11 @@ func newRawItemFromRecordForQuery(record records.CliRecord, terms []string, debu
 	cmdLine := strings.ReplaceAll(record.CmdLine, "\n", ";")
 	cmdLineWithColor := strings.ReplaceAll(cmd, "\n", ";")
 
-	it := rawItem{
-		cmdLine:          cmdLine,
-		cmdLineWithColor: cmdLineWithColor,
-		hits:             hits,
-		key:              key,
+	it := RawItem{
+		CmdLine:          cmdLine,
+		CmdLineWithColor: cmdLineWithColor,
+		Score:            score,
+		Key:              key,
 	}
 	return it, nil
 }

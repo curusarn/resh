@@ -18,6 +18,7 @@ import (
 	"github.com/curusarn/resh/pkg/cfg"
 	"github.com/curusarn/resh/pkg/msg"
 	"github.com/curusarn/resh/pkg/records"
+	"github.com/curusarn/resh/pkg/searchapp"
 
 	"os/user"
 	"path/filepath"
@@ -70,6 +71,8 @@ func runReshCli() (string, int) {
 	pwd := flag.String("pwd", "", "present working directory")
 	gitOriginRemote := flag.String("gitOriginRemote", "DEFAULT", "git origin remote")
 	query := flag.String("query", "", "search query")
+	testHistory := flag.String("test-history", "", "load history from a file instead from the daemon (for testing purposes only!)")
+	testHistoryLines := flag.Int("test-lines", 0, "the number of lines to load from a file passed with --test-history (for testing purposes only!)")
 	flag.Parse()
 
 	if *sessionID == "" {
@@ -96,11 +99,16 @@ func runReshCli() (string, int) {
 	// g.SelBgColor = gocui.ColorGreen
 	g.Highlight = true
 
-	mess := msg.CliMsg{
-		SessionID: *sessionID,
-		PWD:       *pwd,
+	var resp msg.CliResponse
+	if *testHistory == "" {
+		mess := msg.CliMsg{
+			SessionID: *sessionID,
+			PWD:       *pwd,
+		}
+		resp = SendCliMsg(mess, strconv.Itoa(config.Port))
+	} else {
+		resp = searchapp.LoadHistoryFromFile(*testHistory, *testHistoryLines)
 	}
-	resp := SendCliMsg(mess, strconv.Itoa(config.Port))
 
 	st := state{
 		// lock sync.Mutex
@@ -166,8 +174,8 @@ func runReshCli() (string, int) {
 type state struct {
 	lock                sync.Mutex
 	cliRecords          []records.CliRecord
-	data                []item
-	rawData             []rawItem
+	data                []searchapp.Item
+	rawData             []searchapp.RawItem
 	highlightedItem     int
 	displayedItemsCount int
 
@@ -193,7 +201,7 @@ func (m manager) SelectExecute(g *gocui.Gui, v *gocui.View) error {
 	m.s.lock.Lock()
 	defer m.s.lock.Unlock()
 	if m.s.highlightedItem < len(m.s.data) {
-		m.s.output = m.s.data[m.s.highlightedItem].cmdLine
+		m.s.output = m.s.data[m.s.highlightedItem].CmdLine
 		m.s.exitCode = exitCodeExecute
 		return gocui.ErrQuit
 	}
@@ -204,7 +212,7 @@ func (m manager) SelectPaste(g *gocui.Gui, v *gocui.View) error {
 	m.s.lock.Lock()
 	defer m.s.lock.Unlock()
 	if m.s.highlightedItem < len(m.s.data) {
-		m.s.output = m.s.data[m.s.highlightedItem].cmdLine
+		m.s.output = m.s.data[m.s.highlightedItem].CmdLine
 		m.s.exitCode = 0 // success
 		return gocui.ErrQuit
 	}
@@ -233,21 +241,21 @@ func (m manager) UpdateData(input string) {
 		log.Println("len(fullRecords) =", len(m.s.cliRecords))
 		log.Println("len(data) =", len(m.s.data))
 	}
-	query := newQueryFromString(input, m.host, m.pwd, m.gitOriginRemote)
-	var data []item
+	query := searchapp.NewQueryFromString(input, m.host, m.pwd, m.gitOriginRemote, m.config.Debug)
+	var data []searchapp.Item
 	itemSet := make(map[string]int)
 	m.s.lock.Lock()
 	defer m.s.lock.Unlock()
 	for _, rec := range m.s.cliRecords {
-		itm, err := newItemFromRecordForQuery(rec, query, m.config.Debug)
+		itm, err := searchapp.NewItemFromRecordForQuery(rec, query, m.config.Debug)
 		if err != nil {
 			// records didn't match the query
 			// log.Println(" * continue (no match)", rec.Pwd)
 			continue
 		}
-		if idx, ok := itemSet[itm.key]; ok {
+		if idx, ok := itemSet[itm.Key]; ok {
 			// duplicate found
-			if data[idx].score >= itm.score {
+			if data[idx].Score >= itm.Score {
 				// skip duplicate item
 				continue
 			}
@@ -256,14 +264,14 @@ func (m manager) UpdateData(input string) {
 			continue
 		}
 		// add new item
-		itemSet[itm.key] = len(data)
+		itemSet[itm.Key] = len(data)
 		data = append(data, itm)
 	}
 	if debug {
 		log.Println("len(tmpdata) =", len(data))
 	}
 	sort.SliceStable(data, func(p, q int) bool {
-		return data[p].score > data[q].score
+		return data[p].Score > data[q].Score
 	})
 	m.s.data = nil
 	for _, itm := range data {
@@ -281,28 +289,28 @@ func (m manager) UpdateData(input string) {
 }
 
 func (m manager) UpdateRawData(input string) {
-	if debug {
+	if m.config.Debug {
 		log.Println("EDIT start")
 		log.Println("len(fullRecords) =", len(m.s.cliRecords))
 		log.Println("len(data) =", len(m.s.data))
 	}
-	query := getRawTermsFromString(input)
-	var data []rawItem
+	query := searchapp.GetRawTermsFromString(input, m.config.Debug)
+	var data []searchapp.RawItem
 	itemSet := make(map[string]bool)
 	m.s.lock.Lock()
 	defer m.s.lock.Unlock()
 	for _, rec := range m.s.cliRecords {
-		itm, err := newRawItemFromRecordForQuery(rec, query, m.config.Debug)
+		itm, err := searchapp.NewRawItemFromRecordForQuery(rec, query, m.config.Debug)
 		if err != nil {
 			// records didn't match the query
 			// log.Println(" * continue (no match)", rec.Pwd)
 			continue
 		}
-		if itemSet[itm.key] {
+		if itemSet[itm.Key] {
 			// log.Println(" * continue (already present)", itm.key(), itm.pwd)
 			continue
 		}
-		itemSet[itm.key] = true
+		itemSet[itm.Key] = true
 		data = append(data, itm)
 		// log.Println("DATA =", itm.display)
 	}
@@ -310,7 +318,7 @@ func (m manager) UpdateRawData(input string) {
 		log.Println("len(tmpdata) =", len(data))
 	}
 	sort.SliceStable(data, func(p, q int) bool {
-		return data[p].hits > data[q].hits
+		return data[p].Score > data[q].Score
 	})
 	m.s.rawData = nil
 	for _, itm := range data {
@@ -412,31 +420,6 @@ func quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
 
-func getHeader(compactRendering bool) itemColumns {
-	date := "TIME "
-	host := "HOST:"
-	dir := "DIRECTORY"
-	if compactRendering {
-		dir = "DIR"
-	}
-	flags := " FLAGS"
-	cmdLine := "COMMAND-LINE"
-	return itemColumns{
-		date:             date,
-		dateWithColor:    date,
-		host:             host,
-		hostWithColor:    host,
-		pwdTilde:         dir,
-		samePwd:          false,
-		flags:            flags,
-		flagsWithColor:   flags,
-		cmdLine:          cmdLine,
-		cmdLineWithColor: cmdLine,
-		// score:             i.score,
-		key: "_HEADERS_",
-	}
-}
-
 const smallTerminalTresholdWidth = 110
 
 func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
@@ -447,31 +430,31 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 		compactRenderingMode = true
 	}
 
-	data := []itemColumns{}
+	data := []searchapp.ItemColumns{}
 
-	header := getHeader(compactRenderingMode)
-	longestDateLen := len(header.date)
-	longestLocationLen := len(header.host) + len(header.pwdTilde)
+	header := searchapp.GetHeader(compactRenderingMode)
+	longestDateLen := len(header.Date)
+	longestLocationLen := len(header.Host) + len(header.PwdTilde)
 	longestFlagsLen := 2
 	maxPossibleMainViewHeight := maxY - 3 - 1 - 1 - 1 // - top box - header - status - help
 	for i, itm := range m.s.data {
 		if i == maxY {
 			break
 		}
-		ic := itm.drawItemColumns(compactRenderingMode)
+		ic := itm.DrawItemColumns(compactRenderingMode, debug)
 		data = append(data, ic)
 		if i > maxPossibleMainViewHeight {
 			// do not stretch columns because of results that will end up outside of the page
 			continue
 		}
-		if len(ic.date) > longestDateLen {
-			longestDateLen = len(ic.date)
+		if len(ic.Date) > longestDateLen {
+			longestDateLen = len(ic.Date)
 		}
-		if len(ic.host)+len(ic.pwdTilde) > longestLocationLen {
-			longestLocationLen = len(ic.host) + len(ic.pwdTilde)
+		if len(ic.Host)+len(ic.PwdTilde) > longestLocationLen {
+			longestLocationLen = len(ic.Host) + len(ic.PwdTilde)
 		}
-		if len(ic.flags) > longestFlagsLen {
-			longestFlagsLen = len(ic.flags)
+		if len(ic.Flags) > longestFlagsLen {
+			longestFlagsLen = len(ic.Flags)
 		}
 	}
 	maxLocationLen := maxX/7 + 8
@@ -487,7 +470,10 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 	topBoxHeight++    // headers
 	realLineLength := maxX - 2
 	printedLineLength := maxX - 4
-	statusLine := m.s.data[m.s.highlightedItem].drawStatusLine(compactRenderingMode, printedLineLength, realLineLength)
+	statusLine := searchapp.GetEmptyStatusLine(printedLineLength, realLineLength)
+	if m.s.highlightedItem != -1 && m.s.highlightedItem < len(m.s.data) {
+		statusLine = m.s.data[m.s.highlightedItem].DrawStatusLine(compactRenderingMode, printedLineLength, realLineLength)
+	}
 	var statusLineHeight int = len(statusLine)
 
 	helpLineHeight := 1
@@ -500,8 +486,8 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 
 	// header
 	// header := getHeader()
-	dispStr, _ := header.produceLine(longestDateLen, longestLocationLen, longestFlagsLen, true, true)
-	dispStr = doHighlightHeader(dispStr, maxX*2)
+	dispStr, _ := header.ProduceLine(longestDateLen, longestLocationLen, longestFlagsLen, true, true)
+	dispStr = searchapp.DoHighlightHeader(dispStr, maxX*2)
 	v.WriteString(dispStr + "\n")
 
 	var index int
@@ -512,10 +498,10 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 			break
 		}
 
-		displayStr, _ := itm.produceLine(longestDateLen, longestLocationLen, longestFlagsLen, false, true)
+		displayStr, _ := itm.ProduceLine(longestDateLen, longestLocationLen, longestFlagsLen, false, true)
 		if m.s.highlightedItem == index {
 			// maxX * 2 because there are escape sequences that make it hard to tell the real string lenght
-			displayStr = doHighlightString(displayStr, maxX*3)
+			displayStr = searchapp.DoHighlightString(displayStr, maxX*3)
 			if debug {
 				log.Println("### HightlightedItem string :", displayStr)
 			}
@@ -560,10 +546,10 @@ func (m manager) rawMode(g *gocui.Gui, v *gocui.View) error {
 			}
 			break
 		}
-		displayStr := itm.cmdLineWithColor
+		displayStr := itm.CmdLineWithColor
 		if m.s.highlightedItem == i {
 			// use actual min requried length instead of 420 constant
-			displayStr = doHighlightString(displayStr, maxX*2)
+			displayStr = searchapp.DoHighlightString(displayStr, maxX*2)
 			if debug {
 				log.Println("### HightlightedItem string :", displayStr)
 			}

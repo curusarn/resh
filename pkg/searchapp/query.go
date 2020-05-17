@@ -1,4 +1,4 @@
-package main
+package searchapp
 
 import (
 	"log"
@@ -6,7 +6,8 @@ import (
 	"strings"
 )
 
-type query struct {
+// Query holds information that is used for result scoring
+type Query struct {
 	terms           []string
 	host            string
 	pwd             string
@@ -34,7 +35,8 @@ func filterTerms(terms []string) []string {
 	return newTerms
 }
 
-func newQueryFromString(queryInput string, host string, pwd string, gitOriginRemote string) query {
+// NewQueryFromString .
+func NewQueryFromString(queryInput string, host string, pwd string, gitOriginRemote string, debug bool) Query {
 	if debug {
 		log.Println("QUERY input = <" + queryInput + ">")
 	}
@@ -56,7 +58,7 @@ func newQueryFromString(queryInput string, host string, pwd string, gitOriginRem
 		log.Println("QUERY pwd =" + pwd)
 	}
 	sort.SliceStable(terms, func(i, j int) bool { return len(terms[i]) < len(terms[j]) })
-	return query{
+	return Query{
 		terms:           terms,
 		host:            host,
 		pwd:             pwd,
@@ -64,7 +66,8 @@ func newQueryFromString(queryInput string, host string, pwd string, gitOriginRem
 	}
 }
 
-func getRawTermsFromString(queryInput string) []string {
+// GetRawTermsFromString .
+func GetRawTermsFromString(queryInput string, debug bool) []string {
 	if debug {
 		log.Println("QUERY input = <" + queryInput + ">")
 	}

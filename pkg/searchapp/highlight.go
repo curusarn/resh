@@ -1,4 +1,4 @@
-package main
+package searchapp
 
 import (
 	"strconv"
@@ -91,14 +91,16 @@ func highlightGit(str string) string {
 	return greenBold + cleanHighlight(str) + end
 }
 
-func doHighlightHeader(str string, minLength int) string {
+// DoHighlightHeader .
+func DoHighlightHeader(str string, minLength int) string {
 	if len(str) < minLength {
 		str = str + strings.Repeat(" ", minLength-len(str))
 	}
 	return highlightHeader(str)
 }
 
-func doHighlightString(str string, minLength int) string {
+// DoHighlightString .
+func DoHighlightString(str string, minLength int) string {
 	if len(str) < minLength {
 		str = str + strings.Repeat(" ", minLength-len(str))
 	}
