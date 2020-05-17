@@ -200,10 +200,18 @@ type manager struct {
 func (m manager) SelectExecute(g *gocui.Gui, v *gocui.View) error {
 	m.s.lock.Lock()
 	defer m.s.lock.Unlock()
-	if m.s.highlightedItem < len(m.s.data) {
-		m.s.output = m.s.data[m.s.highlightedItem].CmdLine
-		m.s.exitCode = exitCodeExecute
-		return gocui.ErrQuit
+	if m.s.rawMode {
+		if m.s.highlightedItem < len(m.s.rawData) {
+			m.s.output = m.s.rawData[m.s.highlightedItem].CmdLine
+			m.s.exitCode = exitCodeExecute
+			return gocui.ErrQuit
+		}
+	} else {
+		if m.s.highlightedItem < len(m.s.data) {
+			m.s.output = m.s.data[m.s.highlightedItem].CmdLine
+			m.s.exitCode = exitCodeExecute
+			return gocui.ErrQuit
+		}
 	}
 	return nil
 }
@@ -211,10 +219,18 @@ func (m manager) SelectExecute(g *gocui.Gui, v *gocui.View) error {
 func (m manager) SelectPaste(g *gocui.Gui, v *gocui.View) error {
 	m.s.lock.Lock()
 	defer m.s.lock.Unlock()
-	if m.s.highlightedItem < len(m.s.data) {
-		m.s.output = m.s.data[m.s.highlightedItem].CmdLine
-		m.s.exitCode = 0 // success
-		return gocui.ErrQuit
+	if m.s.rawMode {
+		if m.s.highlightedItem < len(m.s.rawData) {
+			m.s.output = m.s.rawData[m.s.highlightedItem].CmdLine
+			m.s.exitCode = 0 // success
+			return gocui.ErrQuit
+		}
+	} else {
+		if m.s.highlightedItem < len(m.s.data) {
+			m.s.output = m.s.data[m.s.highlightedItem].CmdLine
+			m.s.exitCode = 0 // success
+			return gocui.ErrQuit
+		}
 	}
 	return nil
 }
