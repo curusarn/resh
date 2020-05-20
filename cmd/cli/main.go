@@ -467,7 +467,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 			longestDateLen = len(ic.Date)
 		}
 		if len(ic.Host)+len(ic.PwdTilde) > longestLocationLen {
-			longestLocationLen = len(ic.Host) + 1 + len(ic.PwdTilde)
+			longestLocationLen = len(ic.Host) + len(ic.PwdTilde)
 		}
 		if len(ic.Flags) > longestFlagsLen {
 			longestFlagsLen = len(ic.Flags)
