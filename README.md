@@ -210,8 +210,6 @@ You can install `jq` using your favourite package manager or you can use other J
 
 In order to be able to develop a good history tool I will need to get some insight into real life shell and shell history usage patterns.
 
-This project is also my Master thesis so I need to be a bit scientific and base my design decisions on evidence/data.
-
 Running `reshctl sanitize` creates a sanitized version of recorded history.  
 In sanitized history, all sensitive information is replaced with its SHA256 hashes.
 
