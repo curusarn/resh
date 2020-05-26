@@ -241,23 +241,23 @@ func (ic ItemColumns) ProduceLine(dateLength int, locationLength int, flagLength
 }
 
 func leftCutPadString(str string, newLen int) string {
-	dots := "…"
+	dots := "… "
 	strLen := len(str)
 	if newLen > strLen {
 		return strings.Repeat(" ", newLen-strLen) + str
 	} else if newLen < strLen {
-		return dots + str[strLen-newLen+1:]
+		return dots + str[strLen-newLen+2:]
 	}
 	return str
 }
 
 func rightCutPadString(str string, newLen int) string {
-	dots := "…"
+	dots := " …"
 	strLen := len(str)
 	if newLen > strLen {
 		return str + strings.Repeat(" ", newLen-strLen)
 	} else if newLen < strLen {
-		return str[:newLen-1] + dots
+		return str[:newLen-2] + dots
 	}
 	return str
 }
