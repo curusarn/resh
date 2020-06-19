@@ -56,10 +56,10 @@ x86_64)
 x86|i386|i686)
     ARCH=386
     ;;
-arm)
+arm|armv7*)
     ARCH=armv6
     ;;
-arm64|aarch64*|armv*)
+arm64|aarch64*|armv8*)
     ARCH=arm64
     ;;
 *)
