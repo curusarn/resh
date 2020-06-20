@@ -14,96 +14,19 @@ Context-based replacement/enhancement for zsh and bash shell history
 <!-- Better zsh history -->
 <!-- PWD Directory -->
 
-
-## Motivation
-
-When you execute a command in zsh or bash following gets recorded to your shell history:
-
-- Command itself
-- Date
-- Duration of the command (only in zsh and only if enabled)
-
-But shell usage is contextual - you probably use different commands based on additional context:
-
-- Current directory
-- Current git repository/origin
-- Previously executed commands
-- etc ...
-
-Additionally it's annoying to not have your shell history follow you accros your devices.
-Have you lost your history when reinstalling? I personally think this is unacceptable in 2020.
-
-Why not synchronize your shell history accross your devices and add some metadata to know where it came from:
-
-- Hostname
-- OS
-- etc ...
-
-Imagine being able to search your shell history by command and getting relevant results based the additional context.
-
-## What this project does
-
-| | Legend |
-| --- | --- |
-| :heavy_check_mark: | Implemented |
-| :white_check_mark: | Implemented but I'm not happy with it |
-| :x: | Not implemented |
-
-*NOTE: Features can change in the future*
-
-- :heavy_check_mark: Record shell history with metadata
-  - :heavy_check_mark: save it as JSON to `~/.resh_history.json`
-
-- :white_check_mark: Provide an app to search the history
-  - :heavy_check_mark: launch with CTRL+R (enable it using `reshctl enable ctrl_r_binding_global`)
-  - :heavy_check_mark: search by keywords
-  - :heavy_check_mark: relevant results show up first based on context (host, directory, git, exit status)
-  - :heavy_check_mark: allow searching completely without context ("raw" mode)
-  - :heavy_check_mark: import and search history from before RESH was installed
-  - :white_check_mark: include a help with keybindings
-  - :x: allow listing details for individual commands
-  - :x: allow explicitly searching by metadata
-
-- :white_check_mark: Provide bindings for arrow keys
-  - :heavy_check_mark: imitate default behaviour (serve recent history)
-  - :heavy_check_mark: built-in prefix search 
-  - :heavy_check_mark: serve fully dedupicated history
-  - :x: use arrow down for easy sequence repeating
-  - :heavy_check_mark: zsh
-  - :white_check_mark: bash *(off by deafult because of bash performance issues)*
-
-- :heavy_check_mark: Provide a `reshctl` utility to control and interact with the project
-  - :heavy_check_mark: turn on/off resh key bindings
-  - :heavy_check_mark: zsh completion
-  - :heavy_check_mark: bash completion
-
-- :x: Multi-device history
-  - :x: Synchronize recorded history between devices
-  - :x: Allow proxying history when ssh'ing into remote servers
-
-- :x: Provide a stable API to make resh extensible
-
-- :heavy_check_mark: Support zsh and bash
-
-- :heavy_check_mark: Support Linux and macOS
-
-- :white_check_mark: Require only essential prerequisite software
-  - :heavy_check_mark: Linux
-  - :white_check_mark: MacOS *(requires coreutils - `brew install coreutils`)*
-
-- :heavy_check_mark: Provide a tool to sanitize the recorded history
-
-## Prereqisities
-
-Standard stuff: `bash`, `curl`, `tar`, ...
-
-Bash completions will only work if you have `bash-completion` installed
-
-MacOS: `coreutils` (`brew install coreutils`), `bash4.3+` is recommended
+**Search your history by commands and get relevant results based on current directory, git repo, exit status, and host.**
 
 ## Installation
 
-### Simplest
+### Prerequisites
+
+Standard stuff: `bash(4.3+)`, `curl`, `tar`, ...
+
+Bash completions will only work if you have `bash-completion` installed
+
+MacOS: `coreutils` (`brew install coreutils`)
+
+### Simplest installation
 
 Run this command.
 
@@ -111,12 +34,10 @@ Run this command.
 curl -fsSL https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawinstall.sh | bash
 ```
 
-### Simple
+### Simple installation
 
 1. Run `git clone https://github.com/curusarn/resh.git && cd resh`
 2. Run `scripts/rawinstall.sh`
-
-## Examples
 
 ### Update
 
@@ -126,7 +47,13 @@ Check for updates and update
 reshctl update
 ```
 
-### RESH SEARCH application
+## Roadmap
+
+[Overview of the features of the project](./roadmap.md)
+
+## RESH SEARCH application
+
+This is the most important part of this project.
 
 RESH SEARCH app searches your history by commands. It uses host, directories, git remote, and exit status to show you relevant results first.  
 
@@ -163,12 +90,12 @@ reshctl disable ctrl_r_binding
 - Ctrl+G to abort and paste the current query onto the command line
 - Ctrl+R to switch between RAW and NORMAL mode
 
-### Arrow key bindings
+## Arrow key bindings
 
 Resh provides arrow key bindings.
 
 These bindings provide regular stepping through history and prefix search.
-They also fully deduplicate the served history.
+They also fully deduplicate the returned history.
 
 They allow resh to record bindings usage metadata.
 
