@@ -79,6 +79,14 @@ if [ -z "${__RESH_SESSION_ID+x}" ]; then
     # TODO add sesson time
     __resh_reset_variables
     __resh_session_init
+fi
+
+# block for anything we only want to do once per shell
+if [ -z "${__RESH_INIT_DONE+x}" ]; then
+    preexec_functions+=(__resh_preexec)
+    precmd_functions+=(__resh_precmd)
+
+    __resh_reset_variables
 
     if [ "$__RESH_SHELL" = bash ] ; then
         [ "$(resh-config --key BindArrowKeysBash)" = true ] && __resh_bind_arrows
@@ -89,14 +97,6 @@ if [ -z "${__RESH_SESSION_ID+x}" ]; then
         echo "$__RESH_SHELL"
     fi
     [ "$(resh-config --key BindControlR)" = true ] && __resh_bind_control_R
-fi
-
-# block for anything we only want to do once per shell
-if [ -z "${__RESH_INIT_DONE+x}" ]; then
-    preexec_functions+=(__resh_preexec)
-    precmd_functions+=(__resh_precmd)
-
-    __resh_reset_variables
 
     __RESH_INIT_DONE=1
 fi
