@@ -22,14 +22,6 @@
   - :x: allow listing details for individual commands
   - :x: allow explicitly searching by metadata
 
-- :white_check_mark: Provide bindings for arrow keys
-  - :heavy_check_mark: imitate default behaviour (serve recent history)
-  - :heavy_check_mark: built-in prefix search 
-  - :heavy_check_mark: serve fully dedupicated history
-  - :x: use arrow down for easy sequence repeating
-  - :heavy_check_mark: zsh
-  - :white_check_mark: bash *(off by deafult because of bash performance issues)*
-
 - :heavy_check_mark: Provide a `reshctl` utility to control and interact with the project
   - :heavy_check_mark: turn on/off resh key bindings
   - :heavy_check_mark: zsh completion
