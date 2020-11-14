@@ -220,15 +220,6 @@ RESH SEARCH APPLICATION = Redesigned reverse search that actually works
      $ reshctl enable ctrl_r_binding
      $ reshctl disable ctrl_r_binding
 
-ARROW KEY BINDINGS = Slightly better arrow key bindings for zsh
-
-    Arrow keys behave as you are used to. Plus prefix search and the history is fully deduplicated.
-    They are enabled by default in zsh (and disabled in bash because they are slow in bash). 
-
-    Enable/disable arrow key bindings using reshctl command: 
-     $ reshctl enable arrow_key_bindings
-     $ reshctl disable arrow_key_bindings
-
 CHECK FOR UPDATES
     To check for (and install) updates use reshctl command:
      $ reshctl update
