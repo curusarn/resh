@@ -524,14 +524,17 @@ func LoadFromFile(fname string, limit int) []Record {
 	}
 	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
+	reader := bufio.NewReader(file)
 	var i int
 	var firstErrLine int
-	for scanner.Scan() {
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			break
+		}
 		i++
 		record := Record{}
 		fallbackRecord := FallbackRecord{}
-		line := scanner.Text()
 		err = json.Unmarshal([]byte(line), &record)
 		if err != nil {
 			err = json.Unmarshal([]byte(line), &fallbackRecord)
@@ -550,6 +553,11 @@ func LoadFromFile(fname string, limit int) []Record {
 		}
 		recs = append(recs, record)
 	}
+	// log.Println("records: done loading file:", err)
+	if err != io.EOF {
+		log.Println("records: error while loading file:", err)
+	}
+	// log.Println("records: Loaded lines - count:", i)
 	if encounteredErrors > 0 {
 		// fix errors in the history file
 		log.Printf("There were %d decoding errors, the first error happend on line %d/%d", encounteredErrors, firstErrLine, i)
@@ -564,6 +572,7 @@ func LoadFromFile(fname string, limit int) []Record {
 			log.Fatalln("Fatal: Failed write out new history")
 		}
 	}
+	log.Println("records: Loaded records - count:", len(recs))
 	return recs
 }
 

@@ -622,5 +622,8 @@ func SendCliMsg(m msg.CliMsg, port string) msg.CliResponse {
 	if err != nil {
 		log.Fatal("unmarshal resp error: ", err)
 	}
+	if debug {
+		log.Printf("recieved %d records from daemon\n", len(response.CliRecords))
+	}
 	return response
 }

@@ -61,6 +61,7 @@ func (h *Histfile) loadCliRecords(recs []records.Record) {
 		rec := recs[i]
 		h.cliRecords.AddRecord(rec)
 	}
+	log.Println("histfile: resh history loaded - history records count:", len(h.cliRecords.List))
 }
 
 // loadsHistory from resh_history and if there is not enough of it also load native shell histories
@@ -88,6 +89,7 @@ func (h *Histfile) loadHistory(bashHistoryPath, zshHistoryPath string, maxInitHi
 	}
 	log.Println("histfile: Loading resh history from file ...")
 	history := records.LoadFromFile(h.historyPath, math.MaxInt32)
+	log.Println("histfile: resh history loaded from file - count:", len(history))
 	go h.loadCliRecords(history)
 	// NOTE: keeping this weird interface for now because we might use it in the future
 	//			when we only load bash or zsh history
