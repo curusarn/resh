@@ -90,35 +90,6 @@ reshctl disable ctrl_r_binding
 - Ctrl+G to abort and paste the current query onto the command line
 - Ctrl+R to switch between RAW and NORMAL mode
 
-## Arrow key bindings
-
-Resh provides arrow key bindings.
-
-These bindings provide regular stepping through history and prefix search.
-They also fully deduplicate the returned history.
-
-They allow resh to record bindings usage metadata.
-
-![bindings metadata](img/screen-recall.png)
-
-*In example above I pressed UP, pressed DOWN, pressed UP (prefix search `make`) and the command line after the last command line retrieved from history was `make build` so we see that I executed the retrieved command without editing it.*
-
-Arrow key bindings are enabled by default in zsh and they are disabled by default in bash because there are some performance issues.
-
-Enable/disable arrow key bindings:
-
-```sh
-reshctl enable arrow_key_bindings
-
-reshctl disable arrow_key_bindings
-```
-
-See what your current setting is:
-
-```sh
-reshctl status
-```
-
 ### View the recorded history
 
 Resh history is saved to `~/.resh_history.json`
