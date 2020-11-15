@@ -129,6 +129,6 @@ Please do create issues if you encounter any problems or if you have a suggestio
 
 ## Uninstallation
 
-You can uninstall this project at any time by running `rm -rf ~/.resh/`
+You can uninstall this project at any time by running `rm -rf ~/.resh/`.
 
 You won't lose any recorded history by removing `~/.resh` directory because history is saved in `~/.resh_history.json`.
