@@ -15,9 +15,14 @@ if [ "${1-}" = "--test" ] || [ "${1-}" = "-t" ]; then
 else
     echo "Looking for the latest release ..."
     # latest release
-    json=$(curl --silent "https://api.github.com/repos/curusarn/resh/releases/latest")
-    # not very robust but we don't want any dependencies to parse to JSON
-    tag=$(echo "$json" | grep '"tag_name":' | cut -d':' -f2 | tr -d ',' | cut -d'"' -f2)
+    if which jq >/dev/null; then
+        # Use `jq` if it exists on the system
+        tag=$(curl "https://api.github.com/repos/curusarn/resh/releases/latest" | jq .tag_name | tr -d '"' | tr -d "'")
+    else
+        json=$(curl --silent "https://api.github.com/repos/curusarn/resh/releases/latest")
+        # not very robust but we don't want any dependencies to parse to JSON
+        tag=$(echo "$json" | grep '"tag_name":' | cut -d':' -f2 | tr -d ',' | cut -d'"' -f2)
+    fi
 fi
 
 if [ ${#tag} -lt 2 ]; then
