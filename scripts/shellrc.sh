@@ -69,6 +69,8 @@ export __RESH_VERSION=$(resh-collect -version)
 # shellcheck disable=2155
 export __RESH_REVISION=$(resh-collect -revision)
 
+__resh_set_xdg_home_paths
+
 __resh_run_daemon
 
 # block for anything we only want to do once per session

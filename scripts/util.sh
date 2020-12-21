@@ -163,3 +163,29 @@ __resh_session_init() {
                     >| ~/.resh/session_init_last_run_out.txt 2>&1 || echo "resh-session-init ERROR: $(head -n 1 ~/.resh/session_init_last_run_out.txt)"
         fi
 }
+
+__resh_set_xdg_home_paths() {
+    if [ -z "${XDG_CONFIG_HOME-}" ]; then
+        __RESH_XDG_CONFIG_FILE="$HOME/.config"
+    else
+        __RESH_XDG_CONFIG_FILE="$XDG_CONFIG_HOME"
+    fi
+    mkdir -p "$__RESH_XDG_CONFIG_FILE" >/dev/null 2>/dev/null
+    __RESH_XDG_CONFIG_FILE="$__RESH_XDG_CONFIG_FILE/resh.toml"
+
+
+    if [ -z "${XDG_CACHE_HOME-}" ]; then
+        __RESH_XDG_CACHE_HOME="$HOME/.cache/resh"
+    else
+        __RESH_XDG_CACHE_HOME="$XDG_CACHE_HOME/resh"
+    fi
+    mkdir -p "$__RESH_XDG_CACHE_HOME" >/dev/null 2>/dev/null
+
+
+    if [ -z "${XDG_DATA_HOME-}" ]; then
+        __RESH_XDG_DATA_HOME="$HOME/.local/share/resh"
+    else
+        __RESH_XDG_DATA_HOME="$XDG_DATA_HOME/resh"
+    fi
+    mkdir -p "$__RESH_XDG_DATA_HOME" >/dev/null 2>/dev/null
+}
