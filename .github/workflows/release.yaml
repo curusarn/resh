@@ -17,12 +17,12 @@ jobs:
         run: git submodule update --init --recursive 
       -
         name: Set up Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v2
         with:
-          go-version: '1.12'
+          go-version: 1.16
       -
         name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v1
+        uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
           args: release
