@@ -69,8 +69,8 @@ esac
 
 if [ "$OS" = darwin ]; then
     if [ "$ARCH" = armv6 ] ; then
-        echo "It seems that you are running macOS on armv6 - exiting!"
-        echo "Expected Linux or macOS on x86_64 or i386 (or Linux on arm or arm64 or macOS on arm64)"
+        echo "It seems that you are running macOS on 32-bit arm - exiting!"
+        echo "Expected Linux or macOS on x86_64, i386, or arm64 (or Linux on 32-bit arm)"
         echo "Got OS: $(uname) (uname)"
         echo "Got ARCH: $(uname -m) (uname -m)"
         exit 1
@@ -79,7 +79,7 @@ fi
 
 if [ "$OS" = unknown ] || [ "$ARCH" = unknown ]; then
     echo "Couldn't detect your OS and architecture - exiting!"
-    echo "Expected Linux or macOS on x86_64 or i386 (or Linux on arm or arm64)"
+    echo "Expected Linux or macOS on x86_64, i386, or arm64 (or Linux on 32-bit arm)"
     echo "Got OS: $(uname) (uname)"
     echo "Got ARCH: $(uname -m) (uname -m)"
     exit 1
