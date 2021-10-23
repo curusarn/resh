@@ -16,6 +16,7 @@ test_go:
 	@for dir in {cmd,pkg}/* ; do \
 		echo $$dir ; \
 		go test $$dir/*.go ; \
+		go vet $$dir/*.go ; \
 	done
 
 test: test_go
@@ -26,7 +27,7 @@ rebuild:
 	make build
 
 clean:
-	rm bin/resh-*
+	rm -f bin/resh-*
 
 uninstall:
 	# Uninstalling ...
