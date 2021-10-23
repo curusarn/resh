@@ -516,7 +516,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 
 		displayStr, _ := itm.ProduceLine(longestDateLen, longestLocationLen, longestFlagsLen, false, true)
 		if m.s.highlightedItem == index {
-			// maxX * 2 because there are escape sequences that make it hard to tell the real string lenght
+			// maxX * 2 because there are escape sequences that make it hard to tell the real string length
 			displayStr = searchapp.DoHighlightString(displayStr, maxX*3)
 			if debug {
 				log.Println("### HightlightedItem string :", displayStr)

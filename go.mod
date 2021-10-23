@@ -14,4 +14,5 @@ require (
 	github.com/schollz/progressbar v1.0.0
 	github.com/spf13/cobra v0.0.5
 	github.com/whilp/git-urls v0.0.0-20160530060445-31bac0d230fa
+	golang.org/x/exp v0.0.0-20211012155715-ffe10e552389 // indirect
 )
