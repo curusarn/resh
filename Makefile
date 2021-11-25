@@ -21,7 +21,7 @@ rebuild:
 	make build
 
 clean:
-	rm bin/resh-*
+	rm -f bin/resh-*
 
 uninstall:
 	# Uninstalling ...

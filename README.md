@@ -1,5 +1,7 @@
 
 ![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/curusarn/resh?sort=semver)
+![Go test](https://github.com/curusarn/resh/actions/workflows/go.yaml/badge.svg)
+![Shell test](https://github.com/curusarn/resh/actions/workflows/sh.yaml/badge.svg)
 
 # Rich Enhanced Shell History
 
