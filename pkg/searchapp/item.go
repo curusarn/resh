@@ -8,9 +8,11 @@ import (
 	"time"
 
 	"github.com/curusarn/resh/pkg/records"
+	"golang.org/x/exp/utf8string"
 )
 
-const itemLocationLenght = 30
+const itemLocationLength = 30
+const dots = "…"
 
 // Item holds item info for normal mode
 type Item struct {
@@ -202,17 +204,17 @@ func (i Item) DrawItemColumns(compactRendering bool, debug bool) ItemColumns {
 func (ic ItemColumns) ProduceLine(dateLength int, locationLength int, flagLength int, header bool, showDate bool) (string, int) {
 	line := ""
 	if showDate {
-		date := ic.Date
-		for len(date) < dateLength {
-			line += " "
-			date += " "
-		}
-		// TODO: use strings.Repeat
-		line += ic.DateWithColor
+		line += strings.Repeat(" ", dateLength-len(ic.Date)) + ic.DateWithColor
 	}
 	// LOCATION
-	locationWithColor := ic.HostWithColor
-	pwdLength := locationLength - len(ic.Host)
+	var locationWithColor string
+	// ensure that host will not take up all the space
+	if len(ic.Host) >= locationLength {
+		locationWithColor = rightCutPadString(ic.Host, locationLength / 2 - 1) + ":"
+	} else {
+		locationWithColor = ic.HostWithColor
+	}
+	pwdLength := locationLength - len(locationWithColor)
 	if ic.samePwd {
 		locationWithColor += highlightPwd(leftCutPadString(ic.PwdTilde, pwdLength))
 	} else {
@@ -241,23 +243,29 @@ func (ic ItemColumns) ProduceLine(dateLength int, locationLength int, flagLength
 }
 
 func leftCutPadString(str string, newLen int) string {
-	dots := "…"
-	strLen := len(str)
+	if newLen <= 0 {
+		return ""
+	}
+	utf8Str := utf8string.NewString(str)
+	strLen := utf8Str.RuneCount()
 	if newLen > strLen {
 		return strings.Repeat(" ", newLen-strLen) + str
 	} else if newLen < strLen {
-		return dots + str[strLen-newLen+1:]
+		return dots + utf8string.NewString(str).Slice(strLen-newLen+1, strLen)
 	}
 	return str
 }
 
 func rightCutPadString(str string, newLen int) string {
-	dots := "…"
-	strLen := len(str)
+	if newLen <= 0 {
+		return ""
+	}
+	utf8Str := utf8string.NewString(str)
+	strLen := utf8Str.RuneCount()
 	if newLen > strLen {
 		return str + strings.Repeat(" ", newLen-strLen)
 	} else if newLen < strLen {
-		return str[:newLen-1] + dots
+		return utf8Str.Slice(0, newLen-1) + dots
 	}
 	return str
 }
