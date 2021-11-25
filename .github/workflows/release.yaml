@@ -6,22 +6,23 @@ on:
       - v*
 
 jobs:
+
   goreleaser:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout
+
+      - name: Checkout
         uses: actions/checkout@v2
-      - 
-        name: Checkout submodules
+
+      - name: Checkout submodules
         run: git submodule update --init --recursive 
-      -
-        name: Set up Go
+
+      - name: Set up Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.16
-      -
-        name: Run GoReleaser
+
+      - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:
           version: latest

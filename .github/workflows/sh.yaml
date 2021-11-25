@@ -13,5 +13,8 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
+      - name: Checkout submodules
+        run: git submodule update --init --recursive 
+
       - name: Test
         run: scripts/test.sh
