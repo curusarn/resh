@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -165,7 +166,7 @@ func runReshCli() (string, int) {
 	layout.UpdateData(*query)
 	layout.UpdateRawData(*query)
 	err = g.MainLoop()
-	if err != nil && gocui.IsQuit(err) == false {
+	if err != nil && !errors.Is(err, gocui.ErrQuit) {
 		log.Panicln(err)
 	}
 	return layout.s.output, layout.s.exitCode
@@ -395,7 +396,7 @@ func (m manager) Layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 
 	v, err := g.SetView("input", 0, 0, maxX-1, 2, b)
-	if err != nil && gocui.IsUnknownView(err) == false {
+	if err != nil && !errors.Is(err, gocui.ErrUnknownView) {
 		log.Panicln(err.Error())
 	}
 
@@ -418,7 +419,7 @@ func (m manager) Layout(g *gocui.Gui) error {
 	}
 
 	v, err = g.SetView("body", 0, 2, maxX-1, maxY, b)
-	if err != nil && gocui.IsUnknownView(err) == false {
+	if err != nil && !errors.Is(err, gocui.ErrUnknownView) {
 		log.Panicln(err.Error())
 	}
 	v.Frame = false
