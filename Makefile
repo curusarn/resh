@@ -11,14 +11,9 @@ build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect bi
 install: build
 	scripts/install.sh
 
-test_go:
-	# Running tests
-	@for dir in {cmd,pkg}/* ; do \
-		echo $$dir ; \
-		go test $$dir/*.go ; \
-	done
-
-test: test_go
+test:
+	go test -v ./...
+	go vet ./...
 	scripts/test.sh
 
 rebuild:
@@ -36,7 +31,7 @@ bin/resh-%: cmd/%/*.go pkg/*/*.go cmd/control/cmd/*.go cmd/control/status/status
 	grep $@ .goreleaser.yml -q # all build targets need to be included in .goreleaser.yml
 	go build ${GOFLAGS} -o $@ cmd/$*/*.go
 
-.PHONY: ser submodules build install rebuild uninstall clean
+.PHONY: submodules build install rebuild uninstall clean test
 
 
 submodules: | submodules/bash-preexec/bash-preexec.sh submodules/bash-zsh-compat-widgets/bindfunc.sh
