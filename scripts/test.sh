@@ -14,10 +14,12 @@ for f in scripts/{shellrc,util,reshctl,hooks}.sh; do
     ! zsh -n "$f" && echo "Zsh syntax check failed!" && exit 1
 done
 
-for sh in bash zsh; do
-    echo "Running functions in scripts/shellrc.sh using $sh ..."
-    ! $sh -c ". scripts/shellrc.sh; __resh_preexec; __resh_precmd" && echo "Error while running functions!" && exit 1
-done
+if [ "$1" == "--all" ]; then
+	for sh in bash zsh; do
+	    echo "Running functions in scripts/shellrc.sh using $sh ..."
+	    ! $sh -c ". scripts/shellrc.sh; __resh_preexec; __resh_precmd" && echo "Error while running functions!" && exit 1
+	done
+fi
 
 # TODO: test installation
 

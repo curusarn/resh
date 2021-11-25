@@ -14,7 +14,7 @@ install: build
 test:
 	go test -v ./...
 	go vet ./...
-	scripts/test.sh
+	scripts/test.sh --all
 
 rebuild:
 	make clean
