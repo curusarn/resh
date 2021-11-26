@@ -107,17 +107,6 @@ You can install `jq` using your favourite package manager or you can use other J
 
 *Recorded metadata will be reduced to only include useful information in the future.*
 
-## Data sanitization and analysis
-
-In order to be able to develop a good history tool I will need to get some insight into real life shell and shell history usage patterns.
-
-Running `reshctl sanitize` creates a sanitized version of recorded history.  
-In sanitized history, all sensitive information is replaced with its SHA256 hashes.
-
-If you tried sanitizing your history and you think the result is not sanitized enough then please create an issue or message me.
-
-If you would consider supporting my research/thesis by sending me a sanitized version of your history then please give me some contact info using this form: https://forms.gle/227SoyJ5c2iteKt98
-
 ## Known issues
 
 ### Q: I use bash on macOS and resh doesn't work

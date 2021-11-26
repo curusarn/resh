@@ -4,27 +4,6 @@
 # shellcheck source=widgets.sh
 . ~/.resh/widgets.sh
 
-__resh_bind_arrows() {
-    if [ "${__RESH_arrow_keys_bind_enabled-0}" != 0 ]; then
-        echo "RESH arrow key bindings are already enabled!"
-        return 1 
-    fi
-    bindfunc --revert '\eOA' __resh_widget_arrow_up_compat
-    __RESH_bindfunc_revert_arrow_up_bind=$_bindfunc_revert
-    bindfunc --revert '\e[A' __resh_widget_arrow_up_compat
-    __RESH_bindfunc_revert_arrow_up_bind_vim=$_bindfunc_revert
-    bindfunc --vim-cmd --revert 'k' __resh_widget_arrow_up_compat
-    __RESH_bindfunc_revert_k_bind_vim=$_bindfunc_revert
-    bindfunc --revert '\eOB' __resh_widget_arrow_down_compat
-    __RESH_bindfunc_revert_arrow_down_bind=$_bindfunc_revert
-    bindfunc --revert '\e[B' __resh_widget_arrow_down_compat
-    __RESH_bindfunc_revert_arrow_down_bind_vim=$_bindfunc_revert
-    bindfunc --vim-cmd --revert 'j' __resh_widget_arrow_down_compat
-    __RESH_bindfunc_revert_j_bind_vim=$_bindfunc_revert
-    __RESH_arrow_keys_bind_enabled=1
-    return 0
-}
-
 __resh_nop() {
     # does nothing
     true
@@ -53,34 +32,6 @@ __resh_bind_control_R() {
     return 0
 }
 
-__resh_unbind_arrows() {
-    if [ "${__RESH_arrow_keys_bind_enabled-0}" != 1 ]; then
-        echo "RESH arrow key bindings are already disabled!"
-        return 1 
-    fi
-
-    if [ -z "${__RESH_bindfunc_revert_arrow_up_bind+x}" ]; then
-        echo "Warn: Couldn't revert arrow UP binding because 'revert command' is empty."
-    else
-        eval "$__RESH_bindfunc_revert_arrow_up_bind"
-        [ -z "${__RESH_bindfunc_revert_arrow_up_bind_vim+x}" ] || eval "$__RESH_bindfunc_revert_arrow_up_bind_vim"
-        [ -z "${__RESH_bindfunc_revert_k_bind_vim+x}" ] || eval "$__RESH_bindfunc_revert_k_bind_vim"
-        echo "RESH arrow up binding successfully disabled"
-        __RESH_arrow_keys_bind_enabled=0
-    fi
-
-    if [ -z "${__RESH_bindfunc_revert_arrow_down_bind+x}" ]; then
-        echo "Warn: Couldn't revert arrow DOWN binding because 'revert command' is empty."
-    else
-        eval "$__RESH_bindfunc_revert_arrow_down_bind"
-        [ -z "${__RESH_bindfunc_revert_arrow_down_bind_vim+x}" ] || eval "$__RESH_bindfunc_revert_arrow_down_bind_vim"
-        [ -z "${__RESH_bindfunc_revert_j_bind_vim+x}" ] || eval "$__RESH_bindfunc_revert_j_bind_vim"
-        echo "RESH arrow down binding successfully disabled"
-        __RESH_arrow_keys_bind_enabled=0
-    fi
-    return 0
-}
-
 __resh_unbind_control_R() {
     if [ "${__RESH_control_R_bind_enabled-0}" != 1 ]; then
         echo "RESH SEARCH app Ctrl+R binding is already disabled!"
@@ -96,12 +47,10 @@ __resh_unbind_control_R() {
 }
 
 __resh_bind_all() {
-    __resh_bind_arrows
     __resh_bind_control_R
 }
 
 __resh_unbind_all() {
-    __resh_unbind_arrows
     __resh_unbind_control_R
 }
 
@@ -151,11 +100,6 @@ reshctl() {
     #     __resh_bind_all
     #     return 0
     #     ;;
-    31)
-        # enable arrow keys
-        __resh_bind_arrows
-        return 0
-        ;;
     32)
         # enable control R
         __resh_bind_control_R
@@ -167,11 +111,6 @@ reshctl() {
     #     __resh_unbind_all
     #     return 0
     #     ;;
-    41)
-        # disable arrow keys
-        __resh_unbind_arrows
-        return 0
-        ;;
     42)
         # disable control R
         __resh_unbind_control_R
@@ -190,15 +129,10 @@ reshctl() {
         ;;
     52)
         # show status 
-        if [ "${__RESH_arrow_keys_bind_enabled-0}" != 0 ]; then
-            echo ' * this session: ENABLED'
-        else
-            echo ' * this session: DISABLED'
-        fi
         echo
 		echo 'Control R binding ...'
         if [ "$(resh-config --key BindControlR)" = true ]; then
-			echo ' * future sessions: ENABLED (experimental)'
+			echo ' * future sessions: ENABLED'
 		else
 			echo ' * future sessions: DISABLED'
         fi

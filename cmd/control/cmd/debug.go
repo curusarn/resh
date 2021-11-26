@@ -43,8 +43,6 @@ var debugOutputCmd = &cobra.Command{
 			"collect_last_run_out.txt",
 			"postcollect_last_run_out.txt",
 			"session_init_last_run_out.txt",
-			"arrow_up_last_run_out.txt",
-			"arrow_down_last_run_out.txt",
 		}
 		usr, _ := user.Current()
 		dir := usr.HomeDir
