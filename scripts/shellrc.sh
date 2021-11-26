@@ -73,6 +73,8 @@ __resh_set_xdg_home_paths
 
 __resh_run_daemon
 
+[ "$(resh-config --key BindControlR)" = true ] && __resh_bind_control_R
+
 # block for anything we only want to do once per session
 # NOTE: nested shells are still the same session
 if [ -z "${__RESH_SESSION_ID+x}" ]; then
@@ -89,8 +91,6 @@ if [ -z "${__RESH_INIT_DONE+x}" ]; then
     precmd_functions+=(__resh_precmd)
 
     __resh_reset_variables
-
-    [ "$(resh-config --key BindControlR)" = true ] && __resh_bind_control_R
 
     __RESH_INIT_DONE=1
 fi
