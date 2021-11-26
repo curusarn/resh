@@ -48,19 +48,6 @@ var statusCmd = &cobra.Command{
 			fmt.Println(" * Please RESTART this terminal window")
 		}
 
-		fmt.Println()
-		fmt.Println("Arrow key bindings ...")
-		if config.BindArrowKeysBash {
-			fmt.Println(" * bash future sessions: ENABLED (not recommended)")
-		} else {
-			fmt.Println(" * bash future sessions: DISABLED (recommended)")
-		}
-		if config.BindArrowKeysZsh {
-			fmt.Println(" * zsh future sessions: ENABLED (recommended)")
-		} else {
-			fmt.Println(" * zsh future sessions: DISABLED (not recommended)")
-		}
-
 		exitCode = status.ReshStatus
 	},
 }

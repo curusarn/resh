@@ -11,13 +11,9 @@ const (
 	// EnableResh exit code -  tells reshctl() wrapper to enable resh
 	// EnableResh = 30
 
-	// EnableArrowKeyBindings exit code - tells reshctl() wrapper to enable arrow key bindings
-	EnableArrowKeyBindings = 31
 	// EnableControlRBinding exit code - tells reshctl() wrapper to enable control R binding
 	EnableControlRBinding = 32
 
-	// DisableArrowKeyBindings exit code - tells reshctl() wrapper to disable arrow key bindings
-	DisableArrowKeyBindings = 41
 	// DisableControlRBinding exit code - tells reshctl() wrapper to disable control R binding
 	DisableControlRBinding = 42
 	// ReloadRcFiles exit code - tells reshctl() wrapper to reload shellrc resh file

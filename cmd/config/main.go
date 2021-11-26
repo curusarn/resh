@@ -34,10 +34,6 @@ func main() {
 
 	*configKey = strings.ToLower(*configKey)
 	switch *configKey {
-	case "bindarrowkeysbash":
-		printBoolNormalized(config.BindArrowKeysBash)
-	case "bindarrowkeyszsh":
-		printBoolNormalized(config.BindArrowKeysZsh)
 	case "bindcontrolr":
 		printBoolNormalized(config.BindControlR)
 	case "port":
