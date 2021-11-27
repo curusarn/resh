@@ -128,7 +128,7 @@ fi
 echo
 echo "This installations has two modes:"
 echo " * Automatic - no question asked - RECOMMENDED"
-echo " * Guided - prompts to give you more control - useful if you have you a heavily customized shell configuration"
+echo " * Guided - prompts to give you more control - useful if you have heavily customized shell configuration"
 if ask_Yn ">>> Would you like to use the AUTOMATIC install mode?"; then
     SKIP_ASK_PROMPTS=1
     echo "Using automatic install mode ..."
