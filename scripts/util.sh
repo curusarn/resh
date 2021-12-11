@@ -53,6 +53,9 @@ __resh_run_daemon() {
         # hotfix
         gnohup resh-daemon >| ~/.resh/daemon_last_run_out.txt 2>&1 & disown
     else
+        # TODO: switch to nohup for consistency once you confirm that daemon is
+        #       not getting killed anymore on macOS
+        # nohup resh-daemon >| ~/.resh/daemon_last_run_out.txt 2>&1 & disown
         setsid resh-daemon >| ~/.resh/daemon_last_run_out.txt 2>&1 & disown
     fi
 }

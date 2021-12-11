@@ -25,7 +25,7 @@ func sendSignals(sig os.Signal, subscribers []chan os.Signal, done chan string) 
 		case _ = <-done:
 			chanCount--
 			if chanCount == 0 {
-				log.Println("signalhandler: All boxes shut down successfully")
+				log.Println("signalhandler: All components shut down successfully")
 				return
 			}
 		default:
@@ -42,12 +42,20 @@ func sendSignals(sig os.Signal, subscribers []chan os.Signal, done chan string) 
 func Run(subscribers []chan os.Signal, done chan string, server *http.Server) {
 	signals := make(chan os.Signal, 1)
 
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGSTOP, syscall.SIGQUIT)
 
-	sig := <-signals
-	log.Println("signalhandler: Got signal " + sig.String())
+	var sig os.Signal
+	for {
+		sig := <-signals
+		log.Println("signalhandler: Got signal " + sig.String())
+		if sig == syscall.SIGTERM {
+			// Shutdown daemon on SIGTERM
+			break
+		}
+		log.Printf("signalhandler: Ignoring signal %s. Send SIGTERM to trigger shutdown.\n", sig.String())
+	}
 
-	log.Println("signalhandler: Sending signals to Subscribers")
+	log.Println("signalhandler: Sending shutdown signals to components")
 	sendSignals(sig, subscribers, done)
 
 	log.Println("signalhandler: Shutting down the server")
