@@ -42,17 +42,17 @@ func sendSignals(sig os.Signal, subscribers []chan os.Signal, done chan string) 
 func Run(subscribers []chan os.Signal, done chan string, server *http.Server) {
 	signals := make(chan os.Signal, 1)
 
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGSTOP, syscall.SIGQUIT)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 	var sig os.Signal
 	for {
 		sig := <-signals
-		log.Println("signalhandler: Got signal " + sig.String())
+		log.Printf("signalhandler: Got signal '%s'\n", sig.String())
 		if sig == syscall.SIGTERM {
 			// Shutdown daemon on SIGTERM
 			break
 		}
-		log.Printf("signalhandler: Ignoring signal %s. Send SIGTERM to trigger shutdown.\n", sig.String())
+		log.Printf("signalhandler: Ignoring signal '%s'. Send SIGTERM to trigger shutdown.\n", sig.String())
 	}
 
 	log.Println("signalhandler: Sending shutdown signals to components")

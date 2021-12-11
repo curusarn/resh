@@ -38,7 +38,7 @@ func main() {
 
 	f, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
-		log.Fatal("Error opening file:", err)
+		log.Fatalf("Error opening file: %v\n", err)
 	}
 	defer f.Close()
 
@@ -47,7 +47,7 @@ func main() {
 
 	var config cfg.Config
 	if _, err := toml.DecodeFile(configPath, &config); err != nil {
-		log.Println("Error reading config", err)
+		log.Printf("Error reading config: %v\n", err)
 		return
 	}
 	if config.Debug {
@@ -57,7 +57,8 @@ func main() {
 
 	res, err := isDaemonRunning(config.Port)
 	if err != nil {
-		log.Println("Error while checking if the daemon is runnnig", err)
+		log.Printf("Error while checking if the daemon is runnnig"+
+			" - it's probably not running: %v\n", err)
 	}
 	if res {
 		log.Println("Daemon is already running - exiting!")
@@ -69,18 +70,18 @@ func main() {
 		// kill daemon
 		err = killDaemon(pidfilePath)
 		if err != nil {
-			log.Println("Error while killing daemon", err)
+			log.Printf("Error while killing daemon: %v\n", err)
 		}
 	}
 	err = ioutil.WriteFile(pidfilePath, []byte(strconv.Itoa(os.Getpid())), 0644)
 	if err != nil {
-		log.Fatal("Could not create pidfile", err)
+		log.Fatalf("Could not create pidfile: %v\n", err)
 	}
 	runServer(config, reshHistoryPath, bashHistoryPath, zshHistoryPath)
 	log.Println("main: Removing pidfile ...")
 	err = os.Remove(pidfilePath)
 	if err != nil {
-		log.Println("Could not delete pidfile", err)
+		log.Printf("Could not delete pidfile: %v\n", err)
 	}
 	log.Println("main: Shutdown - bye")
 }

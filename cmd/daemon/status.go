@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/curusarn/resh/pkg/httpclient"
 	"github.com/curusarn/resh/pkg/msg"
 )
 
@@ -28,10 +29,11 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 
 func isDaemonRunning(port int) (bool, error) {
 	url := "http://localhost:" + strconv.Itoa(port) + "/status"
-	resp, err := http.Get(url)
+	client := httpclient.New()
+	resp, err := client.Get(url)
 	if err != nil {
-		log.Println("Error while checking daemon status - "+
-			"it's probably not running!", err)
+		log.Printf("Error while checking daemon status - "+
+			"it's probably not running: %v\n", err)
 		return false, err
 	}
 	defer resp.Body.Close()

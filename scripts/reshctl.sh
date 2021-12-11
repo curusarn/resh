@@ -73,10 +73,9 @@ resh() {
     elif [ $status_code = 130 ]; then
         true
     else
-        local tmp_file="$__RESH_XDG_CACHE_HOME/search_last_run_out.txt"
+        local tmp_file="$__RESH_XDG_CACHE_HOME/cli_last_run_out.txt"
         echo "$buffer" >| "$tmp_file"
-        echo "resh-cli ERROR:"
-        cat "$tmp_file"
+        echo "resh-cli failed - check '$tmp_file' and '~/.resh/cli.log'"
     fi
 }
 

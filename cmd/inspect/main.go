@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/curusarn/resh/pkg/cfg"
@@ -63,7 +64,9 @@ func SendInspectMsg(m msg.InspectMsg, port string) msg.MultiResponse {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := http.Client{
+		Timeout: 3 * time.Second,
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Fatal("resh-daemon is not running - try restarting this terminal")

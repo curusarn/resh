@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/curusarn/resh/pkg/httpclient"
 	"github.com/curusarn/resh/pkg/records"
 )
 
@@ -33,7 +34,7 @@ func SendRecallRequest(r records.SlimRecord, port string) (string, bool) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.New()
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Fatal("resh-daemon is not running - try restarting this terminal")
@@ -68,7 +69,7 @@ func SendRecord(r records.Record, port, path string) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.New()
 	_, err = client.Do(req)
 	if err != nil {
 		log.Fatal("resh-daemon is not running - try restarting this terminal")

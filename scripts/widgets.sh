@@ -35,8 +35,9 @@ __resh_widget_control_R() {
             bind -x '"\u[32~": __resh_nop'
         fi
     else
-        echo "$BUFFER" >| ~/.resh/cli_last_run_out.txt
-        echo "# RESH SEARCH APP failed - sorry for the inconvinience (error output was saved to ~/.resh/cli_last_run_out.txt)" 
+        local tmp_file="$__RESH_XDG_CACHE_HOME/cli_last_run_out.txt"
+        echo "$BUFFER" >| "$tmp_file"
+        echo "# RESH SEARCH APP failed - sorry for the inconvinience - check '$tmp_file' and '~/.resh/cli.log'"
         BUFFER="$PREVBUFFER"
     fi
     CURSOR=${#BUFFER}
