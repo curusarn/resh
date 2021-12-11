@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/awesome-gocui/gocui"
@@ -503,7 +504,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 
 	// header
 	// header := getHeader()
-	dispStr, _ := header.ProduceLine(longestDateLen, longestLocationLen, longestFlagsLen, true, true)
+	dispStr, _ := header.ProduceLine(longestDateLen, longestLocationLen, longestFlagsLen, true, true, debug)
 	dispStr = searchapp.DoHighlightHeader(dispStr, maxX*2)
 	v.WriteString(dispStr + "\n")
 
@@ -515,7 +516,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 			break
 		}
 
-		displayStr, _ := itm.ProduceLine(longestDateLen, longestLocationLen, longestFlagsLen, false, true)
+		displayStr, _ := itm.ProduceLine(longestDateLen, longestLocationLen, longestFlagsLen, false, true, debug)
 		if m.s.highlightedItem == index {
 			// maxX * 2 because there are escape sequences that make it hard to tell the real string length
 			displayStr = searchapp.DoHighlightString(displayStr, maxX*3)
@@ -596,17 +597,21 @@ func (m manager) rawMode(g *gocui.Gui, v *gocui.View) error {
 func SendCliMsg(m msg.CliMsg, port string) msg.CliResponse {
 	recJSON, err := json.Marshal(m)
 	if err != nil {
-		log.Fatal("send err 1", err)
+		log.Fatalf("Failed to marshal message: %v\n", err)
 	}
 
-	req, err := http.NewRequest("POST", "http://localhost:"+port+"/dump",
+	req, err := http.NewRequest(
+		"POST",
+		"http://localhost:"+port+"/dump",
 		bytes.NewBuffer(recJSON))
 	if err != nil {
-		log.Fatal("send err 2", err)
+		log.Fatalf("Failed to build request: %v\n", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := http.Client{
+		Timeout: 3 * time.Second,
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Fatal("resh-daemon is not running - try restarting this terminal")
@@ -615,16 +620,16 @@ func SendCliMsg(m msg.CliMsg, port string) msg.CliResponse {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal("read response error")
+		log.Fatalf("Read response error: %v\n", err)
 	}
 	// log.Println(string(body))
 	response := msg.CliResponse{}
 	err = json.Unmarshal(body, &response)
 	if err != nil {
-		log.Fatal("unmarshal resp error: ", err)
+		log.Fatalf("Unmarshal resp error: %v\n", err)
 	}
 	if debug {
-		log.Printf("recieved %d records from daemon\n", len(response.CliRecords))
+		log.Printf("Recieved %d records from daemon\n", len(response.CliRecords))
 	}
 	return response
 }

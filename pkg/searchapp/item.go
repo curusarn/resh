@@ -3,6 +3,7 @@ package searchapp
 import (
 	"fmt"
 	"log"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -46,7 +47,7 @@ type ItemColumns struct {
 	Date          string
 
 	// [host:]pwd
-	HostWithColor string
+	differentHost bool
 	Host          string
 	PwdTilde      string
 	samePwd       bool
@@ -132,7 +133,6 @@ func (i Item) DrawItemColumns(compactRendering bool, debug bool) ItemColumns {
 			DateWithColor: notAvailable + " ",
 			// dateWithColor:    highlightDate(notAvailable) + " ",
 			Host:             "",
-			HostWithColor:    "",
 			PwdTilde:         notAvailable,
 			CmdLine:          i.CmdLine,
 			CmdLineWithColor: i.CmdLineWithColor,
@@ -157,10 +157,8 @@ func (i Item) DrawItemColumns(compactRendering bool, debug bool) ItemColumns {
 	// DISPLAY > location
 	// DISPLAY > location > host
 	host := ""
-	hostWithColor := ""
 	if i.differentHost {
-		host += i.host + ":"
-		hostWithColor += highlightHost(i.host) + ":"
+		host += i.host
 	}
 	// DISPLAY > location > directory
 	pwdTilde := strings.Replace(i.pwd, i.home, "~", 1)
@@ -188,9 +186,9 @@ func (i Item) DrawItemColumns(compactRendering bool, debug bool) ItemColumns {
 		Date:             date,
 		DateWithColor:    dateWithColor,
 		Host:             host,
-		HostWithColor:    hostWithColor,
 		PwdTilde:         pwdTilde,
 		samePwd:          i.samePwd,
+		differentHost:    i.differentHost,
 		Flags:            flags,
 		FlagsWithColor:   flagsWithColor,
 		CmdLine:          i.CmdLine,
@@ -200,27 +198,63 @@ func (i Item) DrawItemColumns(compactRendering bool, debug bool) ItemColumns {
 	}
 }
 
+func minInt(values ...int) int {
+	min := math.MaxInt32
+	for _, val := range values {
+		if val < min {
+			min = val
+		}
+	}
+	return min
+}
+
+func produceLocation(length int, host string, pwdTilde string, differentHost bool, samePwd bool, debug bool) string {
+	hostLen := len(host)
+	if hostLen <= 0 {
+		pwdWithColor := leftCutPadString(pwdTilde, length)
+		if samePwd {
+			pwdWithColor = highlightPwd(pwdWithColor)
+		}
+		return pwdWithColor
+	}
+	colonLen := 1
+	pwdLen := len(pwdTilde)
+	totalLen := hostLen + colonLen + pwdLen
+
+	// how much we need to shrink/crop the location
+	shrinkFactor := float32(length) / float32(totalLen)
+
+	shrinkedHostLen := int(float32(hostLen) * shrinkFactor)
+	if debug {
+		log.Printf("shrinkFactor: %f\n", shrinkFactor)
+	}
+	halfLocationLen := length/2 - colonLen
+
+	newHostLen := minInt(hostLen, shrinkedHostLen, halfLocationLen)
+	newPwdLen := length - colonLen - newHostLen
+
+	hostWithColor := rightCutPadString(host, newHostLen)
+	if differentHost {
+		hostWithColor = highlightHost(hostWithColor)
+	}
+	pwdWithColor := leftCutPadString(pwdTilde, newPwdLen)
+	if samePwd {
+		pwdWithColor = highlightPwd(pwdWithColor)
+	}
+	return hostWithColor + ":" + pwdWithColor
+}
+
 // ProduceLine ...
-func (ic ItemColumns) ProduceLine(dateLength int, locationLength int, flagLength int, header bool, showDate bool) (string, int) {
+func (ic ItemColumns) ProduceLine(dateLength int, locationLength int, flagLength int, header bool, showDate bool, debug bool) (string, int) {
 	line := ""
 	if showDate {
 		line += strings.Repeat(" ", dateLength-len(ic.Date)) + ic.DateWithColor
 	}
 	// LOCATION
-	var locationWithColor string
-	// ensure that host will not take up all the space
-	if len(ic.Host) >= locationLength {
-		locationWithColor = rightCutPadString(ic.Host, locationLength / 2 - 1) + ":"
-	} else {
-		locationWithColor = ic.HostWithColor
-	}
-	pwdLength := locationLength - len(locationWithColor)
-	if ic.samePwd {
-		locationWithColor += highlightPwd(leftCutPadString(ic.PwdTilde, pwdLength))
-	} else {
-		locationWithColor += leftCutPadString(ic.PwdTilde, pwdLength)
-	}
+	locationWithColor := produceLocation(locationLength, ic.Host, ic.PwdTilde, ic.differentHost, ic.samePwd, debug)
 	line += locationWithColor
+
+	// FLAGS
 	line += ic.FlagsWithColor
 	flags := ic.Flags
 	if flagLength < len(ic.Flags) {
@@ -402,7 +436,7 @@ func NewItemFromRecordForQuery(record records.CliRecord, query Query, debug bool
 // GetHeader returns header columns
 func GetHeader(compactRendering bool) ItemColumns {
 	date := "TIME "
-	host := "HOST:"
+	host := "HOST"
 	dir := "DIRECTORY"
 	if compactRendering {
 		dir = "DIR"
@@ -413,7 +447,6 @@ func GetHeader(compactRendering bool) ItemColumns {
 		Date:             date,
 		DateWithColor:    date,
 		Host:             host,
-		HostWithColor:    host,
 		PwdTilde:         dir,
 		samePwd:          false,
 		Flags:            flags,
