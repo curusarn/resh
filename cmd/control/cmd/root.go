@@ -58,6 +58,7 @@ func Execute(ver, com string) status.Code {
 
 	rootCmd.AddCommand(statusCmd)
 
+	updateCmd.Flags().BoolVar(&betaFlag, "beta", false, "Update to latest version even if it's beta.")
 	rootCmd.AddCommand(updateCmd)
 
 	rootCmd.AddCommand(sanitizeCmd)

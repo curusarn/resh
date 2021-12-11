@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var betaFlag bool
 var updateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "check for updates and update RESH",
@@ -17,7 +18,11 @@ var updateCmd = &cobra.Command{
 		usr, _ := user.Current()
 		dir := usr.HomeDir
 		rawinstallPath := filepath.Join(dir, ".resh/rawinstall.sh")
-		execCmd := exec.Command("bash", rawinstallPath)
+		execArgs := []string{rawinstallPath}
+		if betaFlag {
+			execArgs = append(execArgs, "--beta")
+		}
+		execCmd := exec.Command("bash", execArgs...)
 		execCmd.Stdout = os.Stdout
 		execCmd.Stderr = os.Stderr
 		err := execCmd.Run()
