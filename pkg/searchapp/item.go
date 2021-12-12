@@ -221,16 +221,21 @@ func produceLocation(length int, host string, pwdTilde string, differentHost boo
 	pwdLen := len(pwdTilde)
 	totalLen := hostLen + colonLen + pwdLen
 
-	// how much we need to shrink/crop the location
-	shrinkFactor := float32(length) / float32(totalLen)
+	newHostLen := hostLen
+	// only shrink if the location does not fit
+	if totalLen > length {
+		// how much we need to shrink/crop the location
+		shrinkFactor := float64(length) / float64(totalLen)
 
-	shrinkedHostLen := int(float32(hostLen) * shrinkFactor)
-	if debug {
-		log.Printf("shrinkFactor: %f\n", shrinkFactor)
+		shrinkedHostLen := int(math.Ceil(float64(hostLen) * shrinkFactor))
+		if debug {
+			log.Printf("shrinkFactor: %f\n", shrinkFactor)
+		}
+		halfLocationLen := length/2 - colonLen
+
+		newHostLen = minInt(hostLen, shrinkedHostLen, halfLocationLen)
 	}
-	halfLocationLen := length/2 - colonLen
-
-	newHostLen := minInt(hostLen, shrinkedHostLen, halfLocationLen)
+	// pwd length is the rest of the length
 	newPwdLen := length - colonLen - newHostLen
 
 	hostWithColor := rightCutPadString(host, newHostLen)
@@ -245,7 +250,8 @@ func produceLocation(length int, host string, pwdTilde string, differentHost boo
 }
 
 // ProduceLine ...
-func (ic ItemColumns) ProduceLine(dateLength int, locationLength int, flagLength int, header bool, showDate bool, debug bool) (string, int) {
+func (ic ItemColumns) ProduceLine(dateLength int, locationLength int, flagsLength int, header bool, showDate bool, debug bool) (string, int, error) {
+	var err error
 	line := ""
 	if showDate {
 		line += strings.Repeat(" ", dateLength-len(ic.Date)) + ic.DateWithColor
@@ -256,24 +262,21 @@ func (ic ItemColumns) ProduceLine(dateLength int, locationLength int, flagLength
 
 	// FLAGS
 	line += ic.FlagsWithColor
-	flags := ic.Flags
-	if flagLength < len(ic.Flags) {
-		log.Printf("produceLine can't specify line w/ flags shorter than the actual size. - len(flags) %v, requested %v\n", len(ic.Flags), flagLength)
-	}
-	for len(flags) < flagLength {
-		line += " "
-		flags += " "
+	if flagsLength >= len(ic.Flags) {
+		line += strings.Repeat(" ", flagsLength-len(ic.Flags))
+	} else {
+		err = fmt.Errorf("actual flags are longer than dedicated flag space. actual: %v, space: %v", len(ic.Flags), flagsLength)
 	}
 	spacer := "  "
-	if flagLength > 5 || header {
+	if flagsLength > 5 || header {
 		// use shorter spacer
 		// 		because there is likely a long flag like E130 in the view
 		spacer = " "
 	}
 	line += spacer + ic.CmdLineWithColor
 
-	length := dateLength + locationLength + flagLength + len(spacer) + len(ic.CmdLine)
-	return line, length
+	length := dateLength + locationLength + flagsLength + len(spacer) + len(ic.CmdLine)
+	return line, length, err
 }
 
 func leftCutPadString(str string, newLen int) string {

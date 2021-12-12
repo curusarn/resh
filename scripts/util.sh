@@ -49,14 +49,15 @@ __resh_run_daemon() {
     if [ -n "${ZSH_VERSION-}" ]; then
         setopt LOCAL_OPTIONS NO_NOTIFY NO_MONITOR
     fi
+    local fpath_last_run="$__RESH_XDG_CACHE_HOME/daemon_last_run_out.txt"
     if [ "$(uname)" = Darwin ]; then
         # hotfix
-        gnohup resh-daemon >| ~/.resh/daemon_last_run_out.txt 2>&1 & disown
+        gnohup resh-daemon >| "$fpath_last_run" 2>&1 & disown
     else
         # TODO: switch to nohup for consistency once you confirm that daemon is
         #       not getting killed anymore on macOS
-        # nohup resh-daemon >| ~/.resh/daemon_last_run_out.txt 2>&1 & disown
-        setsid resh-daemon >| ~/.resh/daemon_last_run_out.txt 2>&1 & disown
+        # nohup resh-daemon >| "$fpath_last_run" 2>&1 & disown
+        setsid resh-daemon >| "$fpath_last_run" 2>&1 & disown
     fi
 }
 
@@ -134,6 +135,7 @@ __resh_session_init() {
         fi
     fi
     if [ "$__RESH_VERSION" = "$(resh-session-init -version)" ] && [ "$__RESH_REVISION" = "$(resh-session-init -revision)" ]; then
+        local fpath_last_run="$__RESH_XDG_CACHE_HOME/session_init_last_run_out.txt"
         resh-session-init -requireVersion "$__RESH_VERSION" \
                     -requireRevision "$__RESH_REVISION" \
                     -shell "$__RESH_SHELL" \
@@ -163,7 +165,7 @@ __resh_session_init() {
                     -osReleaseIdLike "$__RESH_OS_RELEASE_ID_LIKE" \
                     -osReleaseName "$__RESH_OS_RELEASE_NAME" \
                     -osReleasePrettyName "$__RESH_OS_RELEASE_PRETTY_NAME" \
-                    >| ~/.resh/session_init_last_run_out.txt 2>&1 || echo "resh-session-init ERROR: $(head -n 1 ~/.resh/session_init_last_run_out.txt)"
+                    >| "$fpath_last_run" 2>&1 || echo "resh-session-init ERROR: $(head -n 1 $fpath_last_run)"
         fi
 }
 
@@ -183,6 +185,7 @@ __resh_set_xdg_home_paths() {
         __RESH_XDG_CACHE_HOME="$XDG_CACHE_HOME/resh"
     fi
     mkdir -p "$__RESH_XDG_CACHE_HOME" >/dev/null 2>/dev/null
+    export __RESH_XDG_CACHE_HOME
 
 
     if [ -z "${XDG_DATA_HOME-}" ]; then

@@ -16,12 +16,12 @@ __resh_preexec() {
     # core
     __RESH_COLLECT=1
     __RESH_CMDLINE="$1" # not local to preserve it for postcollect (useful as sanity check)
-    local tmp_file="$__RESH_XDG_CACHE_HOME/collect_last_run_out.txt"
+    local fpath_last_run="$__RESH_XDG_CACHE_HOME/collect_last_run_out.txt"
     __resh_collect --cmdLine "$__RESH_CMDLINE" \
         --recall-actions "$__RESH_HIST_RECALL_ACTIONS" \
         --recall-strategy "$__RESH_HIST_RECALL_STRATEGY" \
         --recall-last-cmdline "$__RESH_HIST_PREV_LINE" \
-        >| $tmp_file 2>&1 || echo "resh-collect ERROR: $(head -n 1 $tmp_file)"
+        >| "$fpath_last_run" 2>&1 || echo "resh-collect ERROR: $(head -n 1 $fpath_last_run)"
 }
 
 # used for collect and collect --recall
@@ -154,7 +154,7 @@ __resh_precmd() {
             fi
         fi
         if [ "$__RESH_VERSION" = "$(resh-postcollect -version)" ] && [ "$__RESH_REVISION" = "$(resh-postcollect -revision)" ]; then
-            local tmp_file="$__RESH_XDG_CACHE_HOME/postcollect_last_run_out.txt"
+            local fpath_last_run="$__RESH_XDG_CACHE_HOME/postcollect_last_run_out.txt"
             resh-postcollect -requireVersion "$__RESH_VERSION" \
                         -requireRevision "$__RESH_REVISION" \
                         -cmdLine "$__RESH_CMDLINE" \
@@ -171,7 +171,7 @@ __resh_precmd() {
                         -gitRemoteExitCodeAfter "$__RESH_GIT_REMOTE_EXIT_CODE_AFTER" \
                         -realtimeAfter "$__RESH_RT_AFTER" \
                         -timezoneAfter "$__RESH_TZ_AFTER" \
-                        >| $tmp_file 2>&1 || echo "resh-postcollect ERROR: $(head -n 1 $tmp_file)"
+                        >| "$fpath_last_run" 2>&1 || echo "resh-postcollect ERROR: $(head -n 1 $fpath_last_run)"
         fi
         __resh_reset_variables
     fi

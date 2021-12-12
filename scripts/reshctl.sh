@@ -73,14 +73,13 @@ resh() {
     elif [ $status_code = 130 ]; then
         true
     else
-        local tmp_file="$__RESH_XDG_CACHE_HOME/cli_last_run_out.txt"
-        echo "$buffer" >| "$tmp_file"
-        echo "resh-cli failed - check '$tmp_file' and '~/.resh/cli.log'"
+        local fpath_last_run="$__RESH_XDG_CACHE_HOME/cli_last_run_out.txt"
+        echo "$buffer" >| "$fpath_last_run"
+        echo "resh-cli failed - check '$fpath_last_run' and '~/.resh/cli.log'"
     fi
 }
 
 reshctl() {
-    # local log=~/.resh/reshctl.log
     # export current shell because resh-control needs to know
     export __RESH_ctl_shell=$__RESH_SHELL
     # run resh-control aka the real reshctl

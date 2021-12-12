@@ -452,7 +452,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 
 	header := searchapp.GetHeader(compactRenderingMode)
 	longestDateLen := len(header.Date)
-	longestLocationLen := len(header.Host) + len(header.PwdTilde)
+	longestLocationLen := len(header.Host) + 1 + len(header.PwdTilde)
 	longestFlagsLen := 2
 	maxPossibleMainViewHeight := maxY - 3 - 1 - 1 - 1 // - top box - header - status - help
 	for i, itm := range m.s.data {
@@ -504,19 +504,27 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 
 	// header
 	// header := getHeader()
-	dispStr, _ := header.ProduceLine(longestDateLen, longestLocationLen, longestFlagsLen, true, true, debug)
+	// error is expected for header
+	dispStr, _, _ := header.ProduceLine(longestDateLen, longestLocationLen, longestFlagsLen, true, true, debug)
 	dispStr = searchapp.DoHighlightHeader(dispStr, maxX*2)
 	v.WriteString(dispStr + "\n")
 
 	var index int
 	for index < len(data) {
 		itm := data[index]
-		if index == mainViewHeight {
+		if index >= mainViewHeight {
+			if debug {
+				log.Printf("Finished drawing page. mainViewHeight: %v, predictedMax: %v\n",
+					mainViewHeight, maxPossibleMainViewHeight)
+			}
 			// page is full
 			break
 		}
 
-		displayStr, _ := itm.ProduceLine(longestDateLen, longestLocationLen, longestFlagsLen, false, true, debug)
+		displayStr, _, err := itm.ProduceLine(longestDateLen, longestLocationLen, longestFlagsLen, false, true, debug)
+		if err != nil {
+			log.Printf("produceLine error: %v\n", err)
+		}
 		if m.s.highlightedItem == index {
 			// maxX * 2 because there are escape sequences that make it hard to tell the real string length
 			displayStr = searchapp.DoHighlightString(displayStr, maxX*3)

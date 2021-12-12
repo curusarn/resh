@@ -190,6 +190,8 @@ if [ -f ~/.resh/resh.pid ]; then
 else
     pkill -SIGTERM "resh-daemon" || true
 fi
+# daemon uses xdg path variables
+__resh_set_xdg_home_paths
 __resh_run_daemon
 
 

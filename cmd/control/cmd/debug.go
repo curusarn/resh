@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"io/ioutil"
-	"os/user"
+	"os"
 	"path/filepath"
 
 	"github.com/curusarn/resh/cmd/control/status"
@@ -43,12 +43,11 @@ var debugOutputCmd = &cobra.Command{
 			"collect_last_run_out.txt",
 			"postcollect_last_run_out.txt",
 			"session_init_last_run_out.txt",
+			"cli_last_run_out.txt",
 		}
-		usr, _ := user.Current()
-		dir := usr.HomeDir
-		reshdir := filepath.Join(dir, ".resh")
+		dir := os.Getenv("__RESH_XDG_CACHE_HOME")
 		for _, fpath := range files {
-			fpath := filepath.Join(reshdir, fpath)
+			fpath := filepath.Join(dir, fpath)
 			debugReadFile(fpath)
 		}
 		exitCode = status.Success
