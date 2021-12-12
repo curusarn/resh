@@ -157,7 +157,7 @@ func (h *Histfile) writer(input chan records.Record, signals chan os.Signal, shu
 				log.Println("histfile DEBUG: Unlocked mutex")
 
 				for sessID, record := range h.sessions {
-					log.Panicln("histfile WARN: Writing incomplete record for session " + sessID)
+					log.Printf("histfile WARN: Writing incomplete record for session: %v\n", sessID)
 					h.writeRecord(record)
 				}
 				log.Println("histfile DEBUG: Shutdown success")
