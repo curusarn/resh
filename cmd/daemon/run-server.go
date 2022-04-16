@@ -60,6 +60,7 @@ func runServer(config cfg.Config, reshHistoryPath, bashHistoryPath, zshHistoryPa
 	mux.HandleFunc("/status", statusHandler)
 	mux.Handle("/record", &recordHandler{subscribers: recordSubscribers})
 	mux.Handle("/session_init", &sessionInitHandler{subscribers: sessionInitSubscribers})
+	// TOOD: drop recall and inspect
 	mux.Handle("/recall", &recallHandler{sesshistDispatch: sesshistDispatch})
 	mux.Handle("/inspect", &inspectHandler{sesshistDispatch: sesshistDispatch})
 	mux.Handle("/dump", &dumpHandler{histfileBox: histfileBox})
