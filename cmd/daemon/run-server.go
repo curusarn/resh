@@ -8,7 +8,6 @@ import (
 	"github.com/curusarn/resh/pkg/cfg"
 	"github.com/curusarn/resh/pkg/histfile"
 	"github.com/curusarn/resh/pkg/records"
-	"github.com/curusarn/resh/pkg/sesshist"
 	"github.com/curusarn/resh/pkg/sesswatch"
 	"github.com/curusarn/resh/pkg/signalhandler"
 )
