@@ -20,14 +20,6 @@ func runServer(config cfg.Config, reshHistoryPath, bashHistoryPath, zshHistoryPa
 
 	shutdown := make(chan string)
 
-	// sessshist
-	sesshistSessionsToInit := make(chan records.Record)
-	sessionInitSubscribers = append(sessionInitSubscribers, sesshistSessionsToInit)
-	sesshistSessionsToDrop := make(chan string)
-	sessionDropSubscribers = append(sessionDropSubscribers, sesshistSessionsToDrop)
-	sesshistRecords := make(chan records.Record)
-	recordSubscribers = append(recordSubscribers, sesshistRecords)
-
 	// histfile
 	histfileRecords := make(chan records.Record)
 	recordSubscribers = append(recordSubscribers, histfileRecords)
