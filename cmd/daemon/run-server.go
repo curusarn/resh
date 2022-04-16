@@ -43,11 +43,6 @@ func runServer(config cfg.Config, reshHistoryPath, bashHistoryPath, zshHistoryPa
 		maxHistSize, minHistSizeKB,
 		histfileSignals, shutdown)
 
-	// sesshist New
-	sesshistDispatch := sesshist.NewDispatch(sesshistSessionsToInit, sesshistSessionsToDrop,
-		sesshistRecords, histfileBox,
-		config.SesshistInitHistorySize)
-
 	// sesswatch
 	sesswatchRecords := make(chan records.Record)
 	recordSubscribers = append(recordSubscribers, sesswatchRecords)
@@ -60,9 +55,6 @@ func runServer(config cfg.Config, reshHistoryPath, bashHistoryPath, zshHistoryPa
 	mux.HandleFunc("/status", statusHandler)
 	mux.Handle("/record", &recordHandler{subscribers: recordSubscribers})
 	mux.Handle("/session_init", &sessionInitHandler{subscribers: sessionInitSubscribers})
-	// TOOD: drop recall and inspect
-	mux.Handle("/recall", &recallHandler{sesshistDispatch: sesshistDispatch})
-	mux.Handle("/inspect", &inspectHandler{sesshistDispatch: sesshistDispatch})
 	mux.Handle("/dump", &dumpHandler{histfileBox: histfileBox})
 
 	server := &http.Server{
