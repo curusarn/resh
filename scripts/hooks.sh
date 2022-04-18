@@ -18,9 +18,6 @@ __resh_preexec() {
     __RESH_CMDLINE="$1" # not local to preserve it for postcollect (useful as sanity check)
     local fpath_last_run="$__RESH_XDG_CACHE_HOME/collect_last_run_out.txt"
     __resh_collect --cmdLine "$__RESH_CMDLINE" \
-        --recall-actions "$__RESH_HIST_RECALL_ACTIONS" \
-        --recall-strategy "$__RESH_HIST_RECALL_STRATEGY" \
-        --recall-last-cmdline "$__RESH_HIST_PREV_LINE" \
         >| "$fpath_last_run" 2>&1 || echo "resh-collect ERROR: $(head -n 1 $fpath_last_run)"
 }
 
@@ -113,7 +110,6 @@ __resh_collect() {
                     -osReleaseIdLike "$__RESH_OS_RELEASE_ID_LIKE" \
                     -osReleaseName "$__RESH_OS_RELEASE_NAME" \
                     -osReleasePrettyName "$__RESH_OS_RELEASE_PRETTY_NAME" \
-                    -histno "$__RESH_HISTNO" \
                     "$@"
             return $?
         fi
