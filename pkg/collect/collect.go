@@ -20,41 +20,6 @@ type SingleResponse struct {
 	CmdLine string `json:"cmdline"`
 }
 
-// SendRecallRequest to daemon
-func SendRecallRequest(r records.SlimRecord, port string) (string, bool) {
-	recJSON, err := json.Marshal(r)
-	if err != nil {
-		log.Fatal("send err 1", err)
-	}
-
-	req, err := http.NewRequest("POST", "http://localhost:"+port+"/recall",
-		bytes.NewBuffer(recJSON))
-	if err != nil {
-		log.Fatal("send err 2", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	client := httpclient.New()
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal("resh-daemon is not running - try restarting this terminal")
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal("read response error")
-	}
-	log.Println(string(body))
-	response := SingleResponse{}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		log.Fatal("unmarshal resp error: ", err)
-	}
-	log.Println(response)
-	return response.CmdLine, response.Found
-}
-
 // SendRecord to daemon
 func SendRecord(r records.Record, port, path string) {
 	recJSON, err := json.Marshal(r)

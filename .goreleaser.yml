@@ -76,45 +76,9 @@ builds:
       - arm
       - arm64
   -
-    id: "evaluate"
-    main: ./cmd/evaluate
-    binary: bin/resh-evaluate
-    goarch: 
-      - 386
-      - amd64
-      - arm
-      - arm64
-  -
-    id: "event"
-    main: ./cmd/event
-    binary: bin/resh-event
-    goarch: 
-      - 386
-      - amd64
-      - arm
-      - arm64
-  -
-    id: "inspect"
-    main: ./cmd/inspect
-    binary: bin/resh-inspect
-    goarch: 
-      - 386
-      - amd64
-      - arm
-      - arm64
-  -
     id: "postcollect"
     main: ./cmd/postcollect
     binary: bin/resh-postcollect
-    goarch: 
-      - 386
-      - amd64
-      - arm
-      - arm64
-  -
-    id: "sanitize"
-    main: ./cmd/sanitize
-    binary: bin/resh-sanitize
     goarch: 
       - 386
       - amd64
