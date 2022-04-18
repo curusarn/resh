@@ -6,7 +6,7 @@ GOFLAGS=-ldflags "-X main.version=${VERSION} -X main.commit=${REVISION}"
 
 
 build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect bin/resh-daemon\
- bin/resh-evaluate bin/resh-sanitize bin/resh-control bin/resh-config bin/resh-inspect bin/resh-cli
+  bin/resh-control bin/resh-config bin/resh-cli
 
 install: build
 	scripts/install.sh

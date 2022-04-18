@@ -35,10 +35,6 @@ func main() {
 	if _, err := toml.DecodeFile(configPath, &config); err != nil {
 		log.Fatal("Error reading config:", err)
 	}
-	// recall command
-	recall := flag.Bool("recall", false, "Recall command on position --histno")
-	recallHistno := flag.Int("histno", 0, "Recall command on position --histno")
-	recallPrefix := flag.String("prefix-search", "", "Recall command based on prefix --prefix-search")
 
 	// version
 	showVersion := flag.Bool("version", false, "Show version and exit")
@@ -54,11 +50,6 @@ func main() {
 	uname := flag.String("uname", "", "uname")
 	sessionID := flag.String("sessionId", "", "resh generated session id")
 	recordID := flag.String("recordId", "", "resh generated record id")
-
-	// recall metadata
-	recallActions := flag.String("recall-actions", "", "recall actions that took place before executing the command")
-	recallStrategy := flag.String("recall-strategy", "", "recall strategy used during recall actions")
-	recallLastCmdLine := flag.String("recall-last-cmdline", "", "last recalled cmdline")
 
 	// posix variables
 	cols := flag.String("cols", "-1", "$COLUMNS")
@@ -127,10 +118,6 @@ func main() {
 			")")
 		os.Exit(3)
 	}
-	if *recallPrefix != "" && *recall == false {
-		log.Println("Option '--prefix-search' only works with '--recall' option - exiting!")
-		os.Exit(4)
-	}
 
 	realtimeBefore, err := strconv.ParseFloat(*rtb, 64)
 	if err != nil {
@@ -171,85 +158,65 @@ func main() {
 	// 	*osReleasePrettyName = "Linux"
 	// }
 
-	if *recall {
-		rec := records.SlimRecord{
-			SessionID:    *sessionID,
-			RecallHistno: *recallHistno,
-			RecallPrefix: *recallPrefix,
-		}
-		str, found := collect.SendRecallRequest(rec, strconv.Itoa(config.Port))
-		if found == false {
-			os.Exit(1)
-		}
-		fmt.Println(str)
-	} else {
-		rec := records.Record{
+	rec := records.Record{
+		// posix
+		Cols:  *cols,
+		Lines: *lines,
+		// core
+		BaseRecord: records.BaseRecord{
+			CmdLine:   *cmdLine,
+			ExitCode:  *exitCode,
+			Shell:     *shell,
+			Uname:     *uname,
+			SessionID: *sessionID,
+			RecordID:  *recordID,
+
 			// posix
-			Cols:  *cols,
-			Lines: *lines,
-			// core
-			BaseRecord: records.BaseRecord{
-				RecallHistno: *recallHistno,
+			Home:  *home,
+			Lang:  *lang,
+			LcAll: *lcAll,
+			Login: *login,
+			// Path:     *path,
+			Pwd:      *pwd,
+			ShellEnv: *shellEnv,
+			Term:     *term,
 
-				CmdLine:   *cmdLine,
-				ExitCode:  *exitCode,
-				Shell:     *shell,
-				Uname:     *uname,
-				SessionID: *sessionID,
-				RecordID:  *recordID,
+			// non-posix
+			RealPwd:    realPwd,
+			Pid:        *pid,
+			SessionPID: *sessionPid,
+			Host:       *host,
+			Hosttype:   *hosttype,
+			Ostype:     *ostype,
+			Machtype:   *machtype,
+			Shlvl:      *shlvl,
 
-				// posix
-				Home:  *home,
-				Lang:  *lang,
-				LcAll: *lcAll,
-				Login: *login,
-				// Path:     *path,
-				Pwd:      *pwd,
-				ShellEnv: *shellEnv,
-				Term:     *term,
+			// before after
+			TimezoneBefore: *timezoneBefore,
 
-				// non-posix
-				RealPwd:    realPwd,
-				Pid:        *pid,
-				SessionPID: *sessionPid,
-				Host:       *host,
-				Hosttype:   *hosttype,
-				Ostype:     *ostype,
-				Machtype:   *machtype,
-				Shlvl:      *shlvl,
+			RealtimeBefore:      realtimeBefore,
+			RealtimeBeforeLocal: realtimeBeforeLocal,
 
-				// before after
-				TimezoneBefore: *timezoneBefore,
+			RealtimeSinceSessionStart: realtimeSinceSessionStart,
+			RealtimeSinceBoot:         realtimeSinceBoot,
 
-				RealtimeBefore:      realtimeBefore,
-				RealtimeBeforeLocal: realtimeBeforeLocal,
+			GitDir:          gitDir,
+			GitRealDir:      gitRealDir,
+			GitOriginRemote: *gitRemote,
+			MachineID:       collect.ReadFileContent(machineIDPath),
 
-				RealtimeSinceSessionStart: realtimeSinceSessionStart,
-				RealtimeSinceBoot:         realtimeSinceBoot,
+			OsReleaseID:         *osReleaseID,
+			OsReleaseVersionID:  *osReleaseVersionID,
+			OsReleaseIDLike:     *osReleaseIDLike,
+			OsReleaseName:       *osReleaseName,
+			OsReleasePrettyName: *osReleasePrettyName,
 
-				GitDir:          gitDir,
-				GitRealDir:      gitRealDir,
-				GitOriginRemote: *gitRemote,
-				MachineID:       collect.ReadFileContent(machineIDPath),
+			PartOne: true,
 
-				OsReleaseID:         *osReleaseID,
-				OsReleaseVersionID:  *osReleaseVersionID,
-				OsReleaseIDLike:     *osReleaseIDLike,
-				OsReleaseName:       *osReleaseName,
-				OsReleasePrettyName: *osReleasePrettyName,
-
-				PartOne: true,
-
-				ReshUUID:     collect.ReadFileContent(reshUUIDPath),
-				ReshVersion:  version,
-				ReshRevision: commit,
-
-				RecallActionsRaw:  *recallActions,
-				RecallPrefix:      *recallPrefix,
-				RecallStrategy:    *recallStrategy,
-				RecallLastCmdLine: *recallLastCmdLine,
-			},
-		}
-		collect.SendRecord(rec, strconv.Itoa(config.Port), "/record")
+			ReshUUID:     collect.ReadFileContent(reshUUIDPath),
+			ReshVersion:  version,
+			ReshRevision: commit,
+		},
 	}
+	collect.SendRecord(rec, strconv.Itoa(config.Port), "/record")
 }

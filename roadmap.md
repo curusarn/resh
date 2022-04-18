@@ -41,5 +41,3 @@
   - :heavy_check_mark: Linux
   - :white_check_mark: MacOS *(requires coreutils - `brew install coreutils`)*
 
-- :heavy_check_mark: Provide a tool to sanitize the recorded history
-
