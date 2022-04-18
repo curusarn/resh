@@ -1,5 +1,6 @@
 
 __resh_reset_variables() {
+    # TODO: remove this block
     __RESH_HISTNO=0
     __RESH_HISTNO_MAX=""
     __RESH_HISTNO_ZERO_LINE=""
@@ -9,6 +10,7 @@ __resh_reset_variables() {
     __RESH_HIST_RECALL_ACTIONS=""
     __RESH_HIST_NO_PREFIX_MODE=0
     __RESH_HIST_RECALL_STRATEGY=""
+    # end TODO
     __RESH_RECORD_ID=$(__resh_get_uuid)
 }
 
