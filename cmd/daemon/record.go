@@ -30,14 +30,14 @@ func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			log.Println("Payload: ", jsn)
 			return
 		}
-		for _, sub := range h.subscribers {
-			sub <- record
-		}
 		part := "2"
 		if record.PartOne {
 			part = "1"
 		}
 		log.Println("/record - ", record.CmdLine, " - part", part)
+		for _, sub := range h.subscribers {
+			sub <- record
+		}
 	}()
 
 	// fmt.Println("cmd:", r.CmdLine)

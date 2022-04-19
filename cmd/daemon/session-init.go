@@ -30,9 +30,9 @@ func (h *sessionInitHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			log.Println("Payload: ", jsn)
 			return
 		}
+		log.Println("/session_init - id:", record.SessionID, " - pid:", record.SessionPID)
 		for _, sub := range h.subscribers {
 			sub <- record
 		}
-		log.Println("/session_init - id:", record.SessionID, " - pid:", record.SessionPID)
 	}()
 }
