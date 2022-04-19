@@ -34,7 +34,7 @@ func (s *sesswatch) waiter(sessionsToWatch chan records.Record, sessionsToWatchR
 				s.mutex.Lock()
 				defer s.mutex.Unlock()
 				if s.watchedSessions[id] == false {
-					log.Println("sesswatch: start watching NEW session ~ pid:", id, "~", pid)
+					log.Println("sesswatch: start watching NEW session - id:", id, "; pid:", pid)
 					s.watchedSessions[id] = true
 					go s.watcher(id, pid)
 				}
@@ -45,7 +45,7 @@ func (s *sesswatch) waiter(sessionsToWatch chan records.Record, sessionsToWatchR
 				s.mutex.Lock()
 				defer s.mutex.Unlock()
 				if s.watchedSessions[id] == false {
-					log.Println("sesswatch WARN: start watching NEW session (based on /record) ~ pid:", id, "~", pid)
+					log.Println("sesswatch WARN: start watching NEW session (based on /record) - id:", id, "; pid:", pid)
 					s.watchedSessions[id] = true
 					go s.watcher(id, pid)
 				}
@@ -59,9 +59,9 @@ func (s *sesswatch) watcher(sessionID string, sessionPID int) {
 		time.Sleep(time.Duration(s.sleepSeconds) * time.Second)
 		proc, err := ps.FindProcess(sessionPID)
 		if err != nil {
-			log.Println("sesswatch ERROR: error while finding process:", sessionPID)
+			log.Println("sesswatch ERROR: error while finding process - pid:", sessionPID)
 		} else if proc == nil {
-			log.Println("sesswatch: Dropping session ~ pid:", sessionID, "~", sessionPID)
+			log.Println("sesswatch: Dropping session - id:", sessionID, "; pid:", sessionPID)
 			func() {
 				s.mutex.Lock()
 				defer s.mutex.Unlock()
