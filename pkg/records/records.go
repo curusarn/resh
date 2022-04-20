@@ -560,9 +560,10 @@ func LoadFromFile(fname string) []Record {
 	// log.Println("records: Loaded lines - count:", i)
 	if encounteredErrors > 0 {
 		// fix errors in the history file
-		log.Printf("There were %d decoding errors, the first error happend on line %d/%d", encounteredErrors, firstErrLine, i)
-		log.Println("Backing up current history file ...")
-		err := copyFile(fname, fname+".bak")
+		log.Printf("There were %d decoding errors, the first error happend on line %d/%d\n", encounteredErrors, firstErrLine, i)
+		fnameBak := fname + ".bak"
+		log.Printf("Backing up current history file to %s\n", fnameBak)
+		err := copyFile(fname, fnameBak)
 		if err != nil {
 			log.Fatalln("Failed to backup history file with decode errors")
 		}

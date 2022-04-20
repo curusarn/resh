@@ -218,10 +218,6 @@ RESH SEARCH APPLICATION = Redesigned reverse search that actually works
     At first, the search application will use the standard shell history without context. 
     All history recorded from now on will have context which will by the RESH SEARCH app.
 
-    Enable/disable Ctrl+R binding using reshctl command:
-     $ reshctl enable ctrl_r_binding
-     $ reshctl disable ctrl_r_binding
-
 CHECK FOR UPDATES
     To check for (and install) updates use reshctl command:
      $ reshctl update
