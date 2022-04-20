@@ -9,10 +9,7 @@ __resh_widget_control_R() {
     # shellcheck disable=2034
     __bp_preexec_interactive_mode="on"
 
-    # local __RESH_PREFIX=${BUFFER:0:CURSOR}
-    # __RESH_HIST_RECALL_ACTIONS="$__RESH_HIST_RECALL_ACTIONS;control_R:$__RESH_PREFIX"
     local PREVBUFFER=$BUFFER
-    __RESH_HIST_RECALL_ACTIONS="$__RESH_HIST_RECALL_ACTIONS|||control_R:$BUFFER"
 
     local status_code
     local git_remote; git_remote="$(git remote get-url origin 2>/dev/null)"
@@ -42,8 +39,6 @@ __resh_widget_control_R() {
         BUFFER="$PREVBUFFER"
     fi
     CURSOR=${#BUFFER}
-    # recorded to history
-    __RESH_HIST_PREV_LINE=${BUFFER}
 }
 
 __resh_widget_control_R_compat() {

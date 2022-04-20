@@ -41,12 +41,6 @@ func Execute(ver, com string) status.Code {
 		// log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	}
 
-	rootCmd.AddCommand(enableCmd)
-	enableCmd.AddCommand(enableControlRBindingCmd)
-
-	rootCmd.AddCommand(disableCmd)
-	disableCmd.AddCommand(disableControlRBindingCmd)
-
 	rootCmd.AddCommand(completionCmd)
 	completionCmd.AddCommand(completionBashCmd)
 	completionCmd.AddCommand(completionZshCmd)
@@ -56,12 +50,10 @@ func Execute(ver, com string) status.Code {
 	debugCmd.AddCommand(debugInspectCmd)
 	debugCmd.AddCommand(debugOutputCmd)
 
-	rootCmd.AddCommand(statusCmd)
+	rootCmd.AddCommand(versionCmd)
 
 	updateCmd.Flags().BoolVar(&betaFlag, "beta", false, "Update to latest version even if it's beta.")
 	rootCmd.AddCommand(updateCmd)
-
-	rootCmd.AddCommand(sanitizeCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

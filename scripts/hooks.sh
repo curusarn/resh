@@ -18,9 +18,7 @@ __resh_collect() {
     local __RESH_COLS="$COLUMNS"
     local __RESH_LANG="$LANG"
     local __RESH_LC_ALL="$LC_ALL"
-    # other LC ?
     local __RESH_LINES="$LINES"
-    # __RESH_PATH="$PATH"
     local __RESH_PWD="$PWD"
     
     # non-posix
@@ -29,8 +27,6 @@ __resh_collect() {
     local __RESH_GIT_CDUP_EXIT_CODE=$?
     local __RESH_GIT_REMOTE; __RESH_GIT_REMOTE="$(git remote get-url origin 2>/dev/null)"
     local __RESH_GIT_REMOTE_EXIT_CODE=$?
-    #__RESH_GIT_TOPLEVEL="$(git rev-parse --show-toplevel)"
-    #__RESH_GIT_TOPLEVEL_EXIT_CODE=$?
 
     if [ -n "${ZSH_VERSION-}" ]; then
         # assume Zsh
