@@ -511,8 +511,8 @@ func (r *EnrichedRecord) DistanceTo(r2 EnrichedRecord, p DistParams) float64 {
 }
 
 // LoadFromFile loads records from 'fname' file
-func LoadFromFile(fname string, limit int) []Record {
-	const allowedErrors = 1
+func LoadFromFile(fname string) []Record {
+	const allowedErrors = 2
 	var encounteredErrors int
 	// NOTE: limit does nothing atm
 	var recs []Record
@@ -528,7 +528,8 @@ func LoadFromFile(fname string, limit int) []Record {
 	var i int
 	var firstErrLine int
 	for {
-		line, err := reader.ReadString('\n')
+		var line string
+		line, err = reader.ReadString('\n')
 		if err != nil {
 			break
 		}
@@ -553,7 +554,6 @@ func LoadFromFile(fname string, limit int) []Record {
 		}
 		recs = append(recs, record)
 	}
-	// log.Println("records: done loading file:", err)
 	if err != io.EOF {
 		log.Println("records: error while loading file:", err)
 	}

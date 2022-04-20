@@ -1,8 +1,6 @@
 package searchapp
 
 import (
-	"math"
-
 	"github.com/curusarn/resh/pkg/histcli"
 	"github.com/curusarn/resh/pkg/msg"
 	"github.com/curusarn/resh/pkg/records"
@@ -10,7 +8,7 @@ import (
 
 // LoadHistoryFromFile ...
 func LoadHistoryFromFile(historyPath string, numLines int) msg.CliResponse {
-	recs := records.LoadFromFile(historyPath, math.MaxInt32)
+	recs := records.LoadFromFile(historyPath)
 	if numLines != 0 && numLines < len(recs) {
 		recs = recs[:numLines]
 	}

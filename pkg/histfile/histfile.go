@@ -88,7 +88,7 @@ func (h *Histfile) loadHistory(bashHistoryPath, zshHistoryPath string, maxInitHi
 		maxInitHistSize = math.MaxInt32
 	}
 	log.Println("histfile: Loading resh history from file ...")
-	history := records.LoadFromFile(h.historyPath, math.MaxInt32)
+	history := records.LoadFromFile(h.historyPath)
 	log.Println("histfile: resh history loaded from file - count:", len(history))
 	go h.loadCliRecords(history)
 	// NOTE: keeping this weird interface for now because we might use it in the future
