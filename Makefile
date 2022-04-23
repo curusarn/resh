@@ -1,8 +1,8 @@
 SHELL=/bin/bash
 LATEST_TAG=$(shell git describe --tags)
-REVISION=$(shell [ -z "$(git status --untracked-files=no --porcelain)" ] && git rev-parse --short=12 HEAD || echo "no_revision")
+COMMIT=$(shell [ -z "$(git status --untracked-files=no --porcelain)" ] && git rev-parse --short=12 HEAD || echo "no_commit")
 VERSION="${LATEST_TAG}-DEV"
-GOFLAGS=-ldflags "-X main.version=${VERSION} -X main.commit=${REVISION}"
+GOFLAGS=-ldflags "-X main.version=${VERSION} -X main.commit=${COMMIT}"
 
 
 build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect bin/resh-daemon\

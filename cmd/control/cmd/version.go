@@ -29,29 +29,27 @@ var versionCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "\nERROR: Resh-daemon didn't respond - it's probably not running.\n\n")
 			fmt.Fprintf(os.Stderr, "-> Try restarting this terminal window to bring resh-daemon back up.\n")
 			fmt.Fprintf(os.Stderr, "-> If the problem persists you can check resh-daemon logs: ~/.resh/daemon.log\n")
+			fmt.Fprintf(os.Stderr, "-> You can file an issue at: https://github.com/curusarn/resh/issues\n")
 			exitCode = status.Fail
 			return
 		}
-		printVersion("Daemon", resp.Version, resp.Commit)
+		printVersion("Currently running daemon", resp.Version, resp.Commit)
 
+		if version != resp.Version {
+			fmt.Fprintf(os.Stderr, "\nWARN: Resh-daemon is running in different version than is installed now - it looks like something went wrong during resh update.\n\n")
+			fmt.Fprintf(os.Stderr, "-> Kill resh-daemon and then launch a new terminal window to fix that.\n")
+			fmt.Fprintf(os.Stderr, " $ pkill resh-daemon\n")
+			fmt.Fprintf(os.Stderr, "-> You can file an issue at: https://github.com/curusarn/resh/issues\n")
+			return
+		}
 		if version != versionEnv {
 			fmt.Fprintf(os.Stderr, "\nWARN: This terminal session was started with different resh version than is installed now - it looks like you updated resh and didn't restart this terminal.\n\n")
 			fmt.Fprintf(os.Stderr, "-> Restart this terminal window to fix that.\n")
 			return
 		}
-		if version != resp.Version {
-			fmt.Fprintf(os.Stderr, "\nWARN: Resh-daemon is running in different version than is installed now - it looks like something went wrong during resh update.\n\n")
-			fmt.Fprintf(os.Stderr, "-> Kill resh-daemon and then launch a new terminal window to fix that.\n")
-			fmt.Fprintf(os.Stderr, " $ pkill resh-daemon\n")
-			return
-		}
 
 		exitCode = status.ReshStatus
 	},
-}
-
-func printErrExtras() {
-
 }
 
 func printVersion(title, version, commit string) {
