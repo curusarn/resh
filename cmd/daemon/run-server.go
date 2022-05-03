@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/curusarn/resh/internal/cfg"
 	"github.com/curusarn/resh/internal/histfile"
@@ -67,8 +68,12 @@ func (s *Server) Run() {
 	mux.Handle("/dump", &dumpHandler{sugar: s.sugar, histfileBox: histfileBox})
 
 	server := &http.Server{
-		Addr:    "localhost:" + strconv.Itoa(s.config.Port),
-		Handler: mux,
+		Addr:              "localhost:" + strconv.Itoa(s.config.Port),
+		Handler:           mux,
+		ReadTimeout:       1 * time.Second,
+		WriteTimeout:      1 * time.Second,
+		ReadHeaderTimeout: 1 * time.Second,
+		IdleTimeout:       30 * time.Second,
 	}
 	go server.ListenAndServe()
 
