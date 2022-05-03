@@ -4,13 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
 
-	"github.com/curusarn/resh/cmd/control/status"
-	"github.com/curusarn/resh/pkg/msg"
+	"github.com/curusarn/resh/internal/msg"
 	"github.com/spf13/cobra"
 )
 
@@ -24,13 +22,13 @@ var versionCmd = &cobra.Command{
 		commitEnv := getEnvVarWithDefault("__RESH_REVISION", "<unknown>")
 		printVersion("This terminal session", versionEnv, commitEnv)
 
+		// TODO: use output.Output.Error... for these
 		resp, err := getDaemonStatus(config.Port)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "\nERROR: Resh-daemon didn't respond - it's probably not running.\n\n")
 			fmt.Fprintf(os.Stderr, "-> Try restarting this terminal window to bring resh-daemon back up.\n")
 			fmt.Fprintf(os.Stderr, "-> If the problem persists you can check resh-daemon logs: ~/.resh/daemon.log\n")
 			fmt.Fprintf(os.Stderr, "-> You can file an issue at: https://github.com/curusarn/resh/issues\n")
-			exitCode = status.Fail
 			return
 		}
 		printVersion("Currently running daemon", resp.Version, resp.Commit)
@@ -48,7 +46,6 @@ var versionCmd = &cobra.Command{
 			return
 		}
 
-		exitCode = status.ReshStatus
 	},
 }
 
@@ -74,11 +71,11 @@ func getDaemonStatus(port int) (msg.StatusResponse, error) {
 	defer resp.Body.Close()
 	jsn, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal("Error while reading 'daemon /status' response:", err)
+		out.Fatal("Error while reading 'daemon /status' response", err)
 	}
 	err = json.Unmarshal(jsn, &mess)
 	if err != nil {
-		log.Fatal("Error while decoding 'daemon /status' response:", err)
+		out.Fatal("Error while decoding 'daemon /status' response", err)
 	}
 	return mess, nil
 }

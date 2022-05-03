@@ -1,9 +1,11 @@
 package histlist
 
-import "log"
+import "go.uber.org/zap"
 
 // Histlist is a deduplicated list of cmdLines
 type Histlist struct {
+	// TODO: I'm not excited about logger being passed here
+	sugar *zap.SugaredLogger
 	// list of commands lines (deduplicated)
 	List []string
 	// lookup: cmdLine -> last index
@@ -11,13 +13,16 @@ type Histlist struct {
 }
 
 // New Histlist
-func New() Histlist {
-	return Histlist{LastIndex: make(map[string]int)}
+func New(sugar *zap.SugaredLogger) Histlist {
+	return Histlist{
+		sugar:     sugar.With("component", "histlist"),
+		LastIndex: make(map[string]int),
+	}
 }
 
 // Copy Histlist
 func Copy(hl Histlist) Histlist {
-	newHl := New()
+	newHl := New(hl.sugar)
 	// copy list
 	newHl.List = make([]string, len(hl.List))
 	copy(newHl.List, hl.List)
@@ -36,7 +41,10 @@ func (h *Histlist) AddCmdLine(cmdLine string) {
 	if found {
 		// remove duplicate
 		if cmdLine != h.List[idx] {
-			log.Println("histlist ERROR: Adding cmdLine:", cmdLine, " != LastIndex[cmdLine]:", h.List[idx])
+			h.sugar.DPanicw("Index key is different than actual cmd line in the list",
+				"indexKeyCmdLine", cmdLine,
+				"actualCmdLine", h.List[idx],
+			)
 		}
 		h.List = append(h.List[:idx], h.List[idx+1:]...)
 		// idx++
@@ -44,7 +52,10 @@ func (h *Histlist) AddCmdLine(cmdLine string) {
 			cmdLn := h.List[idx]
 			h.LastIndex[cmdLn]--
 			if idx != h.LastIndex[cmdLn] {
-				log.Println("histlist ERROR: Shifting LastIndex idx:", idx, " != LastIndex[cmdLn]:", h.LastIndex[cmdLn])
+				h.sugar.DPanicw("Index position is different than actual position of the cmd line",
+					"actualPosition", idx,
+					"indexedPosition", h.LastIndex[cmdLn],
+				)
 			}
 			idx++
 		}
@@ -53,7 +64,10 @@ func (h *Histlist) AddCmdLine(cmdLine string) {
 	h.LastIndex[cmdLine] = len(h.List)
 	// append new cmdline
 	h.List = append(h.List, cmdLine)
-	// log.Println("histlist: Added cmdLine:", cmdLine, "; history length:", lenBefore, "->", len(h.List))
+	h.sugar.Debugw("Added cmdLine",
+		"cmdLine", cmdLine,
+		"historyLength", len(h.List),
+	)
 }
 
 // AddHistlist contents of another histlist to this histlist

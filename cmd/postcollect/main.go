@@ -3,38 +3,42 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 
-	"github.com/BurntSushi/toml"
-	"github.com/curusarn/resh/pkg/cfg"
-	"github.com/curusarn/resh/pkg/collect"
-	"github.com/curusarn/resh/pkg/records"
+	"github.com/curusarn/resh/internal/cfg"
+	"github.com/curusarn/resh/internal/collect"
+	"github.com/curusarn/resh/internal/logger"
+	"github.com/curusarn/resh/internal/output"
+	"github.com/curusarn/resh/internal/records"
+	"go.uber.org/zap"
 
 	//  "os/exec"
-	"os/user"
+
 	"path/filepath"
 	"strconv"
 )
 
-// version from git set during build
+// info passed during build
 var version string
-
-// commit from git set during build
 var commit string
+var developement bool
 
 func main() {
-	usr, _ := user.Current()
-	dir := usr.HomeDir
-	configPath := filepath.Join(dir, "/.config/resh.toml")
-	reshUUIDPath := filepath.Join(dir, "/.resh/resh-uuid")
+	config, errCfg := cfg.New()
+	logger, _ := logger.New("postcollect", config.LogLevel, developement)
+	defer logger.Sync() // flushes buffer, if any
+	if errCfg != nil {
+		logger.Error("Error while getting configuration", zap.Error(errCfg))
+	}
+	out := output.New(logger, "resh-postcollect ERROR")
 
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		out.Fatal("Could not get user home dir", err)
+	}
+	reshUUIDPath := filepath.Join(homeDir, "/.resh/resh-uuid")
 	machineIDPath := "/etc/machine-id"
 
-	var config cfg.Config
-	if _, err := toml.DecodeFile(configPath, &config); err != nil {
-		log.Fatal("Error reading config:", err)
-	}
 	showVersion := flag.Bool("version", false, "Show version and exit")
 	showRevision := flag.Bool("revision", false, "Show git revision and exit")
 
@@ -92,24 +96,24 @@ func main() {
 	}
 	realtimeAfter, err := strconv.ParseFloat(*rta, 64)
 	if err != nil {
-		log.Fatal("Flag Parsing error (rta):", err)
+		out.Fatal("Error while parsing flag --realtimeAfter", err)
 	}
 	realtimeBefore, err := strconv.ParseFloat(*rtb, 64)
 	if err != nil {
-		log.Fatal("Flag Parsing error (rtb):", err)
+		out.Fatal("Error while parsing flag --realtimeBefore", err)
 	}
 	realtimeDuration := realtimeAfter - realtimeBefore
 
-	timezoneAfterOffset := collect.GetTimezoneOffsetInSeconds(*timezoneAfter)
+	timezoneAfterOffset := collect.GetTimezoneOffsetInSeconds(logger, *timezoneAfter)
 	realtimeAfterLocal := realtimeAfter + timezoneAfterOffset
 
 	realPwdAfter, err := filepath.EvalSymlinks(*pwdAfter)
 	if err != nil {
-		log.Println("err while handling pwdAfter realpath:", err)
+		logger.Error("Error while handling pwdAfter realpath", zap.Error(err))
 		realPwdAfter = ""
 	}
 
-	gitDirAfter, gitRealDirAfter := collect.GetGitDirs(*gitCdupAfter, *gitCdupExitCodeAfter, *pwdAfter)
+	gitDirAfter, gitRealDirAfter := collect.GetGitDirs(logger, *gitCdupAfter, *gitCdupExitCodeAfter, *pwdAfter)
 	if *gitRemoteExitCodeAfter != 0 {
 		*gitRemoteAfter = ""
 	}
@@ -150,5 +154,5 @@ func main() {
 			ReshRevision: commit,
 		},
 	}
-	collect.SendRecord(rec, strconv.Itoa(config.Port), "/record")
+	collect.SendRecord(out, rec, strconv.Itoa(config.Port), "/record")
 }

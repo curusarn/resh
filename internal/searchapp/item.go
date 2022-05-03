@@ -2,13 +2,12 @@ package searchapp
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/curusarn/resh/pkg/records"
+	"github.com/curusarn/resh/internal/records"
 	"golang.org/x/exp/utf8string"
 )
 
@@ -228,9 +227,6 @@ func produceLocation(length int, host string, pwdTilde string, differentHost boo
 		shrinkFactor := float64(length) / float64(totalLen)
 
 		shrinkedHostLen := int(math.Ceil(float64(hostLen) * shrinkFactor))
-		if debug {
-			log.Printf("shrinkFactor: %f\n", shrinkFactor)
-		}
 		halfLocationLen := length/2 - colonLen
 
 		newHostLen = minInt(hostLen, shrinkedHostLen, halfLocationLen)

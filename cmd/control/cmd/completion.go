@@ -3,7 +3,6 @@ package cmd
 import (
 	"os"
 
-	"github.com/curusarn/resh/cmd/control/status"
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +29,6 @@ var completionBashCmd = &cobra.Command{
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		rootCmd.GenBashCompletion(os.Stdout)
-		exitCode = status.Success
 	},
 }
 
@@ -43,6 +41,5 @@ var completionZshCmd = &cobra.Command{
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		rootCmd.GenZshCompletion(os.Stdout)
-		exitCode = status.Success
 	},
 }

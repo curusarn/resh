@@ -2,7 +2,7 @@ SHELL=/bin/bash
 LATEST_TAG=$(shell git describe --tags)
 COMMIT=$(shell [ -z "$(git status --untracked-files=no --porcelain)" ] && git rev-parse --short=12 HEAD || echo "no_commit")
 VERSION="${LATEST_TAG}-DEV"
-GOFLAGS=-ldflags "-X main.version=${VERSION} -X main.commit=${COMMIT}"
+GOFLAGS=-ldflags "-X main.version=${VERSION} -X main.commit=${COMMIT} -X main.development=true"
 
 
 build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect bin/resh-daemon\
@@ -27,7 +27,8 @@ uninstall:
 	# Uninstalling ...
 	-rm -rf ~/.resh/
 
-bin/resh-%: cmd/%/*.go pkg/*/*.go cmd/control/cmd/*.go cmd/control/status/status.go
+go_files = $(shell find -name '*.go')
+bin/resh-%: $(go_files)
 	grep $@ .goreleaser.yml -q # all build targets need to be included in .goreleaser.yml
 	go build ${GOFLAGS} -o $@ cmd/$*/*.go
 

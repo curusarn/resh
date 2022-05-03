@@ -4,15 +4,16 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
-	"log"
 	"math"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/curusarn/resh/pkg/histlist"
+	"github.com/curusarn/resh/internal/histlist"
 	"github.com/mattn/go-shellwords"
+	"go.uber.org/zap"
 )
 
 // BaseRecord - common base for Record and FallbackRecord
@@ -219,14 +220,14 @@ func Enriched(r Record) EnrichedRecord {
 	if err != nil {
 		record.Errors = append(record.Errors, "Validate error:"+err.Error())
 		// rec, _ := record.ToString()
-		// log.Println("Invalid command:", rec)
+		// sugar.Println("Invalid command:", rec)
 		record.Invalid = true
 	}
 	record.Command, record.FirstWord, err = GetCommandAndFirstWord(r.CmdLine)
 	if err != nil {
 		record.Errors = append(record.Errors, "GetCommandAndFirstWord error:"+err.Error())
 		// rec, _ := record.ToString()
-		// log.Println("Invalid command:", rec)
+		// sugar.Println("Invalid command:", rec)
 		record.Invalid = true // should this be really invalid ?
 	}
 	return record
@@ -327,7 +328,7 @@ func (r *EnrichedRecord) SetCmdLine(cmdLine string) {
 	r.Command, r.FirstWord, err = GetCommandAndFirstWord(cmdLine)
 	if err != nil {
 		r.Errors = append(r.Errors, "GetCommandAndFirstWord error:"+err.Error())
-		// log.Println("Invalid command:", r.CmdLine)
+		// sugar.Println("Invalid command:", r.CmdLine)
 		r.Invalid = true
 	}
 }
@@ -352,7 +353,7 @@ func Stripped(r EnrichedRecord) EnrichedRecord {
 func GetCommandAndFirstWord(cmdLine string) (string, string, error) {
 	args, err := shellwords.Parse(cmdLine)
 	if err != nil {
-		// log.Println("shellwords Error:", err, " (cmdLine: <", cmdLine, "> )")
+		// Println("shellwords Error:", err, " (cmdLine: <", cmdLine, "> )")
 		return "", "", err
 	}
 	if len(args) == 0 {
@@ -361,15 +362,14 @@ func GetCommandAndFirstWord(cmdLine string) (string, string, error) {
 	i := 0
 	for true {
 		// commands in shell sometimes look like this `variable=something command argument otherArgument --option`
-		//		to get the command we skip over tokens that contain '='
+		// to get the command we skip over tokens that contain '='
 		if strings.ContainsRune(args[i], '=') && len(args) > i+1 {
 			i++
 			continue
 		}
 		return args[i], args[0], nil
 	}
-	log.Fatal("GetCommandAndFirstWord error: this should not happen!")
-	return "ERROR", "ERROR", errors.New("this should not happen - contact developer ;)")
+	return "ERROR", "ERROR", errors.New("failed to retrieve first word of command")
 }
 
 // NormalizeGitRemote func
@@ -511,22 +511,19 @@ func (r *EnrichedRecord) DistanceTo(r2 EnrichedRecord, p DistParams) float64 {
 }
 
 // LoadFromFile loads records from 'fname' file
-func LoadFromFile(fname string) []Record {
-	const allowedErrors = 2
+func LoadFromFile(sugar *zap.SugaredLogger, fname string) []Record {
+	const allowedErrors = 3
 	var encounteredErrors int
-	// NOTE: limit does nothing atm
 	var recs []Record
 	file, err := os.Open(fname)
 	if err != nil {
-		log.Println("Open() resh history file error:", err)
-		log.Println("WARN: Skipping reading resh history!")
+		sugar.Error("Failed to open resh history file - skipping reading resh history", zap.Error(err))
 		return recs
 	}
 	defer file.Close()
 
 	reader := bufio.NewReader(file)
 	var i int
-	var firstErrLine int
 	for {
 		var line string
 		line, err = reader.ReadString('\n')
@@ -540,14 +537,16 @@ func LoadFromFile(fname string) []Record {
 		if err != nil {
 			err = json.Unmarshal([]byte(line), &fallbackRecord)
 			if err != nil {
-				if encounteredErrors == 0 {
-					firstErrLine = i
-				}
 				encounteredErrors++
-				log.Println("Line:", line)
-				log.Println("Decoding error:", err)
+				sugar.Error("Could not decode line in resh history file",
+					"lineContents", line,
+					"lineNumber", i,
+					zap.Error(err),
+				)
 				if encounteredErrors > allowedErrors {
-					log.Fatalf("Fatal: Encountered more than %d decoding errors (%d)", allowedErrors, encounteredErrors)
+					sugar.Fatal("Encountered too many errors during decoding - exiting",
+						"allowedErrors", allowedErrors,
+					)
 				}
 			}
 			record = Convert(&fallbackRecord)
@@ -555,32 +554,43 @@ func LoadFromFile(fname string) []Record {
 		recs = append(recs, record)
 	}
 	if err != io.EOF {
-		log.Println("records: error while loading file:", err)
+		sugar.Error("Error while loading file", zap.Error(err))
 	}
-	// log.Println("records: Loaded lines - count:", i)
+	sugar.Infow("Loaded resh history records",
+		"recordCount", len(recs),
+	)
 	if encounteredErrors > 0 {
 		// fix errors in the history file
-		log.Printf("There were %d decoding errors, the first error happend on line %d/%d\n", encounteredErrors, firstErrLine, i)
+		sugar.Warnw("Some history records could not be decoded - fixing resh history file by dropping them",
+			"corruptedRecords", encounteredErrors,
+		)
 		fnameBak := fname + ".bak"
-		log.Printf("Backing up current history file to %s\n", fnameBak)
+		sugar.Infow("Backing up current corrupted history file",
+			"backupFilename", fnameBak,
+		)
 		err := copyFile(fname, fnameBak)
 		if err != nil {
-			log.Fatalln("Failed to backup history file with decode errors")
+			sugar.Errorw("Failed to create a backup history file - aborting fixing history file",
+				"backupFilename", fnameBak,
+				zap.Error(err),
+			)
+			return recs
 		}
-		log.Println("Writing out a history file without errors ...")
+		sugar.Info("Writing resh history file without errors ...")
 		err = writeHistory(fname, recs)
 		if err != nil {
-			log.Fatalln("Fatal: Failed write out new history")
+			sugar.Errorw("Failed write fixed history file - aborting fixing history file",
+				"filename", fname,
+				zap.Error(err),
+			)
 		}
 	}
-	log.Println("records: Loaded records - count:", len(recs))
 	return recs
 }
 
 func copyFile(source, dest string) error {
 	from, err := os.Open(source)
 	if err != nil {
-		// log.Println("Open() resh history file error:", err)
 		return err
 	}
 	defer from.Close()
@@ -588,14 +598,12 @@ func copyFile(source, dest string) error {
 	// to, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE, 0666)
 	to, err := os.Create(dest)
 	if err != nil {
-		// log.Println("Create() resh history backup error:", err)
 		return err
 	}
 	defer to.Close()
 
 	_, err = io.Copy(to, from)
 	if err != nil {
-		// log.Println("Copy() resh history to backup error:", err)
 		return err
 	}
 	return nil
@@ -604,14 +612,13 @@ func copyFile(source, dest string) error {
 func writeHistory(fname string, history []Record) error {
 	file, err := os.Create(fname)
 	if err != nil {
-		// log.Println("Create() resh history error:", err)
 		return err
 	}
 	defer file.Close()
 	for _, rec := range history {
 		jsn, err := json.Marshal(rec)
 		if err != nil {
-			log.Fatalln("Encode error!")
+			return fmt.Errorf("failed to encode record: %w", err)
 		}
 		file.Write(append(jsn, []byte("\n")...))
 	}
@@ -619,12 +626,11 @@ func writeHistory(fname string, history []Record) error {
 }
 
 // LoadCmdLinesFromZshFile loads cmdlines from zsh history file
-func LoadCmdLinesFromZshFile(fname string) histlist.Histlist {
-	hl := histlist.New()
+func LoadCmdLinesFromZshFile(sugar *zap.SugaredLogger, fname string) histlist.Histlist {
+	hl := histlist.New(sugar)
 	file, err := os.Open(fname)
 	if err != nil {
-		log.Println("Open() zsh history file error:", err)
-		log.Println("WARN: Skipping reading zsh history!")
+		sugar.Error("Failed to open zsh history file - skipping reading zsh history", zap.Error(err))
 		return hl
 	}
 	defer file.Close()
@@ -656,12 +662,11 @@ func LoadCmdLinesFromZshFile(fname string) histlist.Histlist {
 }
 
 // LoadCmdLinesFromBashFile loads cmdlines from bash history file
-func LoadCmdLinesFromBashFile(fname string) histlist.Histlist {
-	hl := histlist.New()
+func LoadCmdLinesFromBashFile(sugar *zap.SugaredLogger, fname string) histlist.Histlist {
+	hl := histlist.New(sugar)
 	file, err := os.Open(fname)
 	if err != nil {
-		log.Println("Open() bash history file error:", err)
-		log.Println("WARN: Skipping reading bash history!")
+		sugar.Error("Failed to open bash history file - skipping reading bash history", zap.Error(err))
 		return hl
 	}
 	defer file.Close()

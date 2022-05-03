@@ -3,37 +3,42 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 
-	"github.com/BurntSushi/toml"
-	"github.com/curusarn/resh/pkg/cfg"
-	"github.com/curusarn/resh/pkg/collect"
-	"github.com/curusarn/resh/pkg/records"
+	"github.com/curusarn/resh/internal/cfg"
+	"github.com/curusarn/resh/internal/collect"
+	"github.com/curusarn/resh/internal/logger"
+	"github.com/curusarn/resh/internal/output"
+	"github.com/curusarn/resh/internal/records"
+	"go.uber.org/zap"
 
-	"os/user"
 	"path/filepath"
 	"strconv"
 )
 
-// version from git set during build
+// info passed during build
 var version string
-
-// commit from git set during build
 var commit string
+var developement bool
 
 func main() {
-	usr, _ := user.Current()
-	dir := usr.HomeDir
-	configPath := filepath.Join(dir, "/.config/resh.toml")
-	reshUUIDPath := filepath.Join(dir, "/.resh/resh-uuid")
+	config, errCfg := cfg.New()
+	logger, _ := logger.New("collect", config.LogLevel, developement)
+	defer logger.Sync() // flushes buffer, if any
+	if errCfg != nil {
+		logger.Error("Error while getting configuration", zap.Error(errCfg))
+	}
+	out := output.New(logger, "resh-collect ERROR")
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		out.Fatal("Could not get user home dir", err)
+	}
+
+	reshUUIDPath := filepath.Join(homeDir, "/.resh/resh-uuid")
 
 	machineIDPath := "/etc/machine-id"
 
-	var config cfg.Config
-	if _, err := toml.DecodeFile(configPath, &config); err != nil {
-		log.Fatal("Error reading config:", err)
-	}
 	showVersion := flag.Bool("version", false, "Show version and exit")
 	showRevision := flag.Bool("revision", false, "Show git revision and exit")
 
@@ -106,20 +111,20 @@ func main() {
 	}
 	realtimeBefore, err := strconv.ParseFloat(*rtb, 64)
 	if err != nil {
-		log.Fatal("Flag Parsing error (rtb):", err)
+		out.Fatal("Error while parsing flag --realtimeBefore", err)
 	}
 	realtimeSessionStart, err := strconv.ParseFloat(*rtsess, 64)
 	if err != nil {
-		log.Fatal("Flag Parsing error (rt sess):", err)
+		out.Fatal("Error while parsing flag --realtimeSession", err)
 	}
 	realtimeSessSinceBoot, err := strconv.ParseFloat(*rtsessboot, 64)
 	if err != nil {
-		log.Fatal("Flag Parsing error (rt sess boot):", err)
+		out.Fatal("Error while parsing flag --realtimeSessSinceBoot", err)
 	}
 	realtimeSinceSessionStart := realtimeBefore - realtimeSessionStart
 	realtimeSinceBoot := realtimeSessSinceBoot + realtimeSinceSessionStart
 
-	timezoneBeforeOffset := collect.GetTimezoneOffsetInSeconds(*timezoneBefore)
+	timezoneBeforeOffset := collect.GetTimezoneOffsetInSeconds(logger, *timezoneBefore)
 	realtimeBeforeLocal := realtimeBefore + timezoneBeforeOffset
 
 	if *osReleaseID == "" {
@@ -182,5 +187,5 @@ func main() {
 			ReshRevision: commit,
 		},
 	}
-	collect.SendRecord(rec, strconv.Itoa(config.Port), "/session_init")
+	collect.SendRecord(out, rec, strconv.Itoa(config.Port), "/session_init")
 }

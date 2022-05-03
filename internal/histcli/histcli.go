@@ -1,7 +1,7 @@
 package histcli
 
 import (
-	"github.com/curusarn/resh/pkg/records"
+	"github.com/curusarn/resh/internal/records"
 )
 
 // Histcli is a dump of history preprocessed for resh cli purposes

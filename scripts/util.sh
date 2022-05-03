@@ -177,6 +177,7 @@ __resh_set_xdg_home_paths() {
     fi
     mkdir -p "$__RESH_XDG_CONFIG_FILE" >/dev/null 2>/dev/null
     __RESH_XDG_CONFIG_FILE="$__RESH_XDG_CONFIG_FILE/resh.toml"
+    export __RESH_XDG_CONFIG_FILE
 
 
     if [ -z "${XDG_CACHE_HOME-}" ]; then
@@ -194,4 +195,5 @@ __resh_set_xdg_home_paths() {
         __RESH_XDG_DATA_HOME="$XDG_DATA_HOME/resh"
     fi
     mkdir -p "$__RESH_XDG_DATA_HOME" >/dev/null 2>/dev/null
+    export __RESH_XDG_CONFIG_FILE
 }
