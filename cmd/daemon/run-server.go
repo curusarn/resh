@@ -5,14 +5,26 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/curusarn/resh/pkg/cfg"
-	"github.com/curusarn/resh/pkg/histfile"
-	"github.com/curusarn/resh/pkg/records"
-	"github.com/curusarn/resh/pkg/sesswatch"
-	"github.com/curusarn/resh/pkg/signalhandler"
+	"github.com/curusarn/resh/internal/cfg"
+	"github.com/curusarn/resh/internal/histfile"
+	"github.com/curusarn/resh/internal/records"
+	"github.com/curusarn/resh/internal/sesswatch"
+	"github.com/curusarn/resh/internal/signalhandler"
+	"go.uber.org/zap"
 )
 
-func runServer(config cfg.Config, reshHistoryPath, bashHistoryPath, zshHistoryPath string) {
+// TODO: turn server and handlers into package
+
+type Server struct {
+	sugar  *zap.SugaredLogger
+	config cfg.Config
+
+	reshHistoryPath string
+	bashHistoryPath string
+	zshHistoryPath  string
+}
+
+func (s *Server) Run() {
 	var recordSubscribers []chan records.Record
 	var sessionInitSubscribers []chan records.Record
 	var sessionDropSubscribers []chan string
@@ -29,8 +41,8 @@ func runServer(config cfg.Config, reshHistoryPath, bashHistoryPath, zshHistoryPa
 	signalSubscribers = append(signalSubscribers, histfileSignals)
 	maxHistSize := 10000  // lines
 	minHistSizeKB := 2000 // roughly lines
-	histfileBox := histfile.New(histfileRecords, histfileSessionsToDrop,
-		reshHistoryPath, bashHistoryPath, zshHistoryPath,
+	histfileBox := histfile.New(s.sugar, histfileRecords, histfileSessionsToDrop,
+		s.reshHistoryPath, s.bashHistoryPath, s.zshHistoryPath,
 		maxHistSize, minHistSizeKB,
 		histfileSignals, shutdown)
 
@@ -39,21 +51,27 @@ func runServer(config cfg.Config, reshHistoryPath, bashHistoryPath, zshHistoryPa
 	recordSubscribers = append(recordSubscribers, sesswatchRecords)
 	sesswatchSessionsToWatch := make(chan records.Record)
 	sessionInitSubscribers = append(sessionInitSubscribers, sesswatchSessionsToWatch)
-	sesswatch.Go(sesswatchSessionsToWatch, sesswatchRecords, sessionDropSubscribers, config.SesswatchPeriodSeconds)
+	sesswatch.Go(
+		s.sugar,
+		sesswatchSessionsToWatch,
+		sesswatchRecords,
+		sessionDropSubscribers,
+		s.config.SesswatchPeriodSeconds,
+	)
 
 	// handlers
 	mux := http.NewServeMux()
-	mux.HandleFunc("/status", statusHandler)
-	mux.Handle("/record", &recordHandler{subscribers: recordSubscribers})
-	mux.Handle("/session_init", &sessionInitHandler{subscribers: sessionInitSubscribers})
-	mux.Handle("/dump", &dumpHandler{histfileBox: histfileBox})
+	mux.Handle("/status", &statusHandler{sugar: s.sugar})
+	mux.Handle("/record", &recordHandler{sugar: s.sugar, subscribers: recordSubscribers})
+	mux.Handle("/session_init", &sessionInitHandler{sugar: s.sugar, subscribers: sessionInitSubscribers})
+	mux.Handle("/dump", &dumpHandler{sugar: s.sugar, histfileBox: histfileBox})
 
 	server := &http.Server{
-		Addr:    "localhost:" + strconv.Itoa(config.Port),
+		Addr:    "localhost:" + strconv.Itoa(s.config.Port),
 		Handler: mux,
 	}
 	go server.ListenAndServe()
 
 	// signalhandler - takes over the main goroutine so when signal handler exists the whole program exits
-	signalhandler.Run(signalSubscribers, shutdown, server)
+	signalhandler.Run(s.sugar, signalSubscribers, shutdown, server)
 }

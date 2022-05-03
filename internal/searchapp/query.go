@@ -1,7 +1,6 @@
 package searchapp
 
 import (
-	"log"
 	"sort"
 	"strings"
 )
@@ -37,25 +36,15 @@ func filterTerms(terms []string) []string {
 
 // NewQueryFromString .
 func NewQueryFromString(queryInput string, host string, pwd string, gitOriginRemote string, debug bool) Query {
-	if debug {
-		log.Println("QUERY input = <" + queryInput + ">")
-	}
 	terms := strings.Fields(queryInput)
 	var logStr string
 	for _, term := range terms {
 		logStr += " <" + term + ">"
 	}
-	if debug {
-		log.Println("QUERY raw terms =" + logStr)
-	}
 	terms = filterTerms(terms)
 	logStr = ""
 	for _, term := range terms {
 		logStr += " <" + term + ">"
-	}
-	if debug {
-		log.Println("QUERY filtered terms =" + logStr)
-		log.Println("QUERY pwd =" + pwd)
 	}
 	sort.SliceStable(terms, func(i, j int) bool { return len(terms[i]) < len(terms[j]) })
 	return Query{
@@ -68,16 +57,10 @@ func NewQueryFromString(queryInput string, host string, pwd string, gitOriginRem
 
 // GetRawTermsFromString .
 func GetRawTermsFromString(queryInput string, debug bool) []string {
-	if debug {
-		log.Println("QUERY input = <" + queryInput + ">")
-	}
 	terms := strings.Fields(queryInput)
 	var logStr string
 	for _, term := range terms {
 		logStr += " <" + term + ">"
-	}
-	if debug {
-		log.Println("QUERY raw terms =" + logStr)
 	}
 	terms = filterTerms(terms)
 	logStr = ""

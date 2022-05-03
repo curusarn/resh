@@ -1,23 +1,20 @@
 package cmd
 
 import (
-	"fmt"
-	"log"
-	"os/user"
-	"path/filepath"
-
-	"github.com/BurntSushi/toml"
-	"github.com/curusarn/resh/cmd/control/status"
-	"github.com/curusarn/resh/pkg/cfg"
+	"github.com/curusarn/resh/internal/cfg"
+	"github.com/curusarn/resh/internal/logger"
+	"github.com/curusarn/resh/internal/output"
 	"github.com/spf13/cobra"
 )
 
-// globals
-var exitCode status.Code
+// info passed during build
 var version string
 var commit string
-var debug = false
+var developement bool
+
+// globals
 var config cfg.Config
+var out *output.Output
 
 var rootCmd = &cobra.Command{
 	Use:   "reshctl",
@@ -25,30 +22,21 @@ var rootCmd = &cobra.Command{
 }
 
 // Execute reshctl
-func Execute(ver, com string) status.Code {
+func Execute(ver, com string) {
 	version = ver
 	commit = com
 
-	usr, _ := user.Current()
-	dir := usr.HomeDir
-	configPath := filepath.Join(dir, ".config/resh.toml")
-	if _, err := toml.DecodeFile(configPath, &config); err != nil {
-		log.Println("Error reading config", err)
-		return status.Fail
-	}
-	if config.Debug {
-		debug = true
-		// log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+	config, errCfg := cfg.New()
+	logger, _ := logger.New("reshctl", config.LogLevel, developement)
+	defer logger.Sync() // flushes buffer, if any
+	out = output.New(logger, "ERROR")
+	if errCfg != nil {
+		out.Error("Error while getting configuration", errCfg)
 	}
 
 	rootCmd.AddCommand(completionCmd)
 	completionCmd.AddCommand(completionBashCmd)
 	completionCmd.AddCommand(completionZshCmd)
-
-	rootCmd.AddCommand(debugCmd)
-	debugCmd.AddCommand(debugReloadCmd)
-	debugCmd.AddCommand(debugInspectCmd)
-	debugCmd.AddCommand(debugOutputCmd)
 
 	rootCmd.AddCommand(versionCmd)
 
@@ -56,8 +44,6 @@ func Execute(ver, com string) status.Code {
 	rootCmd.AddCommand(updateCmd)
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		return status.Fail
+		out.Fatal("Command ended with error", err)
 	}
-	return exitCode
 }

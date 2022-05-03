@@ -4,24 +4,24 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/user"
-	"path/filepath"
 	"strings"
 
-	"github.com/BurntSushi/toml"
-	"github.com/curusarn/resh/pkg/cfg"
+	"github.com/curusarn/resh/internal/cfg"
+	"github.com/curusarn/resh/internal/logger"
+	"go.uber.org/zap"
 )
 
-func main() {
-	usr, _ := user.Current()
-	dir := usr.HomeDir
-	configPath := filepath.Join(dir, ".config/resh.toml")
+// info passed during build
+var version string
+var commit string
+var developement bool
 
-	var config cfg.Config
-	_, err := toml.DecodeFile(configPath, &config)
-	if err != nil {
-		fmt.Println("Error reading config", err)
-		os.Exit(1)
+func main() {
+	config, errCfg := cfg.New()
+	logger, _ := logger.New("config", config.LogLevel, developement)
+	defer logger.Sync() // flushes buffer, if any
+	if errCfg != nil {
+		logger.Error("Error while getting configuration", zap.Error(errCfg))
 	}
 
 	configKey := flag.String("key", "", "Key of the requested config entry")

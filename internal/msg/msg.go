@@ -1,6 +1,6 @@
 package msg
 
-import "github.com/curusarn/resh/pkg/records"
+import "github.com/curusarn/resh/internal/records"
 
 // CliMsg struct
 type CliMsg struct {

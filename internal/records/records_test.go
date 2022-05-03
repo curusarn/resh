@@ -11,7 +11,7 @@ import (
 func GetTestRecords() []Record {
 	file, err := os.Open("testdata/resh_history.json")
 	if err != nil {
-		log.Fatal("Open() resh history file error:", err)
+		log.Fatalf("Failed to open resh history file: %v", err)
 	}
 	defer file.Close()
 
@@ -22,8 +22,7 @@ func GetTestRecords() []Record {
 		line := scanner.Text()
 		err = json.Unmarshal([]byte(line), &record)
 		if err != nil {
-			log.Println("Line:", line)
-			log.Fatal("Decoding error:", err)
+			log.Fatalf("Error decoding record: '%s'; err: %v", line, err)
 		}
 		recs = append(recs, record)
 	}
