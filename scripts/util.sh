@@ -1,3 +1,5 @@
+#!/hint/sh
+
 # util.sh - resh utility functions 
 __resh_get_uuid() {
     cat /proc/sys/kernel/random/uuid 2>/dev/null || resh-uuid

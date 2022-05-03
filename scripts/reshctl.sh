@@ -1,3 +1,4 @@
+#!/hint/sh
 
 # shellcheck source=../submodules/bash-zsh-compat-widgets/bindfunc.sh
 . ~/.resh/bindfunc.sh

@@ -1,3 +1,4 @@
+#!/hint/sh
 
 # shellcheck source=hooks.sh
 . ~/.resh/hooks.sh
