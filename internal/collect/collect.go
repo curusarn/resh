@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/curusarn/resh/internal/httpclient"
 	"github.com/curusarn/resh/internal/output"
 	"github.com/curusarn/resh/internal/records"
 	"go.uber.org/zap"
@@ -39,7 +39,9 @@ func SendRecord(out *output.Output, r records.Record, port, path string) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := httpclient.New()
+	client := http.Client{
+		Timeout: 1 * time.Second,
+	}
 	_, err = client.Do(req)
 	if err != nil {
 		out.FatalDaemonNotRunning(err)

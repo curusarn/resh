@@ -172,16 +172,6 @@ __resh_session_init() {
 }
 
 __resh_set_xdg_home_paths() {
-    if [ -z "${XDG_CONFIG_HOME-}" ]; then
-        __RESH_XDG_CONFIG_FILE="$HOME/.config"
-    else
-        __RESH_XDG_CONFIG_FILE="$XDG_CONFIG_HOME"
-    fi
-    mkdir -p "$__RESH_XDG_CONFIG_FILE" >/dev/null 2>/dev/null
-    __RESH_XDG_CONFIG_FILE="$__RESH_XDG_CONFIG_FILE/resh.toml"
-    export __RESH_XDG_CONFIG_FILE
-
-
     if [ -z "${XDG_CACHE_HOME-}" ]; then
         __RESH_XDG_CACHE_HOME="$HOME/.cache/resh"
     else
@@ -197,5 +187,5 @@ __resh_set_xdg_home_paths() {
         __RESH_XDG_DATA_HOME="$XDG_DATA_HOME/resh"
     fi
     mkdir -p "$__RESH_XDG_DATA_HOME" >/dev/null 2>/dev/null
-    export __RESH_XDG_CONFIG_FILE
+    export __RESH_XDG_DATA_HOME
 }
