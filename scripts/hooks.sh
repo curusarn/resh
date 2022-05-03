@@ -1,3 +1,4 @@
+#!/hint/sh
 
 __resh_reset_variables() {
     __RESH_RECORD_ID=$(__resh_get_uuid)

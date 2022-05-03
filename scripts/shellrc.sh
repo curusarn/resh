@@ -1,3 +1,4 @@
+#!/hint/sh
 
 PATH=$PATH:~/.resh/bin
 # if [ -n "$ZSH_VERSION" ]; then
