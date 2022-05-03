@@ -101,11 +101,12 @@ func runReshCli(out *output.Output, config cfg.Config) (string, int) {
 	}
 
 	layout := manager{
+		out:             out,
+		config:          config,
 		sessionID:       *sessionID,
 		host:            *host,
 		pwd:             *pwd,
 		gitOriginRemote: records.NormalizeGitRemote(*gitOriginRemote),
-		config:          config,
 		s:               &st,
 	}
 	g.SetManager(layout)
@@ -598,7 +599,7 @@ func SendCliMsg(out *output.Output, m msg.CliMsg, port string) msg.CliResponse {
 	if err != nil {
 		out.Fatal("Failed decode response", err)
 	}
-	sugar.Debug("Recieved records from daemon",
+	sugar.Debugw("Recieved records from daemon",
 		"recordCount", len(response.CliRecords),
 	)
 	return response
