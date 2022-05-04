@@ -15,12 +15,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// SingleResponse json struct
-type SingleResponse struct {
-	Found   bool   `json:"found"`
-	CmdLine string `json:"cmdline"`
-}
-
 // SendRecord to daemon
 func SendRecord(out *output.Output, r records.Record, port, path string) {
 	out.Logger.Debug("Sending record ...",
@@ -49,11 +43,14 @@ func SendRecord(out *output.Output, r records.Record, port, path string) {
 }
 
 // ReadFileContent and return it as a string
-func ReadFileContent(path string) string {
+func ReadFileContent(logger *zap.Logger, path string) string {
 	dat, err := ioutil.ReadFile(path)
 	if err != nil {
+		logger.Error("Error reading file",
+			zap.String("filePath", path),
+			zap.Error(err),
+		)
 		return ""
-		//sugar.Fatal("failed to open " + path)
 	}
 	return strings.TrimSuffix(string(dat), "\n")
 }
@@ -84,7 +81,7 @@ func GetTimezoneOffsetInSeconds(logger *zap.Logger, zone string) float64 {
 	}
 	mins, err := strconv.Atoi(minsStr)
 	if err != nil {
-		logger.Error("err while parsing minutes in timezone offset:", zap.Error(err))
+		logger.Error("Errot while parsing minutes in timezone offset:", zap.Error(err))
 		return -1
 	}
 	secs := ((hours * 60) + mins) * 60

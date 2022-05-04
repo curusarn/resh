@@ -116,41 +116,22 @@ cp -f scripts/shellrc.sh ~/.resh/shellrc
 cp -f scripts/reshctl.sh scripts/widgets.sh scripts/hooks.sh scripts/util.sh ~/.resh/
 cp -f scripts/rawinstall.sh ~/.resh/
 
-update_config() {
-    version=$1
-    key=$2
-    value=$3
-    # TODO: create bin/semver-lt
-    if bin/semver-lt "${__RESH_VERSION:-0.0.0}" "$1" && [ "$(bin/resh-config -key $key)" != "$value" ] ; then
-        echo " * config option $key was updated to $value"
-        # TODO: enable resh-config value setting
-        # resh-config -key "$key" -value "$value"
-    fi
-}
-
-
-# Do not overwrite config if it exists
-if [ ! -f ~/.config/resh.toml ]; then
-    echo "Copying config file ..."
-    cp -f conf/config.toml ~/.config/resh.toml
-# else 
-    # echo "Merging config files ..."
-    # NOTE: This is where we will merge configs when we make changes to the upstream config
-    # HINT: check which version are we updating FROM and make changes to config based on that 
-fi
-
 echo "Generating completions ..."
 bin/resh-control completion bash > ~/.resh/bash_completion.d/_reshctl
 bin/resh-control completion zsh > ~/.resh/zsh_completion.d/_reshctl
 
 echo "Copying more files ..."
 cp -f scripts/uuid.sh ~/.resh/bin/resh-uuid
-cp -f bin/* ~/.resh/bin/
+rm ~/.resh/bin/resh-* ||:
+cp -f bin/resh-{daemon,control,collect,postcollect,session-init,config} ~/.resh/bin/
 cp -f scripts/resh-evaluate-plot.py ~/.resh/bin/
 cp -fr data/sanitizer ~/.resh/sanitizer_data
 
 # backward compatibility: We have a new location for resh history file 
 [ ! -f ~/.resh/history.json ] || mv ~/.resh/history.json ~/.resh_history.json 
+
+echo "Checking config file ..."
+./bin/resh-config-setup
 
 echo "Finishing up ..."
 # Adding resh shellrc to .bashrc ...
