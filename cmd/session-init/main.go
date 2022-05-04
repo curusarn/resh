@@ -174,7 +174,7 @@ func main() {
 			RealtimeSinceSessionStart: realtimeSinceSessionStart,
 			RealtimeSinceBoot:         realtimeSinceBoot,
 
-			MachineID: collect.ReadFileContent(machineIDPath),
+			MachineID: collect.ReadFileContent(out.Logger, machineIDPath),
 
 			OsReleaseID:         *osReleaseID,
 			OsReleaseVersionID:  *osReleaseVersionID,
@@ -182,7 +182,7 @@ func main() {
 			OsReleaseName:       *osReleaseName,
 			OsReleasePrettyName: *osReleasePrettyName,
 
-			ReshUUID:     collect.ReadFileContent(reshUUIDPath),
+			ReshUUID:     collect.ReadFileContent(out.Logger, reshUUIDPath),
 			ReshVersion:  version,
 			ReshRevision: commit,
 		},

@@ -207,7 +207,7 @@ func main() {
 			GitDir:          gitDir,
 			GitRealDir:      gitRealDir,
 			GitOriginRemote: *gitRemote,
-			MachineID:       collect.ReadFileContent(machineIDPath),
+			MachineID:       collect.ReadFileContent(out.Logger, machineIDPath),
 
 			OsReleaseID:         *osReleaseID,
 			OsReleaseVersionID:  *osReleaseVersionID,
@@ -217,7 +217,7 @@ func main() {
 
 			PartOne: true,
 
-			ReshUUID:     collect.ReadFileContent(reshUUIDPath),
+			ReshUUID:     collect.ReadFileContent(out.Logger, reshUUIDPath),
 			ReshVersion:  version,
 			ReshRevision: commit,
 		},

@@ -145,11 +145,11 @@ func main() {
 			GitDirAfter:          gitDirAfter,
 			GitRealDirAfter:      gitRealDirAfter,
 			GitOriginRemoteAfter: *gitRemoteAfter,
-			MachineID:            collect.ReadFileContent(machineIDPath),
+			MachineID:            collect.ReadFileContent(out.Logger, machineIDPath),
 
 			PartOne: false,
 
-			ReshUUID:     collect.ReadFileContent(reshUUIDPath),
+			ReshUUID:     collect.ReadFileContent(out.Logger, reshUUIDPath),
 			ReshVersion:  version,
 			ReshRevision: commit,
 		},
