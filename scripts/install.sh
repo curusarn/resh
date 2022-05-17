@@ -210,7 +210,7 @@ info="$info
 RESH SEARCH APPLICATION = Redesigned reverse search that actually works
 
     >>> Launch RESH SEARCH app by pressing CTRL+R <<<
-    (you will need to restart your teminal first)
+    (you will need to restart your terminal first)
      
     Search your history by commands. 
     Host, directories, git remote, and exit status is used to display relevant results first.
