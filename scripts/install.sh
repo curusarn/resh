@@ -20,9 +20,9 @@ bash_version=$(bash -c 'echo ${BASH_VERSION}')
 bash_version_major=$(bash -c 'echo ${BASH_VERSINFO[0]}')
 bash_version_minor=$(bash -c 'echo ${BASH_VERSINFO[1]}')
 bash_too_old=""
-if [ "$bash_version_major" -le 3 ]; then 
+if [ "$bash_version_major" -le 3 ]; then
     bash_too_old=true
-elif [ "$bash_version_major" -eq 4 ] && [ "$bash_version_minor" -lt 3 ]; then 
+elif [ "$bash_version_major" -eq 4 ] && [ "$bash_version_minor" -lt 3 ]; then
     bash_too_old=true
 fi
 
@@ -31,7 +31,7 @@ if [ "$bash_too_old" = true ]; then
     if [ "$login_shell" = bash ]; then
         echo "   > Your bash version is old."
         echo "   > Bash is also your login shell."
-        echo "   > Updating to bash 4.3+ is strongly RECOMMENDED!"
+        echo "   > Updating to bash 4.3+ is STRONGLY RECOMMENDED!"
     else
         echo "   > Your bash version is old"
         echo "   > Bash is not your login shell so it should not be an issue."
@@ -47,12 +47,12 @@ if ! zsh --version >/dev/null 2>&1; then
 else
     zsh_version=$(zsh -c 'echo ${ZSH_VERSION}')
     zsh_version_major=$(echo "$zsh_version" | cut -d'.' -f1)
-    if [ "$zsh_version_major" -lt 5 ]; then 
+    if [ "$zsh_version_major" -lt 5 ]; then
         echo " * Zsh version: $zsh_version - UNSUPPORTED!"
         if [ "$login_shell" = zsh ]; then
             echo "   > Your zsh version is old."
             echo "   > Zsh is also your login shell."
-            echo "   > Updating to Zsh 5.0+ is strongly RECOMMENDED!"
+            echo "   > Updating to Zsh 5.0+ is STRONGLY RECOMMENDED!"
         else
             echo "   > Your zsh version is old"
             echo "   > Zsh is not your login shell so it should not be an issue."
@@ -88,17 +88,17 @@ else
     fi
 fi
 
-# echo 
+# echo
 # echo "Continue with installation? (Any key to CONTINUE / Ctrl+C to ABORT)"
 # # shellcheck disable=2034
 # read -r x
 
-echo 
+echo
 echo "Creating directories ..."
 
 mkdir_if_not_exists() {
     if [ ! -d "$1" ]; then
-        mkdir "$1" 
+        mkdir "$1"
     fi
 }
 
@@ -133,10 +133,6 @@ update_config() {
 if [ ! -f ~/.config/resh.toml ]; then
     echo "Copying config file ..."
     cp -f conf/config.toml ~/.config/resh.toml
-# else 
-    # echo "Merging config files ..."
-    # NOTE: This is where we will merge configs when we make changes to the upstream config
-    # HINT: check which version are we updating FROM and make changes to config based on that 
 fi
 
 echo "Generating completions ..."
@@ -149,8 +145,8 @@ cp -f bin/* ~/.resh/bin/
 cp -f scripts/resh-evaluate-plot.py ~/.resh/bin/
 cp -fr data/sanitizer ~/.resh/sanitizer_data
 
-# backward compatibility: We have a new location for resh history file 
-[ ! -f ~/.resh/history.json ] || mv ~/.resh/history.json ~/.resh_history.json 
+# backward compatibility: We have a new location for resh history file
+[ ! -f ~/.resh/history.json ] || mv ~/.resh/history.json ~/.resh_history.json
 
 echo "Finishing up ..."
 # Adding resh shellrc to .bashrc ...
@@ -158,14 +154,14 @@ if [ ! -f ~/.bashrc ]; then
     touch ~/.bashrc
 fi
 grep -q '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' ~/.bashrc ||\
-	echo -e '\n[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc # this line was added by RESH (Rich Enchanced Shell History)' >> ~/.bashrc
+	echo -e '\n[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc # this line was added by RESH (Rich Enhanced Shell History)' >> ~/.bashrc
 # Adding bash-preexec to .bashrc ...
 grep -q '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' ~/.bashrc ||\
-	echo -e '\n[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh # this line was added by RESH (Rich Enchanced Shell History)' >> ~/.bashrc
+	echo -e '\n[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh # this line was added by RESH (Rich Enhanced Shell History)' >> ~/.bashrc
 # Adding resh shellrc to .zshrc ...
 if [ -f ~/.zshrc ]; then
     grep -q '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' ~/.zshrc ||\
-        echo -e '\n[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc # this line was added by RESH (Rich Enchanced Shell History)' >> ~/.zshrc
+        echo -e '\n[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc # this line was added by RESH (Rich Enhanced Shell History)' >> ~/.zshrc
 fi
 
 # Deleting zsh completion cache - for future use
@@ -177,7 +173,7 @@ touch ~/.resh_history.json
 # Generating resh-uuid ...
 [ -e ~/.resh/resh-uuid ] \
 	|| cat /proc/sys/kernel/random/uuid > ~/.resh/resh-uuid 2>/dev/null \
-	|| scripts/uuid.sh > ~/.resh/resh-uuid 2>/dev/null 
+	|| scripts/uuid.sh > ~/.resh/resh-uuid 2>/dev/null
 
 # Source utils to get __resh_run_daemon function
 # shellcheck source=util.sh
@@ -211,12 +207,12 @@ RESH SEARCH APPLICATION = Redesigned reverse search that actually works
 
     >>> Launch RESH SEARCH app by pressing CTRL+R <<<
     (you will need to restart your terminal first)
-     
-    Search your history by commands. 
+
+    Search your history by commands.
     Host, directories, git remote, and exit status is used to display relevant results first.
 
-    At first, the search application will use the standard shell history without context. 
-    All history recorded from now on will have context which will by the RESH SEARCH app.
+    At first, the search results will include standard shell history without context.
+    From now on, commands in shell history will have additional context added and used by the RESH SEARCH app.
 
     Enable/disable Ctrl+R binding using reshctl command:
      $ reshctl enable ctrl_r_binding
@@ -227,9 +223,12 @@ CHECK FOR UPDATES
      $ reshctl update
 
 HISTORY
-    Your resh history will be recorded to '~/.resh_history.json'
-    Look at it using e.g. following command (you might need to install jq)
-     $ tail -f ~/.resh_history.json | jq
+    Your shell history will now be recorded to '~/.resh_history.json'
+    You can (re)view it in a JSON enabled editor, or with the 'jq' command, for example:
+
+      $ tail -f ~/.resh_history.json | jq
+
+      For more info on the jq command, see https://stedolan.github.io/jq/download/
 
 ISSUES & FEEDBACK
     Please report issues to: https://github.com/curusarn/resh/issues
@@ -244,7 +243,7 @@ if [ -z "${__RESH_VERSION:-}" ]; then info="$info
 fi
 
 info="$info
----- Close this by pressing Q ----" 
+---- Close this by pressing Q ----"
 
 
 echo "$info" | ${PAGER:-less}
