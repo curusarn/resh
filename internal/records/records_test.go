@@ -77,75 +77,9 @@ func TestValidate(t *testing.T) {
 	}
 }
 
-func TestSetCmdLine(t *testing.T) {
-	record := EnrichedRecord{}
-	cmdline := "cmd arg1 arg2"
-	record.SetCmdLine(cmdline)
-	if record.CmdLine != cmdline || record.Command != "cmd" || record.FirstWord != "cmd" {
-		t.Error()
-	}
-}
-
-func TestStripped(t *testing.T) {
-	for _, rec := range GetTestEnrichedRecords() {
-		stripped := Stripped(rec)
-
-		// there should be no cmdline
-		if stripped.CmdLine != "" ||
-			stripped.FirstWord != "" ||
-			stripped.Command != "" {
-			t.Error("Stripped() returned record w/ info about CmdLine, Command OR FirstWord")
-		}
-		//  *after* fields should be overwritten by *before* fields
-		if stripped.PwdAfter != stripped.Pwd ||
-			stripped.RealPwdAfter != stripped.RealPwd ||
-			stripped.TimezoneAfter != stripped.TimezoneBefore ||
-			stripped.RealtimeAfter != stripped.RealtimeBefore ||
-			stripped.RealtimeAfterLocal != stripped.RealtimeBeforeLocal {
-			t.Error("Stripped() returned record w/ different *after* and *before* values - *after* fields should be overwritten by *before* fields")
-		}
-		// there should be no information about duration and session end
-		if stripped.RealtimeDuration != 0 ||
-			stripped.LastRecordOfSession != false {
-			t.Error("Stripped() returned record with too much information")
-		}
-	}
-}
-
 func TestGetCommandAndFirstWord(t *testing.T) {
 	cmd, stWord, err := GetCommandAndFirstWord("cmd arg1 arg2")
 	if err != nil || cmd != "cmd" || stWord != "cmd" {
 		t.Error("GetCommandAndFirstWord() returned wrong Command OR FirstWord")
-	}
-}
-
-func TestDistanceTo(t *testing.T) {
-	paramsFull := DistParams{
-		ExitCode:  1,
-		MachineID: 1,
-		SessionID: 1,
-		Login:     1,
-		Shell:     1,
-		Pwd:       1,
-		RealPwd:   1,
-		Git:       1,
-		Time:      1,
-	}
-	paramsZero := DistParams{}
-	var prevRec EnrichedRecord
-	for _, rec := range GetTestEnrichedRecords() {
-		dist := rec.DistanceTo(rec, paramsFull)
-		if dist != 0 {
-			t.Error("DistanceTo() itself should be always 0")
-		}
-		dist = rec.DistanceTo(prevRec, paramsFull)
-		if dist == 0 {
-			t.Error("DistanceTo() between two test records shouldn't be 0")
-		}
-		dist = rec.DistanceTo(prevRec, paramsZero)
-		if dist != 0 {
-			t.Error("DistanceTo() should be 0 when DistParams is all zeros")
-		}
-		prevRec = rec
 	}
 }

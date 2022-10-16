@@ -29,19 +29,7 @@ __resh_collect() {
     local __RESH_GIT_REMOTE; __RESH_GIT_REMOTE="$(git remote get-url origin 2>/dev/null)"
     local __RESH_GIT_REMOTE_EXIT_CODE=$?
 
-    if [ -n "${ZSH_VERSION-}" ]; then
-        # assume Zsh
-        local __RESH_PID="$$" # current pid
-    elif [ -n "${BASH_VERSION-}" ]; then
-        # assume Bash
-        if [ "${BASH_VERSINFO[0]}" -ge "4" ]; then
-            # $BASHPID is only available in bash4+
-            # $$ is fairly similar so it should not be an issue
-            local __RESH_PID="$BASHPID" # current pid
-        else
-            local __RESH_PID="$$" # current pid
-        fi
-    fi
+    local __RESH_PID="$$" # current pid
     # time
     local __RESH_TZ_BEFORE; __RESH_TZ_BEFORE=$(date +%z)
     # __RESH_RT_BEFORE="$EPOCHREALTIME"

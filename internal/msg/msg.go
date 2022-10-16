@@ -1,27 +1,14 @@
 package msg
 
-import "github.com/curusarn/resh/internal/records"
-
 // CliMsg struct
 type CliMsg struct {
-	SessionID string `json:"sessionID"`
-	PWD       string `json:"pwd"`
+	SessionID string
+	PWD       string
 }
 
 // CliResponse struct
 type CliResponse struct {
-	CliRecords []records.CliRecord `json:"cliRecords"`
-}
-
-// InspectMsg struct
-type InspectMsg struct {
-	SessionID string `json:"sessionId"`
-	Count     uint   `json:"count"`
-}
-
-// MultiResponse struct
-type MultiResponse struct {
-	CmdLines []string `json:"cmdlines"`
+	Records []record.SearchApp
 }
 
 // StatusResponse struct

@@ -47,23 +47,8 @@ __RESH_TERM="$TERM"
 
 # non-posix
 __RESH_RT_SESSION=$(__resh_get_epochrealtime)
-__RESH_OSTYPE="$OSTYPE" 
+__RESH_OSTYPE="$OSTYPE"
 __RESH_MACHTYPE="$MACHTYPE"
-
-if [ $__RESH_LINUX -eq 1 ]; then
-    __RESH_OS_RELEASE_ID=$(. /etc/os-release; echo "$ID")
-    __RESH_OS_RELEASE_VERSION_ID=$(. /etc/os-release; echo "$VERSION_ID")
-    __RESH_OS_RELEASE_ID_LIKE=$(. /etc/os-release; echo "$ID_LIKE")
-    __RESH_OS_RELEASE_NAME=$(. /etc/os-release; echo "$NAME")
-    __RESH_OS_RELEASE_PRETTY_NAME=$(. /etc/os-release; echo "$PRETTY_NAME")
-    __RESH_RT_SESS_SINCE_BOOT=$(cut -d' ' -f1 /proc/uptime)
-elif [ $__RESH_MACOS -eq 1 ]; then
-    __RESH_OS_RELEASE_ID="macos"
-    __RESH_OS_RELEASE_VERSION_ID=$(sw_vers -productVersion 2>/dev/null)
-    __RESH_OS_RELEASE_NAME="macOS"
-    __RESH_OS_RELEASE_PRETTY_NAME="Mac OS X"
-    __RESH_RT_SESS_SINCE_BOOT=$(sysctl -n kern.boottime | awk '{print $4}' | sed 's/,//g')
-fi
 
 # shellcheck disable=2155
 export __RESH_VERSION=$(resh-collect -version)

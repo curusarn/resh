@@ -2,20 +2,19 @@ package logger
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
+	"github.com/curusarn/resh/internal/datadir"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 func New(executable string, level zapcore.Level, developement bool) (*zap.Logger, error) {
-	// TODO: consider getting log path from config ?
-	homeDir, err := os.UserHomeDir()
+	dataDir, err := datadir.GetPath()
 	if err != nil {
-		return nil, fmt.Errorf("error while getting home dir: %w", err)
+		return nil, fmt.Errorf("error while getting resh data dir: %w", err)
 	}
-	logPath := filepath.Join(homeDir, ".resh/log.json")
+	logPath := filepath.Join(dataDir, "log.json")
 	loggerConfig := zap.NewProductionConfig()
 	loggerConfig.OutputPaths = []string{logPath}
 	loggerConfig.Level.SetLevel(level)

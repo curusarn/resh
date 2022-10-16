@@ -59,7 +59,7 @@ var defaults = Config{
 	BindControlR: true,
 
 	Debug:                   false,
-	SesswatchPeriodSeconds:  120,
+	SesswatchPeriodSeconds:  600,
 	SesshistInitHistorySize: 1000,
 }
 
