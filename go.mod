@@ -8,6 +8,7 @@ require (
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/spf13/cobra v1.2.1
+	github.com/whilp/git-urls v1.0.0
 	go.uber.org/zap v1.21.0
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6
 )

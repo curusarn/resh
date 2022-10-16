@@ -5,8 +5,9 @@ VERSION="${LATEST_TAG}-DEV"
 GOFLAGS=-ldflags "-X main.version=${VERSION} -X main.commit=${COMMIT} -X main.development=true"
 
 
-build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect bin/resh-daemon\
-  bin/resh-control bin/resh-config bin/resh-cli bin/resh-config-setup
+build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect\
+  bin/resh-daemon bin/resh-control bin/resh-config bin/resh-cli\
+  bin/installutil
 
 install: build
 	scripts/install.sh
@@ -21,7 +22,7 @@ rebuild:
 	make build
 
 clean:
-	rm -f bin/resh-*
+	rm -f bin/*
 
 uninstall:
 	# Uninstalling ...

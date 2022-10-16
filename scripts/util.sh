@@ -68,18 +68,10 @@ __resh_bash_completion_init() {
     # skip completion init if they are not
     _get_comp_words_by_ref >/dev/null 2>/dev/null
     [[ $? == 127 ]] && return
-    local bash_completion_dir=~/.resh/bash_completion.d
-    if [[ -d $bash_completion_dir && -r $bash_completion_dir && \
-        -x $bash_completion_dir ]]; then
-        for i in $(LC_ALL=C command ls "$bash_completion_dir"); do
-            i=$bash_completion_dir/$i
-            # shellcheck disable=SC2154
-            # shellcheck source=/dev/null
-            [[ -f "$i" && -r "$i" ]] && . "$i"
-        done
-    fi
+    . ~/.resh/bash_completion.d/_reshctl
 }
 
+// TODO: redo this
 __resh_zsh_completion_init() {
     # NOTE: this is hacky - each completion needs to be added individually 
     # TODO: fix later
@@ -137,7 +129,6 @@ __resh_session_init() {
         fi
     fi
     if [ "$__RESH_VERSION" = "$(resh-session-init -version)" ] && [ "$__RESH_REVISION" = "$(resh-session-init -revision)" ]; then
-        local fpath_last_run="$__RESH_XDG_CACHE_HOME/session_init_last_run_out.txt"
         resh-session-init -requireVersion "$__RESH_VERSION" \
                     -requireRevision "$__RESH_REVISION" \
                     -shell "$__RESH_SHELL" \
@@ -166,26 +157,6 @@ __resh_session_init() {
                     -osReleaseVersionId "$__RESH_OS_RELEASE_VERSION_ID" \
                     -osReleaseIdLike "$__RESH_OS_RELEASE_ID_LIKE" \
                     -osReleaseName "$__RESH_OS_RELEASE_NAME" \
-                    -osReleasePrettyName "$__RESH_OS_RELEASE_PRETTY_NAME" \
-                    >| "$fpath_last_run" 2>&1 || echo "resh-session-init ERROR: $(head -n 1 $fpath_last_run)"
+                    -osReleasePrettyName "$__RESH_OS_RELEASE_PRETTY_NAME"
         fi
-}
-
-__resh_set_xdg_home_paths() {
-    if [ -z "${XDG_CACHE_HOME-}" ]; then
-        __RESH_XDG_CACHE_HOME="$HOME/.cache/resh"
-    else
-        __RESH_XDG_CACHE_HOME="$XDG_CACHE_HOME/resh"
-    fi
-    mkdir -p "$__RESH_XDG_CACHE_HOME" >/dev/null 2>/dev/null
-    export __RESH_XDG_CACHE_HOME
-
-
-    if [ -z "${XDG_DATA_HOME-}" ]; then
-        __RESH_XDG_DATA_HOME="$HOME/.local/share/resh"
-    else
-        __RESH_XDG_DATA_HOME="$XDG_DATA_HOME/resh"
-    fi
-    mkdir -p "$__RESH_XDG_DATA_HOME" >/dev/null 2>/dev/null
-    export __RESH_XDG_DATA_HOME
 }

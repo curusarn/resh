@@ -94,6 +94,19 @@ fi
 # read -r x
 
 echo 
+echo "Backing up previous installation"
+# TODO: ~/.resh -> XDG_DATA/resh/rollback/
+# TODO: ~/XDG_DATA/resh/history.reshjson -> XDG_DATA/resh/rollback/
+# TODO: what about legacy history locations
+# TODO: ~/XDG_DATA/resh/log.json -> XDG_DATA/resh/rollback/
+
+echo "Cleaning up installation directory ..."
+rm ~/.resh/bin/* 2>/dev/null ||:
+rm ~/.resh/* 2>/dev/null 2>/dev/null ||:
+# TODO: put this behind version condition
+# backward compatibility: We have a new location for resh history file 
+[ ! -f ~/.resh/history.json ] || mv ~/.resh/history.json ~/.resh_history.json 
+
 echo "Creating directories ..."
 
 mkdir_if_not_exists() {
@@ -122,15 +135,9 @@ bin/resh-control completion zsh > ~/.resh/zsh_completion.d/_reshctl
 
 echo "Copying more files ..."
 cp -f scripts/uuid.sh ~/.resh/bin/resh-uuid
-rm ~/.resh/bin/resh-* ||:
 cp -f bin/resh-{daemon,control,collect,postcollect,session-init,config} ~/.resh/bin/
-cp -f scripts/resh-evaluate-plot.py ~/.resh/bin/
-cp -fr data/sanitizer ~/.resh/sanitizer_data
 
-# backward compatibility: We have a new location for resh history file 
-[ ! -f ~/.resh/history.json ] || mv ~/.resh/history.json ~/.resh_history.json 
-
-echo "Checking config file ..."
+echo "Creating/updating config file ..."
 ./bin/resh-config-setup
 
 echo "Finishing up ..."
