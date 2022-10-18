@@ -92,6 +92,7 @@ func getConfig() (*configFile, error) {
 	return readConfig(path)
 }
 
+// returned config is always usable, returned errors are informative
 func processAndFillDefaults(configF *configFile) (Config, error) {
 	config := defaults
 

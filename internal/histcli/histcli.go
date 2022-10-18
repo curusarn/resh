@@ -1,13 +1,13 @@
 package histcli
 
 import (
-	"github.com/curusarn/resh/internal/records"
+	"github.com/curusarn/resh/internal/recordint"
 )
 
 // Histcli is a dump of history preprocessed for resh cli purposes
 type Histcli struct {
 	// list of records
-	List []records.CliRecord
+	List []recordint.SearchApp
 }
 
 // New Histcli
@@ -16,16 +16,15 @@ func New() Histcli {
 }
 
 // AddRecord to the histcli
-func (h *Histcli) AddRecord(record records.Record) {
-	enriched := records.Enriched(record)
-	cli := records.NewCliRecord(enriched)
+func (h *Histcli) AddRecord(rec *recordint.Indexed) {
+	cli := recordint.NewSearchApp(rec)
 
 	h.List = append(h.List, cli)
 }
 
 // AddCmdLine to the histcli
 func (h *Histcli) AddCmdLine(cmdline string) {
-	cli := records.NewCliRecordFromCmdLine(cmdline)
+	cli := recordint.NewSearchAppFromCmdLine(cmdline)
 
 	h.List = append(h.List, cli)
 }

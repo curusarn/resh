@@ -47,19 +47,21 @@ __resh_get_epochrealtime() {
     fi
 }
 
+# FIXME: figure out if stdout/stderr should be discarded
 __resh_run_daemon() {
     if [ -n "${ZSH_VERSION-}" ]; then
         setopt LOCAL_OPTIONS NO_NOTIFY NO_MONITOR
     fi
-    local fpath_last_run="$__RESH_XDG_CACHE_HOME/daemon_last_run_out.txt"
     if [ "$(uname)" = Darwin ]; then
         # hotfix
-        gnohup resh-daemon >| "$fpath_last_run" 2>&1 & disown
+        # gnohup resh-daemon 2>&1 & disown
+        gnohup resh-daemon & disown
     else
         # TODO: switch to nohup for consistency once you confirm that daemon is
         #       not getting killed anymore on macOS
-        # nohup resh-daemon >| "$fpath_last_run" 2>&1 & disown
-        setsid resh-daemon >| "$fpath_last_run" 2>&1 & disown
+        nohup resh-daemon & disown
+        #nohup resh-daemon 2>&1 & disown
+        #setsid resh-daemon 2>&1 & disown
     fi
 }
 
@@ -71,7 +73,7 @@ __resh_bash_completion_init() {
     . ~/.resh/bash_completion.d/_reshctl
 }
 
-// TODO: redo this
+# TODO: redo this
 __resh_zsh_completion_init() {
     # NOTE: this is hacky - each completion needs to be added individually 
     # TODO: fix later
@@ -131,32 +133,8 @@ __resh_session_init() {
     if [ "$__RESH_VERSION" = "$(resh-session-init -version)" ] && [ "$__RESH_REVISION" = "$(resh-session-init -revision)" ]; then
         resh-session-init -requireVersion "$__RESH_VERSION" \
                     -requireRevision "$__RESH_REVISION" \
-                    -shell "$__RESH_SHELL" \
-                    -uname "$__RESH_UNAME" \
                     -sessionId "$__RESH_SESSION_ID" \
-                    -cols "$__RESH_COLS" \
-                    -home "$__RESH_HOME" \
-                    -lang "$__RESH_LANG" \
-                    -lcAll "$__RESH_LC_ALL" \
-                    -lines "$__RESH_LINES" \
-                    -login "$__RESH_LOGIN" \
-                    -shellEnv "$__RESH_SHELL_ENV" \
-                    -term "$__RESH_TERM" \
-                    -pid "$__RESH_PID" \
-                    -sessionPid "$__RESH_SESSION_PID" \
-                    -host "$__RESH_HOST" \
-                    -hosttype "$__RESH_HOSTTYPE" \
-                    -ostype "$__RESH_OSTYPE" \
-                    -machtype "$__RESH_MACHTYPE" \
-                    -shlvl "$__RESH_SHLVL" \
-                    -realtimeBefore "$__RESH_RT_BEFORE" \
-                    -realtimeSession "$__RESH_RT_SESSION" \
-                    -realtimeSessSinceBoot "$__RESH_RT_SESS_SINCE_BOOT" \
-                    -timezoneBefore "$__RESH_TZ_BEFORE" \
-                    -osReleaseId "$__RESH_OS_RELEASE_ID" \
-                    -osReleaseVersionId "$__RESH_OS_RELEASE_VERSION_ID" \
-                    -osReleaseIdLike "$__RESH_OS_RELEASE_ID_LIKE" \
-                    -osReleaseName "$__RESH_OS_RELEASE_NAME" \
-                    -osReleasePrettyName "$__RESH_OS_RELEASE_PRETTY_NAME"
-        fi
+                    -sessionPid "$__RESH_SESSION_PID"
+    fi
+
 }

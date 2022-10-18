@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/curusarn/resh/internal/records"
+	"github.com/curusarn/resh/internal/recordint"
 	"github.com/mitchellh/go-ps"
 	"go.uber.org/zap"
 )
@@ -21,7 +21,7 @@ type sesswatch struct {
 
 // Go runs the session watcher - watches sessions and sends
 func Go(sugar *zap.SugaredLogger,
-	sessionsToWatch chan records.Record, sessionsToWatchRecords chan records.Record,
+	sessionsToWatch chan recordint.SessionInit, sessionsToWatchRecords chan recordint.Collect,
 	sessionsToDrop []chan string, sleepSeconds uint) {
 
 	sw := sesswatch{
@@ -33,17 +33,17 @@ func Go(sugar *zap.SugaredLogger,
 	go sw.waiter(sessionsToWatch, sessionsToWatchRecords)
 }
 
-func (s *sesswatch) waiter(sessionsToWatch chan records.Record, sessionsToWatchRecords chan records.Record) {
+func (s *sesswatch) waiter(sessionsToWatch chan recordint.SessionInit, sessionsToWatchRecords chan recordint.Collect) {
 	for {
 		func() {
 			select {
-			case record := <-sessionsToWatch:
+			case rec := <-sessionsToWatch:
 				// normal way to start watching a session
-				id := record.SessionID
-				pid := record.SessionPID
+				id := rec.SessionID
+				pid := rec.SessionPID
 				sugar := s.sugar.With(
-					"sessionID", record.SessionID,
-					"sessionPID", record.SessionPID,
+					"sessionID", rec.SessionID,
+					"sessionPID", rec.SessionPID,
 				)
 				s.mutex.Lock()
 				defer s.mutex.Unlock()
@@ -52,13 +52,13 @@ func (s *sesswatch) waiter(sessionsToWatch chan records.Record, sessionsToWatchR
 					s.watchedSessions[id] = true
 					go s.watcher(sugar, id, pid)
 				}
-			case record := <-sessionsToWatchRecords:
+			case rec := <-sessionsToWatchRecords:
 				// additional safety - watch sessions that were never properly initialized
-				id := record.SessionID
-				pid := record.SessionPID
+				id := rec.SessionID
+				pid := rec.SessionPID
 				sugar := s.sugar.With(
-					"sessionID", record.SessionID,
-					"sessionPID", record.SessionPID,
+					"sessionID", rec.SessionID,
+					"sessionPID", rec.SessionPID,
 				)
 				s.mutex.Lock()
 				defer s.mutex.Unlock()

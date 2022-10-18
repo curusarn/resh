@@ -11,14 +11,14 @@ import (
 	"time"
 
 	"github.com/curusarn/resh/internal/output"
-	"github.com/curusarn/resh/internal/records"
+	"github.com/curusarn/resh/internal/recordint"
 	"go.uber.org/zap"
 )
 
 // SendRecord to daemon
-func SendRecord(out *output.Output, r records.Record, port, path string) {
+func SendRecord(out *output.Output, r recordint.Collect, port, path string) {
 	out.Logger.Debug("Sending record ...",
-		zap.String("cmdLine", r.CmdLine),
+		zap.String("cmdLine", r.Rec.CmdLine),
 		zap.String("sessionID", r.SessionID),
 	)
 	recJSON, err := json.Marshal(r)
@@ -27,6 +27,33 @@ func SendRecord(out *output.Output, r records.Record, port, path string) {
 	}
 
 	req, err := http.NewRequest("POST", "http://localhost:"+port+path,
+		bytes.NewBuffer(recJSON))
+	if err != nil {
+		out.Fatal("Error while sending record", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := http.Client{
+		Timeout: 1 * time.Second,
+	}
+	_, err = client.Do(req)
+	if err != nil {
+		out.FatalDaemonNotRunning(err)
+	}
+}
+
+// SendSessionInit to daemon
+func SendSessionInit(out *output.Output, r recordint.SessionInit, port string) {
+	out.Logger.Debug("Sending session init ...",
+		zap.String("sessionID", r.SessionID),
+		zap.Int("sessionPID", r.SessionPID),
+	)
+	recJSON, err := json.Marshal(r)
+	if err != nil {
+		out.Fatal("Error while encoding record", err)
+	}
+
+	req, err := http.NewRequest("POST", "http://localhost:"+port+"/session_init",
 		bytes.NewBuffer(recJSON))
 	if err != nil {
 		out.Fatal("Error while sending record", err)

@@ -16,6 +16,7 @@ type V1 struct {
 	ExitCode int    `json:"exitCode"`
 
 	// paths
+	// TODO: Do we need both pwd and real pwd?
 	Home    string `json:"home"`
 	Pwd     string `json:"pwd"`
 	RealPwd string `json:"realPwd"`
@@ -27,8 +28,9 @@ type V1 struct {
 	// git info
 	// origin is the most important
 	GitOriginRemote string `json:"gitOriginRemote"`
-	// maybe branch could be useful - e.g. in monorepo ??
-	GitBranch string `json:"gitBranch"`
+	// TODO: add GitBranch (v2 ?)
+	//       maybe branch could be useful - e.g. in monorepo ??
+	// GitBranch string `json:"gitBranch"`
 
 	// what is this for ??
 	// session watching needs this
@@ -36,11 +38,11 @@ type V1 struct {
 	// records belong to sessions
 	// PID int `json:"pid"`
 	// needed for tracking of sessions but I think it shouldn't be part of V1
-	SessionPID int `json:"sessionPID"`
+	// SessionPID int `json:"sessionPID"`
 
 	// needed to because records are merged with parts with same "SessionID + Shlvl"
 	// I don't think we need to save it
-	Shlvl int `json:"shlvl"`
+	// Shlvl int `json:"shlvl"`
 
 	// time (before), duration of command
 	Time     float64 `json:"time"`

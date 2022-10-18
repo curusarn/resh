@@ -22,7 +22,10 @@ var developement bool
 
 func main() {
 	config, errCfg := cfg.New()
-	logger, _ := logger.New("daemon", config.LogLevel, developement)
+	logger, err := logger.New("daemon", config.LogLevel, developement)
+	if err != nil {
+		fmt.Printf("Error while creating logger: %v", err)
+	}
 	defer logger.Sync() // flushes buffer, if any
 	if errCfg != nil {
 		logger.Error("Error while getting configuration", zap.Error(errCfg))
@@ -33,9 +36,6 @@ func main() {
 		"version", version,
 		"commit", commit,
 	)
-
-	// xdgCacheHome := d.getEnvOrPanic("__RESH_XDG_CACHE_HOME")
-	// xdgDataHome := d.getEnvOrPanic("__RESH_XDG_DATA_HOME")
 
 	// TODO: rethink PID file and logs location
 	homeDir, err := os.UserHomeDir()

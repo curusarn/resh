@@ -1,7 +1,6 @@
 package histfile
 
 import (
-	"encoding/json"
 	"math"
 	"os"
 	"strconv"
@@ -9,20 +8,22 @@ import (
 
 	"github.com/curusarn/resh/internal/histcli"
 	"github.com/curusarn/resh/internal/histlist"
+	"github.com/curusarn/resh/internal/recio"
+	"github.com/curusarn/resh/internal/record"
+	"github.com/curusarn/resh/internal/recordint"
 	"github.com/curusarn/resh/internal/records"
+	"github.com/curusarn/resh/internal/recutil"
 	"go.uber.org/zap"
 )
 
+// TODO: get rid of histfile - use histio instead
 // Histfile writes records to histfile
 type Histfile struct {
 	sugar *zap.SugaredLogger
 
 	sessionsMutex sync.Mutex
-	sessions      map[string]records.Record
+	sessions      map[string]recordint.Collect
 	historyPath   string
-
-	recentMutex   sync.Mutex
-	recentRecords []records.Record
 
 	// NOTE: we have separate histories which only differ if there was not enough resh_history
 	//			resh_history itself is common for both bash and zsh
@@ -30,21 +31,25 @@ type Histfile struct {
 	zshCmdLines  histlist.Histlist
 
 	cliRecords histcli.Histcli
+
+	rio *recio.RecIO
 }
 
 // New creates new histfile and runs its gorutines
-func New(sugar *zap.SugaredLogger, input chan records.Record, sessionsToDrop chan string,
+func New(sugar *zap.SugaredLogger, input chan recordint.Collect, sessionsToDrop chan string,
 	reshHistoryPath string, bashHistoryPath string, zshHistoryPath string,
 	maxInitHistSize int, minInitHistSizeKB int,
 	signals chan os.Signal, shutdownDone chan string) *Histfile {
 
+	rio := recio.New(sugar.With("module", "histfile"))
 	hf := Histfile{
 		sugar:        sugar.With("module", "histfile"),
-		sessions:     map[string]records.Record{},
+		sessions:     map[string]recordint.Collect{},
 		historyPath:  reshHistoryPath,
 		bashCmdLines: histlist.New(sugar),
 		zshCmdLines:  histlist.New(sugar),
 		cliRecords:   histcli.New(),
+		rio:          &rio,
 	}
 	go hf.loadHistory(bashHistoryPath, zshHistoryPath, maxInitHistSize, minInitHistSizeKB)
 	go hf.writer(input, signals, shutdownDone)
@@ -53,7 +58,7 @@ func New(sugar *zap.SugaredLogger, input chan records.Record, sessionsToDrop cha
 }
 
 // load records from resh history, reverse, enrich and save
-func (h *Histfile) loadCliRecords(recs []records.Record) {
+func (h *Histfile) loadCliRecords(recs []recordint.Indexed) {
 	for _, cmdline := range h.bashCmdLines.List {
 		h.cliRecords.AddCmdLine(cmdline)
 	}
@@ -62,7 +67,7 @@ func (h *Histfile) loadCliRecords(recs []records.Record) {
 	}
 	for i := len(recs) - 1; i >= 0; i-- {
 		rec := recs[i]
-		h.cliRecords.AddRecord(rec)
+		h.cliRecords.AddRecord(&rec)
 	}
 	h.sugar.Infow("Resh history loaded",
 		"historyRecordsCount", len(h.cliRecords.List),
@@ -71,8 +76,6 @@ func (h *Histfile) loadCliRecords(recs []records.Record) {
 
 // loadsHistory from resh_history and if there is not enough of it also load native shell histories
 func (h *Histfile) loadHistory(bashHistoryPath, zshHistoryPath string, maxInitHistSize, minInitHistSizeKB int) {
-	h.recentMutex.Lock()
-	defer h.recentMutex.Unlock()
 	h.sugar.Infow("Checking if resh_history is large enough ...")
 	fi, err := os.Stat(h.historyPath)
 	var size int
@@ -95,14 +98,17 @@ func (h *Histfile) loadHistory(bashHistoryPath, zshHistoryPath string, maxInitHi
 	h.sugar.Debugw("Loading resh history from file ...",
 		"historyFile", h.historyPath,
 	)
-	history := records.LoadFromFile(h.sugar, h.historyPath)
+	history, err := h.rio.ReadAndFixFile(h.historyPath, 3)
+	if err != nil {
+		h.sugar.Panicf("Failed to read file: %w", err)
+	}
 	h.sugar.Infow("Resh history loaded from file",
 		"historyFile", h.historyPath,
 		"recordCount", len(history),
 	)
 	go h.loadCliRecords(history)
 	// NOTE: keeping this weird interface for now because we might use it in the future
-	//			when we only load bash or zsh history
+	//       when we only load bash or zsh history
 	reshCmdLines := loadCmdLines(h.sugar, history)
 	h.sugar.Infow("Resh history loaded and processed",
 		"recordCount", len(reshCmdLines.List),
@@ -130,7 +136,7 @@ func (h *Histfile) sessionGC(sessionsToDrop chan string) {
 			if part1, found := h.sessions[session]; found == true {
 				sugar.Infow("Dropping session")
 				delete(h.sessions, session)
-				go writeRecord(sugar, part1, h.historyPath)
+				go h.rio.AppendToFile(h.historyPath, []record.V1{part1.Rec})
 			} else {
 				sugar.Infow("No hanging parts for session - nothing to drop")
 			}
@@ -139,43 +145,43 @@ func (h *Histfile) sessionGC(sessionsToDrop chan string) {
 }
 
 // writer reads records from channel, merges them and writes them to file
-func (h *Histfile) writer(input chan records.Record, signals chan os.Signal, shutdownDone chan string) {
+func (h *Histfile) writer(collect chan recordint.Collect, signals chan os.Signal, shutdownDone chan string) {
 	for {
 		func() {
 			select {
-			case record := <-input:
+			case rec := <-collect:
 				part := "2"
-				if record.PartOne {
+				if rec.Rec.PartOne {
 					part = "1"
 				}
 				sugar := h.sugar.With(
-					"recordCmdLine", record.CmdLine,
+					"recordCmdLine", rec.Rec.CmdLine,
 					"recordPart", part,
-					"recordShell", record.Shell,
+					"recordShell", rec.Shell,
 				)
 				sugar.Debugw("Got record")
 				h.sessionsMutex.Lock()
 				defer h.sessionsMutex.Unlock()
 
 				// allows nested sessions to merge records properly
-				mergeID := record.SessionID + "_" + strconv.Itoa(record.Shlvl)
+				mergeID := rec.SessionID + "_" + strconv.Itoa(rec.Shlvl)
 				sugar = sugar.With("mergeID", mergeID)
-				if record.PartOne {
+				if rec.Rec.PartOne {
 					if _, found := h.sessions[mergeID]; found {
 						msg := "Got another first part of the records before merging the previous one - overwriting!"
-						if record.Shell == "zsh" {
+						if rec.Shell == "zsh" {
 							sugar.Warnw(msg)
 						} else {
 							sugar.Infow(msg + " Unfortunately this is normal in bash, it can't be prevented.")
 						}
 					}
-					h.sessions[mergeID] = record
+					h.sessions[mergeID] = rec
 				} else {
 					if part1, found := h.sessions[mergeID]; found == false {
 						sugar.Warnw("Got second part of record and nothing to merge it with - ignoring!")
 					} else {
 						delete(h.sessions, mergeID)
-						go h.mergeAndWriteRecord(sugar, part1, record)
+						go h.mergeAndWriteRecord(sugar, part1, rec)
 					}
 				}
 			case sig := <-signals:
@@ -187,11 +193,11 @@ func (h *Histfile) writer(input chan records.Record, signals chan os.Signal, shu
 				defer h.sessionsMutex.Unlock()
 				sugar.Debugw("Unlocked mutex")
 
-				for sessID, record := range h.sessions {
+				for sessID, rec := range h.sessions {
 					sugar.Warnw("Writing incomplete record for session",
 						"sessionID", sessID,
 					)
-					h.writeRecord(sugar, record)
+					h.writeRecord(sugar, rec.Rec)
 				}
 				sugar.Debugw("Shutdown successful")
 				shutdownDone <- "histfile"
@@ -201,52 +207,53 @@ func (h *Histfile) writer(input chan records.Record, signals chan os.Signal, shu
 	}
 }
 
-func (h *Histfile) writeRecord(sugar *zap.SugaredLogger, part1 records.Record) {
-	writeRecord(sugar, part1, h.historyPath)
+func (h *Histfile) writeRecord(sugar *zap.SugaredLogger, rec record.V1) {
+	h.rio.AppendToFile(h.historyPath, []record.V1{rec})
 }
 
-func (h *Histfile) mergeAndWriteRecord(sugar *zap.SugaredLogger, part1, part2 records.Record) {
-	err := part1.Merge(part2)
+func (h *Histfile) mergeAndWriteRecord(sugar *zap.SugaredLogger, part1 recordint.Collect, part2 recordint.Collect) {
+	rec, err := recutil.Merge(&part1, &part2)
 	if err != nil {
 		sugar.Errorw("Error while merging records", "error", err)
 		return
 	}
 
 	func() {
-		h.recentMutex.Lock()
-		defer h.recentMutex.Unlock()
-		h.recentRecords = append(h.recentRecords, part1)
-		cmdLine := part1.CmdLine
+		cmdLine := rec.CmdLine
 		h.bashCmdLines.AddCmdLine(cmdLine)
 		h.zshCmdLines.AddCmdLine(cmdLine)
-		h.cliRecords.AddRecord(part1)
+		h.cliRecords.AddRecord(&recordint.Indexed{
+			// TODO: is this what we want?
+			Rec: rec,
+		})
 	}()
 
-	writeRecord(sugar, part1, h.historyPath)
+	h.rio.AppendToFile(h.historyPath, []record.V1{rec})
 }
 
-func writeRecord(sugar *zap.SugaredLogger, rec records.Record, outputPath string) {
-	recJSON, err := json.Marshal(rec)
-	if err != nil {
-		sugar.Errorw("Marshalling error", "error", err)
-		return
-	}
-	f, err := os.OpenFile(outputPath,
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		sugar.Errorw("Could not open file", "error", err)
-		return
-	}
-	defer f.Close()
-	_, err = f.Write(append(recJSON, []byte("\n")...))
-	if err != nil {
-		sugar.Errorw("Error while writing record",
-			"recordRaw", rec,
-			"error", err,
-		)
-		return
-	}
-}
+// TODO: use errors in RecIO
+// func writeRecord(sugar *zap.SugaredLogger, rec record.V1, outputPath string) {
+// 	recJSON, err := json.Marshal(rec)
+// 	if err != nil {
+// 		sugar.Errorw("Marshalling error", "error", err)
+// 		return
+// 	}
+// 	f, err := os.OpenFile(outputPath,
+// 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+// 	if err != nil {
+// 		sugar.Errorw("Could not open file", "error", err)
+// 		return
+// 	}
+// 	defer f.Close()
+// 	_, err = f.Write(append(recJSON, []byte("\n")...))
+// 	if err != nil {
+// 		sugar.Errorw("Error while writing record",
+// 			"recordRaw", rec,
+// 			"error", err,
+// 		)
+// 		return
+// 	}
+// }
 
 // DumpCliRecords returns enriched records
 func (h *Histfile) DumpCliRecords() histcli.Histcli {
@@ -254,13 +261,13 @@ func (h *Histfile) DumpCliRecords() histcli.Histcli {
 	return h.cliRecords
 }
 
-func loadCmdLines(sugar *zap.SugaredLogger, recs []records.Record) histlist.Histlist {
+func loadCmdLines(sugar *zap.SugaredLogger, recs []recordint.Indexed) histlist.Histlist {
 	hl := histlist.New(sugar)
 	// go from bottom and deduplicate
 	var cmdLines []string
 	cmdLinesSet := map[string]bool{}
 	for i := len(recs) - 1; i >= 0; i-- {
-		cmdLine := recs[i].CmdLine
+		cmdLine := recs[i].Rec.CmdLine
 		if cmdLinesSet[cmdLine] {
 			continue
 		}

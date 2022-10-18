@@ -5,11 +5,11 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/curusarn/resh/internal/records"
+	"github.com/curusarn/resh/internal/recordint"
 	"go.uber.org/zap"
 )
 
-func NewRecordHandler(sugar *zap.SugaredLogger, subscribers []chan records.Record) recordHandler {
+func NewRecordHandler(sugar *zap.SugaredLogger, subscribers []chan recordint.Collect) recordHandler {
 	return recordHandler{
 		sugar:       sugar.With(zap.String("endpoint", "/record")),
 		subscribers: subscribers,
@@ -18,7 +18,7 @@ func NewRecordHandler(sugar *zap.SugaredLogger, subscribers []chan records.Recor
 
 type recordHandler struct {
 	sugar       *zap.SugaredLogger
-	subscribers []chan records.Record
+	subscribers []chan recordint.Collect
 }
 
 func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -34,8 +34,8 @@ func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		sugar.Debugw("Unmarshaling record ...")
-		record := records.Record{}
-		err = json.Unmarshal(jsn, &record)
+		rec := recordint.Collect{}
+		err = json.Unmarshal(jsn, &rec)
 		if err != nil {
 			sugar.Errorw("Error during unmarshaling",
 				"error", err,
@@ -44,16 +44,16 @@ func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		part := "2"
-		if record.PartOne {
+		if rec.Rec.PartOne {
 			part = "1"
 		}
 		sugar := sugar.With(
-			"cmdLine", record.CmdLine,
+			"cmdLine", rec.Rec.CmdLine,
 			"part", part,
 		)
 		sugar.Debugw("Got record, sending to subscribers ...")
 		for _, sub := range h.subscribers {
-			sub <- record
+			sub <- rec
 		}
 		sugar.Debugw("Record sent to subscribers")
 	}()

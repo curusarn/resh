@@ -135,7 +135,7 @@ bin/resh-control completion zsh > ~/.resh/zsh_completion.d/_reshctl
 
 echo "Copying more files ..."
 cp -f scripts/uuid.sh ~/.resh/bin/resh-uuid
-cp -f bin/resh-{daemon,control,collect,postcollect,session-init,config} ~/.resh/bin/
+cp -f bin/resh-{daemon,cli,control,collect,postcollect,session-init,config} ~/.resh/bin/
 
 echo "Creating/updating config file ..."
 ./bin/resh-config-setup
@@ -179,7 +179,8 @@ else
     pkill -SIGTERM "resh-daemon" || true
 fi
 # daemon uses xdg path variables
-__resh_set_xdg_home_paths
+# FIXME: this does not exist anymore
+#__resh_set_xdg_home_paths
 __resh_run_daemon
 
 

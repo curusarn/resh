@@ -55,7 +55,8 @@ export __RESH_VERSION=$(resh-collect -version)
 # shellcheck disable=2155
 export __RESH_REVISION=$(resh-collect -revision)
 
-__resh_set_xdg_home_paths
+# FIXME: this does not exist anymore
+# __resh_set_xdg_home_paths
 
 __resh_run_daemon
 

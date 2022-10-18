@@ -1,5 +1,12 @@
 package recordint
 
+import (
+	"net/url"
+	"strings"
+
+	giturls "github.com/whilp/git-urls"
+)
+
 // SearchApp record used for sending records to RESH-CLI
 type SearchApp struct {
 	IsRaw     bool
@@ -14,6 +21,9 @@ type SearchApp struct {
 	ExitCode        int
 
 	Time float64
+
+	// file index
+	Idx int
 }
 
 // NewCliRecordFromCmdLine
@@ -25,16 +35,39 @@ func NewSearchAppFromCmdLine(cmdLine string) SearchApp {
 }
 
 // NewCliRecord from EnrichedRecord
-func NewSearchApp(r *Enriched) SearchApp {
+func NewSearchApp(r *Indexed) SearchApp {
+	// TODO: we used to validate records with recutil.Validate()
 	return SearchApp{
-		IsRaw:           false,
-		SessionID:       r.SessionID,
-		CmdLine:         r.CmdLine,
-		Host:            r.Hostname,
-		Pwd:             r.Pwd,
-		Home:            r.Home,
-		GitOriginRemote: r.GitOriginRemote,
-		ExitCode:        r.ExitCode,
-		Time:            r.Time,
+		IsRaw:     false,
+		SessionID: r.Rec.SessionID,
+		CmdLine:   r.Rec.CmdLine,
+		Host:      r.Rec.Hostname,
+		Pwd:       r.Rec.Pwd,
+		Home:      r.Rec.Home,
+		// TODO: is this the right place to normalize the git remote
+		GitOriginRemote: normalizeGitRemote(r.Rec.GitOriginRemote),
+		ExitCode:        r.Rec.ExitCode,
+		Time:            r.Rec.Time,
+
+		Idx: r.Idx,
 	}
+}
+
+// TODO: maybe move this to a more appropriate place
+// normalizeGitRemote helper
+func normalizeGitRemote(gitRemote string) string {
+	if strings.HasSuffix(gitRemote, ".git") {
+		gitRemote = gitRemote[:len(gitRemote)-4]
+	}
+	parsedURL, err := giturls.Parse(gitRemote)
+	if err != nil {
+		// TODO: log this error
+		return gitRemote
+	}
+	if parsedURL.User == nil || parsedURL.User.Username() == "" {
+		parsedURL.User = url.User("git")
+	}
+	// TODO: figure out what scheme we want
+	parsedURL.Scheme = "git+ssh"
+	return parsedURL.String()
 }

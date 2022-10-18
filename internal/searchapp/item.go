@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/curusarn/resh/internal/records"
+	"github.com/curusarn/resh/internal/recordint"
 	"golang.org/x/exp/utf8string"
 )
 
@@ -18,7 +18,7 @@ const dots = "…"
 type Item struct {
 	isRaw bool
 
-	realtimeBefore float64
+	time float64
 
 	// [host:]pwd
 	differentHost bool
@@ -105,8 +105,8 @@ func (i Item) DrawStatusLine(compactRendering bool, printedLineLength, realLineL
 	if i.isRaw {
 		return splitStatusLineToLines(i.CmdLine, printedLineLength, realLineLength)
 	}
-	secs := int64(i.realtimeBefore)
-	nsecs := int64((i.realtimeBefore - float64(secs)) * 1e9)
+	secs := int64(i.time)
+	nsecs := int64((i.time - float64(secs)) * 1e9)
 	tm := time.Unix(secs, nsecs)
 	const timeFormat = "2006-01-02 15:04:05"
 	timeString := tm.Format(timeFormat)
@@ -142,8 +142,8 @@ func (i Item) DrawItemColumns(compactRendering bool, debug bool) ItemColumns {
 
 	// DISPLAY
 	// DISPLAY > date
-	secs := int64(i.realtimeBefore)
-	nsecs := int64((i.realtimeBefore - float64(secs)) * 1e9)
+	secs := int64(i.time)
+	nsecs := int64((i.time - float64(secs)) * 1e9)
 	tm := time.Unix(secs, nsecs)
 
 	var date string
@@ -314,7 +314,7 @@ func properMatch(str, term, padChar string) bool {
 
 // NewItemFromRecordForQuery creates new item from record based on given query
 //		returns error if the query doesn't match the record
-func NewItemFromRecordForQuery(record records.CliRecord, query Query, debug bool) (Item, error) {
+func NewItemFromRecordForQuery(record recordint.SearchApp, query Query, debug bool) (Item, error) {
 	// Use numbers that won't add up to same score for any number of query words
 	// query score weigth 1.51
 	const hitScore = 1.517              // 1 * 1.51
@@ -411,10 +411,10 @@ func NewItemFromRecordForQuery(record records.CliRecord, query Query, debug bool
 	// if score <= 0 && !anyHit {
 	//	return Item{}, errors.New("no match for given record and query")
 	// }
-	score += record.RealtimeBefore * timeScoreCoef
+	score += record.Time * timeScoreCoef
 
 	it := Item{
-		realtimeBefore: record.RealtimeBefore,
+		time: record.Time,
 
 		differentHost: differentHost,
 		host:          record.Host,
@@ -470,7 +470,7 @@ type RawItem struct {
 
 // NewRawItemFromRecordForQuery creates new item from record based on given query
 //		returns error if the query doesn't match the record
-func NewRawItemFromRecordForQuery(record records.CliRecord, terms []string, debug bool) (RawItem, error) {
+func NewRawItemFromRecordForQuery(record recordint.SearchApp, terms []string, debug bool) (RawItem, error) {
 	const hitScore = 1.0
 	const hitScoreConsecutive = 0.01
 	const properMatchScore = 0.3
@@ -489,7 +489,7 @@ func NewRawItemFromRecordForQuery(record records.CliRecord, terms []string, debu
 			cmd = strings.ReplaceAll(cmd, term, highlightMatch(term))
 		}
 	}
-	score += record.RealtimeBefore * timeScoreCoef
+	score += record.Time * timeScoreCoef
 	// KEY for deduplication
 	key := record.CmdLine
 
