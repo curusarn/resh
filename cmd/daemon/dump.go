@@ -40,7 +40,7 @@ func (h *dumpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		sugar.Errorw("Error when getting records", "error", err)
 	}
 
-	resp := msg.CliResponse{CliRecords: fullRecords.List}
+	resp := msg.CliResponse{Records: fullRecords.List}
 	jsn, err = json.Marshal(&resp)
 	if err != nil {
 		sugar.Errorw("Error when marshaling", "error", err)

@@ -102,6 +102,15 @@ builds:
       - amd64
       - arm
       - arm64
+  -
+    id: "install-utils"
+    main: ./cmd/install-utils
+    binary: bin/resh-install-utils
+    goarch:
+      - 386
+      - amd64
+      - arm
+      - arm64
 
 # signs:
 #   - artifacts: checksum

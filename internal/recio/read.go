@@ -48,7 +48,7 @@ func (r *RecIO) ReadAndFixFile(fpath string, maxErrors int) ([]recordint.Indexed
 	for _, rec := range recs {
 		recsV1 = append(recsV1, rec.Rec)
 	}
-	err = r.WriteFile(fpath, recsV1)
+	err = r.OverwriteFile(fpath, recsV1)
 	if err != nil {
 		r.sugar.Errorw("Failed write fixed history file - aborting fixing history file",
 			"filename", fpath,

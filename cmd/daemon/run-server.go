@@ -8,7 +8,7 @@ import (
 
 	"github.com/curusarn/resh/internal/cfg"
 	"github.com/curusarn/resh/internal/histfile"
-	"github.com/curusarn/resh/internal/records"
+	"github.com/curusarn/resh/internal/recordint"
 	"github.com/curusarn/resh/internal/sesswatch"
 	"github.com/curusarn/resh/internal/signalhandler"
 	"go.uber.org/zap"
@@ -26,15 +26,15 @@ type Server struct {
 }
 
 func (s *Server) Run() {
-	var recordSubscribers []chan records.Record
-	var sessionInitSubscribers []chan records.Record
+	var recordSubscribers []chan recordint.Collect
+	var sessionInitSubscribers []chan recordint.SessionInit
 	var sessionDropSubscribers []chan string
 	var signalSubscribers []chan os.Signal
 
 	shutdown := make(chan string)
 
 	// histfile
-	histfileRecords := make(chan records.Record)
+	histfileRecords := make(chan recordint.Collect)
 	recordSubscribers = append(recordSubscribers, histfileRecords)
 	histfileSessionsToDrop := make(chan string)
 	sessionDropSubscribers = append(sessionDropSubscribers, histfileSessionsToDrop)
@@ -48,9 +48,9 @@ func (s *Server) Run() {
 		histfileSignals, shutdown)
 
 	// sesswatch
-	sesswatchRecords := make(chan records.Record)
+	sesswatchRecords := make(chan recordint.Collect)
 	recordSubscribers = append(recordSubscribers, sesswatchRecords)
-	sesswatchSessionsToWatch := make(chan records.Record)
+	sesswatchSessionsToWatch := make(chan recordint.SessionInit)
 	sessionInitSubscribers = append(sessionInitSubscribers, sesswatchSessionsToWatch)
 	sesswatch.Go(
 		s.sugar,

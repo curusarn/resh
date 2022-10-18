@@ -19,7 +19,7 @@ import (
 	"github.com/curusarn/resh/internal/logger"
 	"github.com/curusarn/resh/internal/msg"
 	"github.com/curusarn/resh/internal/output"
-	"github.com/curusarn/resh/internal/records"
+	"github.com/curusarn/resh/internal/recordint"
 	"github.com/curusarn/resh/internal/searchapp"
 	"go.uber.org/zap"
 
@@ -96,7 +96,7 @@ func runReshCli(out *output.Output, config cfg.Config) (string, int) {
 
 	st := state{
 		// lock sync.Mutex
-		cliRecords:   resp.CliRecords,
+		cliRecords:   resp.Records,
 		initialQuery: *query,
 	}
 
@@ -106,7 +106,7 @@ func runReshCli(out *output.Output, config cfg.Config) (string, int) {
 		sessionID:       *sessionID,
 		host:            *host,
 		pwd:             *pwd,
-		gitOriginRemote: records.NormalizeGitRemote(*gitOriginRemote),
+		gitOriginRemote: *gitOriginRemote,
 		s:               &st,
 	}
 	g.SetManager(layout)
@@ -159,7 +159,7 @@ func runReshCli(out *output.Output, config cfg.Config) (string, int) {
 
 type state struct {
 	lock                sync.Mutex
-	cliRecords          []records.CliRecord
+	cliRecords          []recordint.SearchApp
 	data                []searchapp.Item
 	rawData             []searchapp.RawItem
 	highlightedItem     int
@@ -600,7 +600,7 @@ func SendCliMsg(out *output.Output, m msg.CliMsg, port string) msg.CliResponse {
 		out.Fatal("Failed decode response", err)
 	}
 	sugar.Debugw("Recieved records from daemon",
-		"recordCount", len(response.CliRecords),
+		"recordCount", len(response.Records),
 	)
 	return response
 }

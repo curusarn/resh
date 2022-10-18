@@ -20,7 +20,9 @@ func main() {
 	case "backup":
 		backup()
 	case "rollback":
-		rollback()
+		// FIXME
+		panic("Rollback not implemented yet!")
+		// rollback()
 	case "migrate-config":
 		migrateConfig()
 	case "migrate-history":

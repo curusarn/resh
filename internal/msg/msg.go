@@ -1,5 +1,7 @@
 package msg
 
+import "github.com/curusarn/resh/internal/recordint"
+
 // CliMsg struct
 type CliMsg struct {
 	SessionID string
@@ -8,7 +10,7 @@ type CliMsg struct {
 
 // CliResponse struct
 type CliResponse struct {
-	Records []record.SearchApp
+	Records []recordint.SearchApp
 }
 
 // StatusResponse struct

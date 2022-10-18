@@ -5,13 +5,13 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/curusarn/resh/internal/records"
+	"github.com/curusarn/resh/internal/recordint"
 	"go.uber.org/zap"
 )
 
 type sessionInitHandler struct {
 	sugar       *zap.SugaredLogger
-	subscribers []chan records.Record
+	subscribers []chan recordint.SessionInit
 }
 
 func (h *sessionInitHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -28,8 +28,8 @@ func (h *sessionInitHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		sugar.Debugw("Unmarshaling record ...")
-		record := records.Record{}
-		err = json.Unmarshal(jsn, &record)
+		rec := recordint.SessionInit{}
+		err = json.Unmarshal(jsn, &rec)
 		if err != nil {
 			sugar.Errorw("Error during unmarshaling",
 				"error", err,
@@ -38,12 +38,12 @@ func (h *sessionInitHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		sugar := sugar.With(
-			"sessionID", record.SessionID,
-			"sessionPID", record.SessionPID,
+			"sessionID", rec.SessionID,
+			"sessionPID", rec.SessionPID,
 		)
 		sugar.Infow("Got session, sending to subscribers ...")
 		for _, sub := range h.subscribers {
-			sub <- record
+			sub <- rec
 		}
 		sugar.Debugw("Session sent to subscribers")
 	}()

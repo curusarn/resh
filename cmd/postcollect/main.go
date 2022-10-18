@@ -9,12 +9,12 @@ import (
 	"github.com/curusarn/resh/internal/collect"
 	"github.com/curusarn/resh/internal/logger"
 	"github.com/curusarn/resh/internal/output"
-	"github.com/curusarn/resh/internal/records"
+	"github.com/curusarn/resh/internal/record"
+	"github.com/curusarn/resh/internal/recordint"
 	"go.uber.org/zap"
 
 	//  "os/exec"
 
-	"path/filepath"
 	"strconv"
 )
 
@@ -32,44 +32,20 @@ func main() {
 	}
 	out := output.New(logger, "resh-postcollect ERROR")
 
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		out.Fatal("Could not get user home dir", err)
-	}
-	reshUUIDPath := filepath.Join(homeDir, "/.resh/resh-uuid")
-	machineIDPath := "/etc/machine-id"
-
 	showVersion := flag.Bool("version", false, "Show version and exit")
 	showRevision := flag.Bool("revision", false, "Show git revision and exit")
 
 	requireVersion := flag.String("requireVersion", "", "abort if version doesn't match")
 	requireRevision := flag.String("requireRevision", "", "abort if revision doesn't match")
 
-	cmdLine := flag.String("cmdLine", "", "command line")
 	exitCode := flag.Int("exitCode", -1, "exit code")
-	sessionID := flag.String("sessionId", "", "resh generated session id")
-	recordID := flag.String("recordId", "", "resh generated record id")
+	sessionID := flag.String("sessionID", "", "resh generated session id")
+	recordID := flag.String("recordID", "", "resh generated record id")
 
 	shlvl := flag.Int("shlvl", -1, "$SHLVL")
-	shell := flag.String("shell", "", "actual shell")
 
-	// posix variables
-	pwdAfter := flag.String("pwdAfter", "", "$PWD after command")
-
-	// non-posix
-	// sessionPid := flag.Int("sessionPid", -1, "$$ at session start")
-
-	gitCdupAfter := flag.String("gitCdupAfter", "", "git rev-parse --show-cdup")
-	gitRemoteAfter := flag.String("gitRemoteAfter", "", "git remote get-url origin")
-
-	gitCdupExitCodeAfter := flag.Int("gitCdupExitCodeAfter", -1, "... $?")
-	gitRemoteExitCodeAfter := flag.Int("gitRemoteExitCodeAfter", -1, "... $?")
-
-	// before after
-	timezoneAfter := flag.String("timezoneAfter", "", "")
-
-	rtb := flag.String("realtimeBefore", "-1", "before $EPOCHREALTIME")
-	rta := flag.String("realtimeAfter", "-1", "after $EPOCHREALTIME")
+	rtb := flag.String("timeBefore", "-1", "before $EPOCHREALTIME")
+	rta := flag.String("timeAfter", "-1", "after $EPOCHREALTIME")
 	flag.Parse()
 
 	if *showVersion == true {
@@ -81,77 +57,36 @@ func main() {
 		os.Exit(0)
 	}
 	if *requireVersion != "" && *requireVersion != version {
-		fmt.Println("Please restart/reload this terminal session " +
-			"(resh version: " + version +
-			"; resh version of this terminal session: " + *requireVersion +
-			")")
-		os.Exit(3)
+		out.FatalVersionMismatch(version, *requireVersion)
 	}
 	if *requireRevision != "" && *requireRevision != commit {
-		fmt.Println("Please restart/reload this terminal session " +
-			"(resh revision: " + commit +
-			"; resh revision of this terminal session: " + *requireRevision +
-			")")
-		os.Exit(3)
+		// this is only relevant for dev versions so we can reuse FatalVersionMismatch()
+		out.FatalVersionMismatch("revision "+commit, "revision "+*requireVersion)
 	}
-	realtimeAfter, err := strconv.ParseFloat(*rta, 64)
+
+	timeAfter, err := strconv.ParseFloat(*rta, 64)
 	if err != nil {
-		out.Fatal("Error while parsing flag --realtimeAfter", err)
+		out.Fatal("Error while parsing flag --timeAfter", err)
 	}
-	realtimeBefore, err := strconv.ParseFloat(*rtb, 64)
+	timeBefore, err := strconv.ParseFloat(*rtb, 64)
 	if err != nil {
-		out.Fatal("Error while parsing flag --realtimeBefore", err)
+		out.Fatal("Error while parsing flag --timeBefore", err)
 	}
-	realtimeDuration := realtimeAfter - realtimeBefore
+	duration := timeAfter - timeBefore
 
-	timezoneAfterOffset := collect.GetTimezoneOffsetInSeconds(logger, *timezoneAfter)
-	realtimeAfterLocal := realtimeAfter + timezoneAfterOffset
+	// FIXME: use recordint.Postollect
+	rec := recordint.Collect{
+		SessionID: *sessionID,
+		Shlvl:     *shlvl,
 
-	realPwdAfter, err := filepath.EvalSymlinks(*pwdAfter)
-	if err != nil {
-		logger.Error("Error while handling pwdAfter realpath", zap.Error(err))
-		realPwdAfter = ""
-	}
-
-	gitDirAfter, gitRealDirAfter := collect.GetGitDirs(logger, *gitCdupAfter, *gitCdupExitCodeAfter, *pwdAfter)
-	if *gitRemoteExitCodeAfter != 0 {
-		*gitRemoteAfter = ""
-	}
-
-	rec := records.Record{
-		// core
-		BaseRecord: records.BaseRecord{
-			CmdLine:   *cmdLine,
-			ExitCode:  *exitCode,
-			SessionID: *sessionID,
+		Rec: record.V1{
 			RecordID:  *recordID,
-			Shlvl:     *shlvl,
-			Shell:     *shell,
+			SessionID: *sessionID,
 
-			PwdAfter: *pwdAfter,
+			ExitCode: *exitCode,
+			Duration: duration,
 
-			// non-posix
-			RealPwdAfter: realPwdAfter,
-
-			// before after
-			TimezoneAfter: *timezoneAfter,
-
-			RealtimeBefore:     realtimeBefore,
-			RealtimeAfter:      realtimeAfter,
-			RealtimeAfterLocal: realtimeAfterLocal,
-
-			RealtimeDuration: realtimeDuration,
-
-			GitDirAfter:          gitDirAfter,
-			GitRealDirAfter:      gitRealDirAfter,
-			GitOriginRemoteAfter: *gitRemoteAfter,
-			MachineID:            collect.ReadFileContent(out.Logger, machineIDPath),
-
-			PartOne: false,
-
-			ReshUUID:     collect.ReadFileContent(out.Logger, reshUUIDPath),
-			ReshVersion:  version,
-			ReshRevision: commit,
+			PartsNotMerged: true,
 		},
 	}
 	collect.SendRecord(out, rec, strconv.Itoa(config.Port), "/record")

@@ -74,8 +74,6 @@ resh() {
     elif [ $status_code = 130 ]; then
         true
     else
-        local fpath_last_run="$__RESH_XDG_CACHE_HOME/cli_last_run_out.txt"
-        echo "$buffer" >| "$fpath_last_run"
-        echo "resh-cli failed - check '$fpath_last_run' and '~/.resh/cli.log'"
+        printf "%s" "$buffer" >&2
     fi
 }
