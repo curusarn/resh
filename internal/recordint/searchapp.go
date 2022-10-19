@@ -2,6 +2,7 @@ package recordint
 
 import (
 	"net/url"
+	"strconv"
 	"strings"
 
 	giturls "github.com/whilp/git-urls"
@@ -37,17 +38,19 @@ func NewSearchAppFromCmdLine(cmdLine string) SearchApp {
 // NewCliRecord from EnrichedRecord
 func NewSearchApp(r *Indexed) SearchApp {
 	// TODO: we used to validate records with recutil.Validate()
+	// TODO: handle this error
+	time, _ := strconv.ParseFloat(r.Rec.Time, 64)
 	return SearchApp{
 		IsRaw:     false,
 		SessionID: r.Rec.SessionID,
 		CmdLine:   r.Rec.CmdLine,
-		Host:      r.Rec.Hostname,
+		Host:      r.Rec.Device,
 		Pwd:       r.Rec.Pwd,
 		Home:      r.Rec.Home,
 		// TODO: is this the right place to normalize the git remote
 		GitOriginRemote: normalizeGitRemote(r.Rec.GitOriginRemote),
 		ExitCode:        r.Rec.ExitCode,
-		Time:            r.Rec.Time,
+		Time:            time,
 
 		Idx: r.Idx,
 	}

@@ -57,7 +57,7 @@ func (s *Server) Run() {
 		sesswatchSessionsToWatch,
 		sesswatchRecords,
 		sessionDropSubscribers,
-		s.config.SesswatchPeriodSeconds,
+		s.config.SessionWatchPeriodSeconds,
 	)
 
 	// handlers

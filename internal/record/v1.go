@@ -6,14 +6,14 @@ type V1 struct {
 	// FIXME: is this the best way? .. what about string, separate fields, or something similar
 	Flags int `json:"flags"`
 
+	// cmdline, exitcode
+	CmdLine  string `json:"cmdLine"`
+	ExitCode int    `json:"exitCode"`
+
 	DeviceID  string `json:"deviceID"`
 	SessionID string `json:"sessionID"`
 	// can we have a shorter uuid for record
 	RecordID string `json:"recordID"`
-
-	// cmdline, exitcode
-	CmdLine  string `json:"cmdLine"`
-	ExitCode int    `json:"exitCode"`
 
 	// paths
 	// TODO: Do we need both pwd and real pwd?
@@ -21,9 +21,11 @@ type V1 struct {
 	Pwd     string `json:"pwd"`
 	RealPwd string `json:"realPwd"`
 
-	// hostname + lognem (not sure if we actually need logname)
-	Logname  string `json:"logname"`
-	Hostname string `json:"hostname"`
+	// hostname + logname (not sure if we actually need logname)
+	// Logname  string `json:"logname"`
+	// Device is usually hostname but not stricly hostname
+	// It can be configured in RESH configuration
+	Device string `json:"device"`
 
 	// git info
 	// origin is the most important
@@ -45,8 +47,10 @@ type V1 struct {
 	// Shlvl int `json:"shlvl"`
 
 	// time (before), duration of command
-	Time     float64 `json:"time"`
-	Duration float64 `json:"duration"`
+	// time and duration are strings because we don't want unnecessary precision when they get serialized into json
+	// we could implement custom (un)marshalling but I don't see downsides of directly representing the values as strings
+	Time     string `json:"time"`
+	Duration string `json:"duration"`
 
 	// these look like internal stuff
 

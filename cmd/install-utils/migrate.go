@@ -19,7 +19,7 @@ func migrateConfig() {
 		os.Exit(1)
 	}
 	if changes {
-		fmt.Printf("Config file format has changed since last update - your config was updated to reflect the changes.\n")
+		fmt.Printf("RESH config file format has changed since last update - your config was updated to reflect the changes.\n")
 	}
 }
 
@@ -30,7 +30,11 @@ func migrateHistory() {
 	// }
 
 	// TODO: Find history in:
+	//  - .resh/history.json (copy) - message user to delete the file once they confirm the new setup works
+	//  - .resh_history.json (copy) - message user to delete the file once they confirm the new setup works
 	//  - xdg_data/resh/history.reshjson
-	//  - .resh_history.json
-	//  - .resh/history.json
+
+	// Read xdg_data/resh/history.reshjson
+	// Write xdg_data/resh/history.reshjson
+	// the old format can be found in the backup dir
 }

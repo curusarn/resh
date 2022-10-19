@@ -54,8 +54,8 @@ func main() {
 
 	shell := flag.String("shell", "", "current shell")
 
-	logname := flag.String("logname", "", "$LOGNAME")
-	hostname := flag.String("hostname", "", "$HOSTNAME")
+	// logname := flag.String("logname", "", "$LOGNAME")
+	device := flag.String("device", "", "device name, usually $HOSTNAME")
 
 	// non-posix
 	shlvl := flag.Int("shlvl", -1, "$SHLVL")
@@ -111,12 +111,12 @@ func main() {
 			Pwd:     *pwd,
 			RealPwd: realPwd,
 
-			Logname:  *logname,
-			Hostname: *hostname,
+			// Logname:  *logname,
+			Device: *device,
 
 			GitOriginRemote: *gitRemote,
 
-			Time: time,
+			Time: fmt.Sprintf("%.4f", time),
 
 			PartOne:        true,
 			PartsNotMerged: true,
