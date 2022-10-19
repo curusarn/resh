@@ -84,7 +84,7 @@ func main() {
 			SessionID: *sessionID,
 
 			ExitCode: *exitCode,
-			Duration: duration,
+			Duration: fmt.Sprintf("%.4f", duration),
 
 			PartsNotMerged: true,
 		},

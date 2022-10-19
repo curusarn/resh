@@ -44,12 +44,16 @@ type Config struct {
 
 	// Debug mode for search app
 	Debug bool
-	// SesswatchPeriodSeconds is how often should daemon check if terminal
+	// SessionWatchPeriodSeconds is how often should daemon check if terminal
 	// sessions are still alive
-	SesswatchPeriodSeconds uint
-	// SesshistInitHistorySize is how large resh history needs to be for
+	// There is not much need to adjust the value both memory overhead of watched sessions
+	// and the CPU overhead of chacking them are relatively low
+	SessionWatchPeriodSeconds uint
+	// ReshHistoryMinSize is how large resh history needs to be for
 	// daemon to ignore standard shell history files
-	SesshistInitHistorySize int
+	// Ignoring standard shell history gives us more consistent experience
+	// but you can increase this to something large to see standard shell history in RESH search
+	ReshHistoryMinSize int
 }
 
 // defaults for config
@@ -58,10 +62,52 @@ var defaults = Config{
 	LogLevel:     zap.InfoLevel,
 	BindControlR: true,
 
-	Debug:                   false,
-	SesswatchPeriodSeconds:  600,
-	SesshistInitHistorySize: 1000,
+	Debug:                     false,
+	SessionWatchPeriodSeconds: 600,
+	ReshHistoryMinSize:        1000,
 }
+
+const headerComment = `##
+######################
+## RESH config (v1) ##
+######################
+## Here you can find info about RESH configuration options.
+## You can uncomment the options and custimize them.
+
+## Required.
+## The config format can change in future versions.
+## ConfigVersion helps us seemlessly upgrade to the new formats.
+# ConfigVersion = "v1"
+
+## Port used by RESH daemon and rest of the components to communicate.
+## Make sure to restart the daemon (pkill resh-daemon) when you change it.
+# Port = 2627
+
+## Controls how much and how detailed logs all RESH components produce.
+## Use "debug" for full logs when you encounter an issue
+## Options: "debug", "info", "warn", "error", "fatal"
+# LogLevel = "info"
+
+## When BindControlR is "true" RESH search app is bound to CTRL+R on terminal startuA
+# BindControlR = true
+
+## When Debug is "true" the RESH search app runs in debug mode.
+## This is useful for development.
+# Debug = false
+
+## Daemon keeps track of running terminal sessions.
+## SessionWatchPeriodSeconds controls how often daemon checks if the sessions are still alive.
+## You shouldn't need to adjust this.
+# SessionWatchPeriodSeconds = 600
+
+## When RESH is first installed there is no RESH history so there is nothing to search.
+## As a temporary woraround, RESH daemon parses bash/zsh shell history and searches it.
+## Once RESH history is big enough RESH stops using bash/zsh history.
+## ReshHistoryMinSize controls how big RESH history needs to be before this happens.
+## You can increase this this to e.g. 10000 to get RESH to use bash/zsh history longer.
+# ReshHistoryMinSize = 1000
+
+`
 
 func getConfigPath() (string, error) {
 	fname := "resh.toml"
@@ -100,10 +146,10 @@ func processAndFillDefaults(configF *configFile) (Config, error) {
 		config.Port = *configF.Port
 	}
 	if configF.SesswatchPeriodSeconds != nil {
-		config.SesswatchPeriodSeconds = *configF.SesswatchPeriodSeconds
+		config.SessionWatchPeriodSeconds = *configF.SesswatchPeriodSeconds
 	}
 	if configF.SesshistInitHistorySize != nil {
-		config.SesshistInitHistorySize = *configF.SesshistInitHistorySize
+		config.ReshHistoryMinSize = *configF.SesshistInitHistorySize
 	}
 
 	var err error

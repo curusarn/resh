@@ -19,10 +19,7 @@ __resh_collect() {
     # non-posix
     local __RESH_SHLVL="$SHLVL"
     local __RESH_GIT_REMOTE; __RESH_GIT_REMOTE="$(git remote get-url origin 2>/dev/null)"
-    local __RESH_GIT_REMOTE_EXIT_CODE=$?
 
-    local __RESH_PID="$$" # current pid
-    # time
     # __RESH_RT_BEFORE="$EPOCHREALTIME"
     __RESH_RT_BEFORE=$(__resh_get_epochrealtime)
 
@@ -36,22 +33,23 @@ __resh_collect() {
         fi
     elif [ "$__RESH_REVISION" != "$(resh-collect -revision)" ]; then
         # shellcheck source=shellrc.sh
-        source ~/.resh/shellrc 
+        source ~/.resh/shellrc
         if [ "$__RESH_REVISION" != "$(resh-collect -revision)" ]; then
             echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh revision: $(resh-collect -revision); resh revision of this terminal session: ${__RESH_REVISION})"
         fi
     fi
+    # TODO: change how resh-uuid is read
     if [ "$__RESH_VERSION" = "$(resh-collect -version)" ] && [ "$__RESH_REVISION" = "$(resh-collect -revision)" ]; then
         resh-collect -requireVersion "$__RESH_VERSION" \
                     -requireRevision "$__RESH_REVISION" \
                     -shell "$__RESH_SHELL" \
+                    -device "$__RESH_HOST" \
+                    -deviceID "$(cat ~/.resh/resh-uuid 2>/dev/null)" \
                     -sessionID "$__RESH_SESSION_ID" \
                     -recordID "$__RESH_RECORD_ID" \
                     -home "$__RESH_HOME" \
-                    -logname "$__RESH_LOGIN" \
                     -pwd "$__RESH_PWD" \
                     -sessionPID "$__RESH_SESSION_PID" \
-                    -hostname "$__RESH_HOST" \
                     -shlvl "$__RESH_SHLVL" \
                     -gitRemote "$__RESH_GIT_REMOTE" \
                     -time "$__RESH_RT_BEFORE" \

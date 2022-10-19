@@ -54,67 +54,16 @@ __resh_run_daemon() {
     fi
     if [ "$(uname)" = Darwin ]; then
         # hotfix
-        # gnohup resh-daemon 2>&1 & disown
-        gnohup resh-daemon & disown
+        gnohup resh-daemon >/dev/null 2>/dev/null & disown
     else
         # TODO: switch to nohup for consistency once you confirm that daemon is
         #       not getting killed anymore on macOS
-        nohup resh-daemon & disown
-        #nohup resh-daemon 2>&1 & disown
+        nohup resh-daemon >/dev/null 2>/dev/null & disown
         #setsid resh-daemon 2>&1 & disown
     fi
 }
 
-__resh_bash_completion_init() {
-    # primitive check to find out if bash_completions are installed
-    # skip completion init if they are not
-    _get_comp_words_by_ref >/dev/null 2>/dev/null
-    [[ $? == 127 ]] && return
-    . ~/.resh/bash_completion.d/_reshctl
-}
-
-# TODO: redo this
-__resh_zsh_completion_init() {
-    # NOTE: this is hacky - each completion needs to be added individually 
-    # TODO: fix later
-    # fpath=(~/.resh/zsh_completion.d $fpath)
-    # we should be using fpath but that doesn't work well with oh-my-zsh
-    #   so we are just adding it manually 
-    # shellcheck disable=1090
-    if typeset -f compdef >/dev/null 2>&1; then
-        source ~/.resh/zsh_completion.d/_reshctl && compdef _reshctl reshctl
-    else
-        # fallback I guess
-        fpath=(~/.resh/zsh_completion.d $fpath)
-        __RESH_zsh_no_compdef=1
-    fi
-
-    # TODO: test and use this
-    # NOTE: this is not how globbing works
-    # for f in ~/.resh/zsh_completion.d/_*; do
-    #   source ~/.resh/zsh_completion.d/_$f && compdef _$f $f
-    # done
-}
-
 __resh_session_init() {
-    # posix
-    local __RESH_COLS="$COLUMNS"
-    local __RESH_LANG="$LANG"
-    local __RESH_LC_ALL="$LC_ALL"
-    # other LC ?
-    local __RESH_LINES="$LINES"
-    local __RESH_PWD="$PWD"
-    
-    # non-posix
-    local __RESH_SHLVL="$SHLVL"
-
-    # pid
-    local __RESH_PID; __RESH_PID=$(__resh_get_pid)
-
-    # time
-    local __RESH_TZ_BEFORE; __RESH_TZ_BEFORE=$(date +%z)
-    local __RESH_RT_BEFORE; __RESH_RT_BEFORE=$(__resh_get_epochrealtime)
-
     if [ "$__RESH_VERSION" != "$(resh-session-init -version)" ]; then
         # shellcheck source=shellrc.sh
         source ~/.resh/shellrc 
@@ -136,5 +85,4 @@ __resh_session_init() {
                     -sessionId "$__RESH_SESSION_ID" \
                     -sessionPid "$__RESH_SESSION_PID"
     fi
-
 }

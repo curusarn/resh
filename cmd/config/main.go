@@ -39,9 +39,9 @@ func main() {
 	case "port":
 		fmt.Println(config.Port)
 	case "sesswatchperiodseconds":
-		fmt.Println(config.SesswatchPeriodSeconds)
+		fmt.Println(config.SessionWatchPeriodSeconds)
 	case "sesshistinithistorysize":
-		fmt.Println(config.SesshistInitHistorySize)
+		fmt.Println(config.ReshHistoryMinSize)
 	default:
 		fmt.Println("Error: illegal --key!")
 		os.Exit(1)

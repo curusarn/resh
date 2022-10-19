@@ -57,12 +57,19 @@ func Migrate() (bool, error) {
 	return true, nil
 }
 
+// writeConfig should only be used when migrating config to new version
+// writing the config file discards all comments in the config file (limitation of TOML library)
+// to make up for lost comments we add header comment to the start of the file
 func writeConfig(config *configFile, path string) error {
 	file, err := os.OpenFile(path, os.O_RDWR|os.O_TRUNC, 0666)
 	if err != nil {
 		return fmt.Errorf("could not open config for writing: %w", err)
 	}
 	defer file.Close()
+	_, err = file.WriteString(headerComment)
+	if err != nil {
+		return fmt.Errorf("could not write config header: %w", err)
+	}
 	err = toml.NewEncoder(file).Encode(config)
 	if err != nil {
 		return fmt.Errorf("could not encode config: %w", err)

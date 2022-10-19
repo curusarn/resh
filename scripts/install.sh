@@ -31,7 +31,7 @@ if [ "$bash_too_old" = true ]; then
     if [ "$login_shell" = bash ]; then
         echo "   > Your bash version is old."
         echo "   > Bash is also your login shell."
-        echo "   > Updating to bash 4.3+ is strongly RECOMMENDED!"
+        echo "   > Updating to bash 4.3+ is STRONGLY RECOMMENDED!"
     else
         echo "   > Your bash version is old"
         echo "   > Bash is not your login shell so it should not be an issue."
@@ -52,7 +52,7 @@ else
         if [ "$login_shell" = zsh ]; then
             echo "   > Your zsh version is old."
             echo "   > Zsh is also your login shell."
-            echo "   > Updating to Zsh 5.0+ is strongly RECOMMENDED!"
+            echo "   > Updating to Zsh 5.0+ is STRONGLY RECOMMENDED!"
         else
             echo "   > Your zsh version is old"
             echo "   > Zsh is not your login shell so it should not be an issue."
@@ -93,12 +93,12 @@ fi
 # # shellcheck disable=2034
 # read -r x
 
-echo 
 echo "Backing up previous installation"
-# TODO: ~/.resh -> XDG_DATA/resh/rollback/
-# TODO: ~/XDG_DATA/resh/history.reshjson -> XDG_DATA/resh/rollback/
+#./bin/resh-install-utils backup
+# TODO: ~/.resh -> XDG_DATA_HOME/resh/rollback/
+# TODO: ~/XDG_DATA_HOME/resh/history.reshjson -> XDG_DATA/resh/rollback/
 # TODO: what about legacy history locations
-# TODO: ~/XDG_DATA/resh/log.json -> XDG_DATA/resh/rollback/
+# TODO: ~/XDG_DATA_HOME/resh/log.json -> XDG_DATA/resh/rollback/
 
 echo "Cleaning up installation directory ..."
 rm ~/.resh/bin/* 2>/dev/null ||:
@@ -106,6 +106,8 @@ rm ~/.resh/* 2>/dev/null 2>/dev/null ||:
 # TODO: put this behind version condition
 # backward compatibility: We have a new location for resh history file 
 [ ! -f ~/.resh/history.json ] || mv ~/.resh/history.json ~/.resh_history.json 
+
+#[ ! -f ~/.resh_history.json ] || mv ~/.resh_history.json $XDG .resh_history.json 
 
 echo "Creating directories ..."
 
@@ -117,8 +119,6 @@ mkdir_if_not_exists() {
 
 mkdir_if_not_exists ~/.resh
 mkdir_if_not_exists ~/.resh/bin
-mkdir_if_not_exists ~/.resh/bash_completion.d
-mkdir_if_not_exists ~/.resh/zsh_completion.d
 mkdir_if_not_exists ~/.config
 
 echo "Copying files ..."
@@ -138,7 +138,7 @@ cp -f scripts/uuid.sh ~/.resh/bin/resh-uuid
 cp -f bin/resh-{daemon,cli,control,collect,postcollect,session-init,config} ~/.resh/bin/
 
 echo "Creating/updating config file ..."
-./bin/resh-config-setup
+./bin/resh-install-utils migrate-config
 
 echo "Finishing up ..."
 # Adding resh shellrc to .bashrc ...
@@ -146,14 +146,14 @@ if [ ! -f ~/.bashrc ]; then
     touch ~/.bashrc
 fi
 grep -q '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' ~/.bashrc ||\
-	echo -e '\n[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc # this line was added by RESH (Rich Enchanced Shell History)' >> ~/.bashrc
+	echo -e '\n[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc # this line was added by RESH (Rich Enhanced Shell History)' >> ~/.bashrc
 # Adding bash-preexec to .bashrc ...
 grep -q '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' ~/.bashrc ||\
-	echo -e '\n[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh # this line was added by RESH (Rich Enchanced Shell History)' >> ~/.bashrc
+	echo -e '\n[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh # this line was added by RESH (Rich Enhanced Shell History)' >> ~/.bashrc
 # Adding resh shellrc to .zshrc ...
 if [ -f ~/.zshrc ]; then
     grep -q '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' ~/.zshrc ||\
-        echo -e '\n[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc # this line was added by RESH (Rich Enchanced Shell History)' >> ~/.zshrc
+        echo -e '\n[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc # this line was added by RESH (Rich Enhanced Shell History)' >> ~/.zshrc
 fi
 
 # Deleting zsh completion cache - for future use
@@ -178,9 +178,6 @@ if [ -f ~/.resh/resh.pid ]; then
 else
     pkill -SIGTERM "resh-daemon" || true
 fi
-# daemon uses xdg path variables
-# FIXME: this does not exist anymore
-#__resh_set_xdg_home_paths
 __resh_run_daemon
 
 
@@ -195,6 +192,7 @@ info="---- Scroll down using arrow keys ----
 #####################################
 "
 
+# FIMXE: update info - resh history path
 info="$info
 RESH SEARCH APPLICATION = Redesigned reverse search that actually works
 
@@ -214,7 +212,7 @@ CHECK FOR UPDATES
 HISTORY
     Your resh history will be recorded to '~/.resh_history.json'
     Look at it using e.g. following command (you might need to install jq)
-     $ tail -f ~/.resh_history.json | jq
+     $ cat ~/.resh_history.json | sed 's/^v[^{]*{/{/' | jq .
 
 ISSUES & FEEDBACK
     Please report issues to: https://github.com/curusarn/resh/issues
