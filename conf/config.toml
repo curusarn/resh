@@ -1,5 +1,1 @@
-port = 2627 
-sesswatchPeriodSeconds = 120 
-sesshistInitHistorySize = 1000
-bindControlR = true
-logVerbosity = info
+configVersion = "v1"
