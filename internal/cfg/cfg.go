@@ -29,6 +29,8 @@ type configFile struct {
 	// deprecated in v1
 	BindArrowKeysBash *bool
 	BindArrowKeysZsh  *bool
+
+	SyncConnectorAddress *string
 }
 
 // Config returned by this package to be used in the rest of the project
@@ -47,13 +49,22 @@ type Config struct {
 	// SessionWatchPeriodSeconds is how often should daemon check if terminal
 	// sessions are still alive
 	// There is not much need to adjust the value both memory overhead of watched sessions
-	// and the CPU overhead of chacking them are relatively low
+	// and the CPU overhead of checking them are relatively low
 	SessionWatchPeriodSeconds uint
 	// ReshHistoryMinSize is how large resh history needs to be for
 	// daemon to ignore standard shell history files
-	// Ignoring standard shell history gives us more consistent experience
+	// Ignoring standard shell history gives us more consistent experience,
 	// but you can increase this to something large to see standard shell history in RESH search
 	ReshHistoryMinSize int
+
+	// SyncConnectorAddress used by the daemon to connect to the Sync Connector
+	// examples:
+	//  - localhost:1234
+	//  - http://localhost:1234
+	//  - 192.168.1.1:1324
+	//  - https://domain.tld
+	//  - https://domain.tld/resh
+	SyncConnectorAddress *string
 }
 
 // defaults for config
@@ -165,6 +176,8 @@ func processAndFillDefaults(configF *configFile) (Config, error) {
 	if configF.BindControlR != nil {
 		config.BindControlR = *configF.BindControlR
 	}
+
+	config.SyncConnectorAddress = configF.SyncConnectorAddress
 
 	return config, err
 }

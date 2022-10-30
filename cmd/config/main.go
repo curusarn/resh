@@ -35,7 +35,7 @@ func main() {
 	*configKey = strings.ToLower(*configKey)
 	switch *configKey {
 	case "bindcontrolr":
-		printBoolNormalized(config.BindControlR)
+		fmt.Println(config.BindControlR)
 	case "port":
 		fmt.Println(config.Port)
 	case "sesswatchperiodseconds":
@@ -45,14 +45,5 @@ func main() {
 	default:
 		fmt.Println("Error: illegal --key!")
 		os.Exit(1)
-	}
-}
-
-// this might be unnecessary but I'm too lazy to look it up
-func printBoolNormalized(x bool) {
-	if x {
-		fmt.Println("true")
-	} else {
-		fmt.Println("false")
 	}
 }
