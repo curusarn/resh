@@ -22,5 +22,5 @@ func LoadHistoryFromFile(sugar *zap.SugaredLogger, historyPath string, numLines 
 		rec := recs[i]
 		cliRecords.AddRecord(&rec)
 	}
-	return msg.CliResponse{Records: cliRecords.List}
+	return msg.CliResponse{Records: cliRecords.Dump()}
 }

@@ -2,17 +2,17 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/curusarn/resh/internal/histcli"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/curusarn/resh/internal/histfile"
 	"github.com/curusarn/resh/internal/msg"
 	"go.uber.org/zap"
 )
 
 type dumpHandler struct {
-	sugar       *zap.SugaredLogger
-	histfileBox *histfile.Histfile
+	sugar   *zap.SugaredLogger
+	history *histcli.Histcli
 }
 
 func (h *dumpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -35,12 +35,8 @@ func (h *dumpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sugar.Debugw("Getting records to send ...")
-	fullRecords := h.histfileBox.DumpCliRecords()
-	if err != nil {
-		sugar.Errorw("Error when getting records", "error", err)
-	}
 
-	resp := msg.CliResponse{Records: fullRecords.List}
+	resp := msg.CliResponse{Records: h.history.Dump()}
 	jsn, err = json.Marshal(&resp)
 	if err != nil {
 		sugar.Errorw("Error when marshaling", "error", err)

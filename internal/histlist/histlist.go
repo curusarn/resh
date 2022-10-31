@@ -35,7 +35,7 @@ func Copy(hl Histlist) Histlist {
 
 // AddCmdLine to the histlist
 func (h *Histlist) AddCmdLine(cmdLine string) {
-	// lenBefore := len(h.List)
+	// lenBefore := len(h.list)
 	// lookup
 	idx, found := h.LastIndex[cmdLine]
 	if found {

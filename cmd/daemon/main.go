@@ -126,7 +126,7 @@ func (d *daemon) killDaemon(pidfile string) error {
 			"PIDFile", pidfile,
 			"error", err)
 	}
-	d.sugar.Infow("Succesfully read PID file", "contents", string(dat))
+	d.sugar.Infow("Successfully read PID file", "contents", string(dat))
 	pid, err := strconv.Atoi(strings.TrimSuffix(string(dat), "\n"))
 	if err != nil {
 		return fmt.Errorf("could not parse PID file contents: %w", err)

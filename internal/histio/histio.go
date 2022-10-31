@@ -25,7 +25,7 @@ func New(sugar *zap.SugaredLogger, dataDir, deviceID string) *Histio {
 	sugarHistio := sugar.With(zap.String("component", "histio"))
 	histDir := path.Join(dataDir, "history")
 	currPath := path.Join(histDir, deviceID)
-	// TODO: file extenstion for the history, yes or no? (<id>.reshjson vs. <id>)
+	// TODO: file extension for the history, yes or no? (<id>.reshjson vs. <id>)
 
 	// TODO: discover other history files, exclude current
 

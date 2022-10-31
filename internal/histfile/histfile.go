@@ -30,7 +30,7 @@ type Histfile struct {
 	bashCmdLines histlist.Histlist
 	zshCmdLines  histlist.Histlist
 
-	cliRecords histcli.Histcli
+	cliRecords *histcli.Histcli
 
 	rio *recio.RecIO
 }
@@ -39,7 +39,7 @@ type Histfile struct {
 func New(sugar *zap.SugaredLogger, input chan recordint.Collect, sessionsToDrop chan string,
 	reshHistoryPath string, bashHistoryPath string, zshHistoryPath string,
 	maxInitHistSize int, minInitHistSizeKB int,
-	signals chan os.Signal, shutdownDone chan string) *Histfile {
+	signals chan os.Signal, shutdownDone chan string, histCli *histcli.Histcli) *Histfile {
 
 	rio := recio.New(sugar.With("module", "histfile"))
 	hf := Histfile{
@@ -48,7 +48,7 @@ func New(sugar *zap.SugaredLogger, input chan recordint.Collect, sessionsToDrop 
 		historyPath:  reshHistoryPath,
 		bashCmdLines: histlist.New(sugar),
 		zshCmdLines:  histlist.New(sugar),
-		cliRecords:   histcli.New(),
+		cliRecords:   histCli,
 		rio:          &rio,
 	}
 	go hf.loadHistory(bashHistoryPath, zshHistoryPath, maxInitHistSize, minInitHistSizeKB)
@@ -70,7 +70,7 @@ func (h *Histfile) loadCliRecords(recs []recordint.Indexed) {
 		h.cliRecords.AddRecord(&rec)
 	}
 	h.sugar.Infow("Resh history loaded",
-		"historyRecordsCount", len(h.cliRecords.List),
+		"historyRecordsCount", len(h.cliRecords.Dump()),
 	)
 }
 
@@ -254,12 +254,6 @@ func (h *Histfile) mergeAndWriteRecord(sugar *zap.SugaredLogger, part1 recordint
 // 		return
 // 	}
 // }
-
-// DumpCliRecords returns enriched records
-func (h *Histfile) DumpCliRecords() histcli.Histcli {
-	// don't forget locks in the future
-	return h.cliRecords
-}
 
 func loadCmdLines(sugar *zap.SugaredLogger, recs []recordint.Indexed) histlist.Histlist {
 	hl := histlist.New(sugar)

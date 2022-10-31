@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/curusarn/resh/internal/histcli"
+	"github.com/curusarn/resh/internal/syncconnector"
 	"net/http"
 	"os"
 	"strconv"
@@ -33,6 +35,8 @@ func (s *Server) Run() {
 
 	shutdown := make(chan string)
 
+	history := histcli.New()
+
 	// histfile
 	histfileRecords := make(chan recordint.Collect)
 	recordSubscribers = append(recordSubscribers, histfileRecords)
@@ -42,13 +46,14 @@ func (s *Server) Run() {
 	signalSubscribers = append(signalSubscribers, histfileSignals)
 	maxHistSize := 10000  // lines
 	minHistSizeKB := 2000 // roughly lines
-	histfileBox := histfile.New(s.sugar, histfileRecords, histfileSessionsToDrop,
+	histfile.New(s.sugar, histfileRecords, histfileSessionsToDrop,
 		s.reshHistoryPath, s.bashHistoryPath, s.zshHistoryPath,
 		maxHistSize, minHistSizeKB,
-		histfileSignals, shutdown)
+		histfileSignals, shutdown, history)
 
 	// sesswatch
 	sesswatchRecords := make(chan recordint.Collect)
+	// TODO: add sync connector subscriber
 	recordSubscribers = append(recordSubscribers, sesswatchRecords)
 	sesswatchSessionsToWatch := make(chan recordint.SessionInit)
 	sessionInitSubscribers = append(sessionInitSubscribers, sesswatchSessionsToWatch)
@@ -65,7 +70,7 @@ func (s *Server) Run() {
 	mux.Handle("/status", &statusHandler{sugar: s.sugar})
 	mux.Handle("/record", &recordHandler{sugar: s.sugar, subscribers: recordSubscribers})
 	mux.Handle("/session_init", &sessionInitHandler{sugar: s.sugar, subscribers: sessionInitSubscribers})
-	mux.Handle("/dump", &dumpHandler{sugar: s.sugar, histfileBox: histfileBox})
+	mux.Handle("/dump", &dumpHandler{sugar: s.sugar, history: history})
 
 	server := &http.Server{
 		Addr:              "localhost:" + strconv.Itoa(s.config.Port),
@@ -76,6 +81,19 @@ func (s *Server) Run() {
 		IdleTimeout:       30 * time.Second,
 	}
 	go server.ListenAndServe()
+
+	s.sugar.Infow("", "sync_addr", s.config.SyncConnectorAddress)
+	if s.config.SyncConnectorAddress != nil {
+		sc, err := syncconnector.New(s.sugar, *s.config.SyncConnectorAddress, s.config.SyncConnectorAuthToken, s.config.SyncConnectorPullPeriodSeconds, history)
+		if err != nil {
+			s.sugar.Errorw("Sync Connector init failed", "error", err)
+		} else {
+			s.sugar.Infow("Initialized Sync Connector", "Sync Connector", sc)
+		}
+		// TODO: load sync connector data
+		// TODO: load sync connector data
+		// TODO: send connector data periodically (record by record / or batch)
+	}
 
 	// signalhandler - takes over the main goroutine so when signal handler exists the whole program exits
 	signalhandler.Run(s.sugar, signalSubscribers, shutdown, server)

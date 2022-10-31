@@ -30,7 +30,9 @@ type configFile struct {
 	BindArrowKeysBash *bool
 	BindArrowKeysZsh  *bool
 
-	SyncConnectorAddress *string
+	SyncConnectorAddress           *string
+	SyncConnectorAuthToken         *string
+	SyncConnectorPullPeriodSeconds *int
 }
 
 // Config returned by this package to be used in the rest of the project
@@ -65,6 +67,12 @@ type Config struct {
 	//  - https://domain.tld
 	//  - https://domain.tld/resh
 	SyncConnectorAddress *string
+
+	// SyncConnectorAuthToken used by the daemon to authenticate with the Sync Connector
+	SyncConnectorAuthToken string
+
+	// SyncConnectorPullPeriodSeconds how often should Resh daemon download history from Sync Connector
+	SyncConnectorPullPeriodSeconds int
 }
 
 // defaults for config
@@ -76,6 +84,8 @@ var defaults = Config{
 	Debug:                     false,
 	SessionWatchPeriodSeconds: 600,
 	ReshHistoryMinSize:        1000,
+
+	SyncConnectorPullPeriodSeconds: 60,
 }
 
 const headerComment = `##
@@ -178,6 +188,14 @@ func processAndFillDefaults(configF *configFile) (Config, error) {
 	}
 
 	config.SyncConnectorAddress = configF.SyncConnectorAddress
+
+	if configF.SyncConnectorAuthToken != nil {
+		config.SyncConnectorAuthToken = *configF.SyncConnectorAuthToken
+	}
+
+	if configF.SyncConnectorPullPeriodSeconds != nil {
+		config.SyncConnectorPullPeriodSeconds = *configF.SyncConnectorPullPeriodSeconds
+	}
 
 	return config, err
 }
