@@ -9,10 +9,10 @@ import (
 	"github.com/curusarn/resh/internal/histcli"
 	"github.com/curusarn/resh/internal/histlist"
 	"github.com/curusarn/resh/internal/recio"
-	"github.com/curusarn/resh/internal/record"
 	"github.com/curusarn/resh/internal/recordint"
 	"github.com/curusarn/resh/internal/records"
 	"github.com/curusarn/resh/internal/recutil"
+	"github.com/curusarn/resh/record"
 	"go.uber.org/zap"
 )
 

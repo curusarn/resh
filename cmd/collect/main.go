@@ -9,8 +9,8 @@ import (
 	"github.com/curusarn/resh/internal/collect"
 	"github.com/curusarn/resh/internal/logger"
 	"github.com/curusarn/resh/internal/output"
-	"github.com/curusarn/resh/internal/record"
 	"github.com/curusarn/resh/internal/recordint"
+	"github.com/curusarn/resh/record"
 	"go.uber.org/zap"
 
 	//  "os/exec"
