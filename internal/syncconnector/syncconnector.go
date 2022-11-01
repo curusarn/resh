@@ -2,12 +2,16 @@ package syncconnector
 
 import (
 	"github.com/curusarn/resh/internal/histcli"
-	"github.com/curusarn/resh/internal/record"
 	"github.com/curusarn/resh/internal/recordint"
 	"go.uber.org/zap"
 	"net/url"
+	"path"
 	"time"
 )
+
+const storeEndpoint = "/store"
+const historyEndpoint = "/history"
+const latestEndpoint = "/latest"
 
 type SyncConnector struct {
 	sugar *zap.SugaredLogger
@@ -37,18 +41,29 @@ func New(sugar *zap.SugaredLogger, address string, authToken string, pullPeriodS
 	// TODO: propagate signals
 	go func(sc *SyncConnector) {
 		for _ = range time.Tick(time.Second * time.Duration(pullPeriodSeconds)) {
-			sc.sugar.Infow("checking remote")
+			sc.sugar.Debug("checking remote")
 
-			// Add fake record (this will be produced by the sync connector)
-			sc.history.AddRecord(&recordint.Indexed{
-				Rec: record.V1{
-					CmdLine:  "__fake_test__",
-					DeviceID: "__test__",
-				},
-			})
+			recs, err := sc.downloadRecords(map[string]string{})
+			if err != nil {
+				continue
+			}
+
+			sc.sugar.Debugf("Got %d records", len(recs))
+
+			for _, rec := range recs {
+				sc.history.AddRecord(&recordint.Indexed{
+					Rec: rec,
+				})
+			}
 
 		}
 	}(sc)
 
 	return sc, nil
+}
+
+func (sc SyncConnector) getAddressWithPath(endpoint string) string {
+	address := *sc.address
+	address.Path = path.Join(address.Path, endpoint)
+	return address.String()
 }

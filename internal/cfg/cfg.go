@@ -61,9 +61,9 @@ type Config struct {
 
 	// SyncConnectorAddress used by the daemon to connect to the Sync Connector
 	// examples:
-	//  - localhost:1234
 	//  - http://localhost:1234
-	//  - 192.168.1.1:1324
+	//  - http://localhost:1234
+	//  - http://192.168.1.1:1324
 	//  - https://domain.tld
 	//  - https://domain.tld/resh
 	SyncConnectorAddress *string
@@ -129,6 +129,8 @@ const headerComment = `##
 # ReshHistoryMinSize = 1000
 
 `
+
+// TODO: Add description for the new options.
 
 func getConfigPath() (string, error) {
 	fname := "resh.toml"
