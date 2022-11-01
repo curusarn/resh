@@ -3,8 +3,8 @@ package recutil
 import (
 	"errors"
 
-	"github.com/curusarn/resh/internal/record"
 	"github.com/curusarn/resh/internal/recordint"
+	"github.com/curusarn/resh/record"
 )
 
 // TODO: reintroduce validation

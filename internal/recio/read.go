@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/curusarn/resh/internal/recconv"
-	"github.com/curusarn/resh/internal/record"
 	"github.com/curusarn/resh/internal/recordint"
+	"github.com/curusarn/resh/record"
 	"go.uber.org/zap"
 )
 

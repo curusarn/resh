@@ -3,7 +3,7 @@ package recconv
 import (
 	"fmt"
 
-	"github.com/curusarn/resh/internal/record"
+	"github.com/curusarn/resh/record"
 )
 
 func LegacyToV1(r *record.Legacy) *record.V1 {

@@ -1,6 +1,6 @@
 package recordint
 
-import "github.com/curusarn/resh/internal/record"
+import "github.com/curusarn/resh/record"
 
 type Collect struct {
 	// record merging
