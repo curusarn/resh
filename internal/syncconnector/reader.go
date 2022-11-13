@@ -3,7 +3,7 @@ package syncconnector
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/curusarn/resh/internal/record"
+	"github.com/curusarn/resh/record"
 	"io"
 	"io/ioutil"
 	"log"
@@ -50,4 +50,9 @@ func (sc SyncConnector) downloadRecords(lastRecords map[string]string) ([]record
 	}
 
 	return records, nil
+}
+
+func latest() {
+	//curl localhost:8080/latest -X POST -d '[]'
+	//curl localhost:8080/latest -X POST -d '["one"]'
 }
