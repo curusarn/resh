@@ -39,8 +39,12 @@ curl -fsSL https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawins
 
 ### Simple installation
 
-1. Run `git clone https://github.com/curusarn/resh.git && cd resh`
-2. Run `scripts/rawinstall.sh`
+Run
+
+```shell
+git clone https://github.com/curusarn/resh.git
+cd resh && scripts/rawinstall.sh
+```
 
 ### Update
 
