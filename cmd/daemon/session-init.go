@@ -27,11 +27,11 @@ func (h *sessionInitHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		sugar.Debugw("Unmarshaling record ...")
+		sugar.Debugw("Unmarshalling record ...")
 		rec := recordint.SessionInit{}
 		err = json.Unmarshal(jsn, &rec)
 		if err != nil {
-			sugar.Errorw("Error during unmarshaling",
+			sugar.Errorw("Error during unmarshalling",
 				"error", err,
 				"payload", jsn,
 			)
