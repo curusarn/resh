@@ -3,7 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -69,7 +69,7 @@ func getDaemonStatus(port int) (msg.StatusResponse, error) {
 		return mess, err
 	}
 	defer resp.Body.Close()
-	jsn, err := ioutil.ReadAll(resp.Body)
+	jsn, err := io.ReadAll(resp.Body)
 	if err != nil {
 		out.Fatal("Error while reading 'daemon /status' response", err)
 	}

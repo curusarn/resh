@@ -17,7 +17,7 @@ func LoadHistoryFromFile(sugar *zap.SugaredLogger, historyPath string, numLines 
 	if numLines != 0 && numLines < len(recs) {
 		recs = recs[:numLines]
 	}
-	cliRecords := histcli.New()
+	cliRecords := histcli.New(sugar)
 	for i := len(recs) - 1; i >= 0; i-- {
 		rec := recs[i]
 		cliRecords.AddRecord(&rec)

@@ -35,7 +35,7 @@ func (s *Server) Run() {
 
 	shutdown := make(chan string)
 
-	history := histcli.New()
+	history := histcli.New(s.sugar)
 
 	// histfile
 	histfileRecords := make(chan recordint.Collect)

@@ -43,7 +43,7 @@ func New(sugar *zap.SugaredLogger, address string, authToken string, pullPeriodS
 		for _ = range time.Tick(time.Second * time.Duration(pullPeriodSeconds)) {
 			sc.sugar.Debug("checking remote")
 
-			recs, err := sc.downloadRecords(map[string]string{})
+			recs, err := sc.downloadRecords(sc.history.LatestRecordsPerDevice())
 			if err != nil {
 				continue
 			}

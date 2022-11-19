@@ -3,9 +3,9 @@ package syncconnector
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/curusarn/resh/record"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
@@ -15,15 +15,25 @@ func (sc SyncConnector) getLatestRecord(machineId *string) (map[string]string, e
 	return map[string]string{}, nil
 }
 
-func (sc SyncConnector) downloadRecords(lastRecords map[string]string) ([]record.V1, error) {
+func (sc SyncConnector) downloadRecords(lastRecords map[string]float64) ([]record.V1, error) {
 	var records []record.V1
 
 	client := http.Client{
 		Timeout: 3 * time.Second,
 	}
 
-	// TODO: create request based on the local last records
-	responseBody := bytes.NewBuffer([]byte("{}"))
+	latestRes := map[string]string{}
+	for device, t := range lastRecords {
+		sc.sugar.Debugf("Latest for %s is %f", device, t)
+		latestRes[device] = fmt.Sprintf("%.4f", t)
+	}
+
+	latestJson, err := json.Marshal(latestRes)
+	if err != nil {
+		sc.sugar.Errorw("converting latest to JSON failed", "err", err)
+		return nil, err
+	}
+	responseBody := bytes.NewBuffer(latestJson)
 
 	address := sc.getAddressWithPath(historyEndpoint)
 	resp, err := client.Post(address, "application/json", responseBody)
@@ -38,7 +48,7 @@ func (sc SyncConnector) downloadRecords(lastRecords map[string]string) ([]record
 			sc.sugar.Errorw("reader close failed", "err", err)
 		}
 	}(resp.Body)
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatalln(err)
 	}

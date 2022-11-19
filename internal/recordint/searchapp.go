@@ -43,6 +43,7 @@ func NewSearchApp(r *Indexed) SearchApp {
 	return SearchApp{
 		IsRaw:     false,
 		SessionID: r.Rec.SessionID,
+		DeviceID:  r.Rec.DeviceID,
 		CmdLine:   r.Rec.CmdLine,
 		Host:      r.Rec.Device,
 		Pwd:       r.Rec.Pwd,
