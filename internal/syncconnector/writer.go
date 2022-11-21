@@ -1,49 +1,77 @@
 package syncconnector
 
 import (
-	"github.com/curusarn/resh/internal/recordint"
+	"bytes"
+	"encoding/json"
+	"github.com/curusarn/resh/record"
+	"io"
+	"net/http"
+	"strconv"
+	"time"
 )
 
-func (sc SyncConnector) write(collect chan recordint.Collect) {
-	//for {
-	//	func() {
-	//		select {
-	//		case rec := <-collect:
-	//			part := "2"
-	//			if rec.Rec.PartOne {
-	//				part = "1"
-	//			}
-	//			sugar := h.sugar.With(
-	//				"recordCmdLine", rec.Rec.CmdLine,
-	//				"recordPart", part,
-	//				"recordShell", rec.Shell,
-	//			)
-	//			sc.sugar.Debugw("Got record")
-	//			h.sessionsMutex.Lock()
-	//			defer h.sessionsMutex.Unlock()
-	//
-	//			// allows nested sessions to merge records properly
-	//			mergeID := rec.SessionID + "_" + strconv.Itoa(rec.Shlvl)
-	//			sugar = sc.sugar.With("mergeID", mergeID)
-	//			if rec.Rec.PartOne {
-	//				if _, found := h.sessions[mergeID]; found {
-	//					msg := "Got another first part of the records before merging the previous one - overwriting!"
-	//					if rec.Shell == "zsh" {
-	//						sc.sugar.Warnw(msg)
-	//					} else {
-	//						sc.sugar.Infow(msg + " Unfortunately this is normal in bash, it can't be prevented.")
-	//					}
-	//				}
-	//				h.sessions[mergeID] = rec
-	//			} else {
-	//				if part1, found := h.sessions[mergeID]; found == false {
-	//					sc.sugar.Warnw("Got second part of record and nothing to merge it with - ignoring!")
-	//				} else {
-	//					delete(h.sessions, mergeID)
-	//					go h.mergeAndWriteRecord(sugar, part1, rec)
-	//				}
-	//			}
-	//		}
-	//	}()
-	//}
+func (sc SyncConnector) write() error {
+	latestRemote, err := sc.latest()
+	if err != nil {
+		return err
+	}
+	latestLocal := sc.history.LatestRecordsPerDevice()
+	remoteIsOlder := false
+	for deviceId, lastLocal := range latestLocal {
+		if lastRemote, ok := latestRemote[deviceId]; !ok {
+			// Unknown deviceId on the remote - add records have to be sent
+			remoteIsOlder = true
+			break
+		} else if lastLocal > lastRemote {
+			remoteIsOlder = true
+			break
+		}
+	}
+	if !remoteIsOlder {
+		sc.sugar.Debug("No need to sync remote, there are no newer local records")
+		return nil
+	}
+	var toSend []record.V1
+	for _, r := range sc.history.DumpRaw() {
+		t, err := strconv.ParseFloat(r.Time, 64)
+		if err != nil {
+			sc.sugar.Warnw("Invalid time for record - skipping", "time", r.Time)
+			continue
+		}
+		l, ok := latestRemote[r.DeviceID]
+		if ok && l >= t {
+			continue
+		}
+		sc.sugar.Infow("record is newer", "new", t, "old", l, "id", r.RecordID, "deviceid", r.DeviceID)
+		toSend = append(toSend, r)
+	}
+
+	client := http.Client{
+		Timeout: 3 * time.Second,
+	}
+
+	toSendJson, err := json.Marshal(toSend)
+	if err != nil {
+		sc.sugar.Errorw("converting toSend to JSON failed", "err", err)
+		return err
+	}
+	reqBody := bytes.NewBuffer(toSendJson)
+
+	address := sc.getAddressWithPath(storeEndpoint)
+	resp, err := client.Post(address, "application/json", reqBody)
+	if err != nil {
+		sc.sugar.Errorw("store request failed", "address", address, "err", err)
+		return err
+	}
+
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			sc.sugar.Errorw("reader close failed", "err", err)
+		}
+	}(resp.Body)
+
+	sc.sugar.Debugw("store call", "status", resp.Status)
+
+	return nil
 }

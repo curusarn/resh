@@ -20,12 +20,9 @@ type SyncConnector struct {
 	authToken string
 
 	history *histcli.Histcli
-
-	// TODO periodic push (or from the write channel)
-	// TODO push period
 }
 
-func New(sugar *zap.SugaredLogger, address string, authToken string, pullPeriodSeconds int, history *histcli.Histcli) (*SyncConnector, error) {
+func New(sugar *zap.SugaredLogger, address string, authToken string, pullPeriodSeconds int, sendPeriodSeconds int, history *histcli.Histcli) (*SyncConnector, error) {
 	parsedAddress, err := url.Parse(address)
 	if err != nil {
 		return nil, err
@@ -41,7 +38,7 @@ func New(sugar *zap.SugaredLogger, address string, authToken string, pullPeriodS
 	// TODO: propagate signals
 	go func(sc *SyncConnector) {
 		for _ = range time.Tick(time.Second * time.Duration(pullPeriodSeconds)) {
-			sc.sugar.Debug("checking remote")
+			sc.sugar.Debug("checking remote for new records")
 
 			recs, err := sc.downloadRecords(sc.history.LatestRecordsPerDevice())
 			if err != nil {
@@ -56,6 +53,19 @@ func New(sugar *zap.SugaredLogger, address string, authToken string, pullPeriodS
 				})
 			}
 
+		}
+	}(sc)
+
+	go func(sc *SyncConnector) {
+		// wait to properly load all the records
+		time.Sleep(time.Second * time.Duration(sendPeriodSeconds))
+		for _ = range time.Tick(time.Second * time.Duration(sendPeriodSeconds)) {
+			sc.sugar.Debug("syncing local records to the remote")
+
+			err := sc.write()
+			if err != nil {
+				sc.sugar.Warnw("sending records to the remote failed", "err", err)
+			}
 		}
 	}(sc)
 

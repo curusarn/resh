@@ -2,6 +2,7 @@ package histcli
 
 import (
 	"github.com/curusarn/resh/internal/recordint"
+	"github.com/curusarn/resh/record"
 	"go.uber.org/zap"
 	"sync"
 )
@@ -9,7 +10,9 @@ import (
 // Histcli is a dump of history preprocessed for resh cli purposes
 type Histcli struct {
 	// list of records
-	list     []recordint.SearchApp
+	list []recordint.SearchApp
+	// TODO It is not optimal to keep both raw and list but is necessary for syncConnector now
+	raw      []record.V1
 	knownIds map[string]struct{}
 	lock     sync.RWMutex
 	sugar    *zap.SugaredLogger
@@ -34,6 +37,7 @@ func (h *Histcli) AddRecord(rec *recordint.Indexed) {
 	if _, ok := h.knownIds[rec.Rec.RecordID]; !ok {
 		h.knownIds[rec.Rec.RecordID] = struct{}{}
 		h.list = append(h.list, cli)
+		h.raw = append(h.raw, rec.Rec)
 		h.updateLatestPerDevice(cli)
 	} else {
 		h.sugar.Debugw("Record is already present", "id", rec.Rec.RecordID)
@@ -54,6 +58,13 @@ func (h *Histcli) Dump() []recordint.SearchApp {
 	defer h.lock.RUnlock()
 
 	return h.list
+}
+
+func (h *Histcli) DumpRaw() []record.V1 {
+	h.lock.RLock()
+	defer h.lock.RUnlock()
+
+	return h.raw
 }
 
 // updateLatestPerDevice should be called only with write lock because it does not lock on its own.

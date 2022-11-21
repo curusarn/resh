@@ -218,15 +218,13 @@ func (h *Histfile) mergeAndWriteRecord(sugar *zap.SugaredLogger, part1 recordint
 		return
 	}
 
-	func() {
-		cmdLine := rec.CmdLine
-		h.bashCmdLines.AddCmdLine(cmdLine)
-		h.zshCmdLines.AddCmdLine(cmdLine)
-		h.cliRecords.AddRecord(&recordint.Indexed{
-			// TODO: is this what we want?
-			Rec: rec,
-		})
-	}()
+	cmdLine := rec.CmdLine
+	h.bashCmdLines.AddCmdLine(cmdLine)
+	h.zshCmdLines.AddCmdLine(cmdLine)
+	h.cliRecords.AddRecord(&recordint.Indexed{
+		// TODO: is this what we want?
+		Rec: rec,
+	})
 
 	h.rio.AppendToFile(h.historyPath, []record.V1{rec})
 }

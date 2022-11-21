@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"github.com/curusarn/resh/record"
 	"io"
-	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -33,10 +33,10 @@ func (sc SyncConnector) downloadRecords(lastRecords map[string]float64) ([]recor
 		sc.sugar.Errorw("converting latest to JSON failed", "err", err)
 		return nil, err
 	}
-	responseBody := bytes.NewBuffer(latestJson)
+	reqBody := bytes.NewBuffer(latestJson)
 
 	address := sc.getAddressWithPath(historyEndpoint)
-	resp, err := client.Post(address, "application/json", responseBody)
+	resp, err := client.Post(address, "application/json", reqBody)
 	if err != nil {
 		sc.sugar.Errorw("history request failed", "address", address, "err", err)
 		return nil, err
@@ -50,7 +50,7 @@ func (sc SyncConnector) downloadRecords(lastRecords map[string]float64) ([]recor
 	}(resp.Body)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalln(err)
+		sc.sugar.Warnw("reading response body failed", "err", err)
 	}
 
 	err = json.Unmarshal(body, &records)
@@ -62,7 +62,57 @@ func (sc SyncConnector) downloadRecords(lastRecords map[string]float64) ([]recor
 	return records, nil
 }
 
-func latest() {
-	//curl localhost:8080/latest -X POST -d '[]'
-	//curl localhost:8080/latest -X POST -d '["one"]'
+func (sc SyncConnector) latest() (map[string]float64, error) {
+	var knownDevices []string
+	for deviceId, _ := range sc.history.LatestRecordsPerDevice() {
+		knownDevices = append(knownDevices, deviceId)
+	}
+
+	client := http.Client{
+		Timeout: 3 * time.Second,
+	}
+
+	knownJson, err := json.Marshal(knownDevices)
+	if err != nil {
+		sc.sugar.Errorw("converting latest to JSON failed", "err", err)
+		return nil, err
+	}
+	reqBody := bytes.NewBuffer(knownJson)
+
+	address := sc.getAddressWithPath(latestEndpoint)
+	resp, err := client.Post(address, "application/json", reqBody)
+	if err != nil {
+		sc.sugar.Errorw("latest request failed", "address", address, "err", err)
+		return nil, err
+	}
+
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			sc.sugar.Errorw("reader close failed", "err", err)
+		}
+	}(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		sc.sugar.Warnw("reading response body failed", "err", err)
+	}
+
+	latest := map[string]string{}
+
+	err = json.Unmarshal(body, &latest)
+	if err != nil {
+		sc.sugar.Errorw("Unmarshalling failed", "err", err)
+		return nil, err
+	}
+
+	l := make(map[string]float64, len(latest))
+	for deviceId, ts := range latest {
+		t, err := strconv.ParseFloat(ts, 64)
+		if err != nil {
+			return nil, err
+		}
+		l[deviceId] = t
+	}
+
+	return l, nil
 }

@@ -33,6 +33,7 @@ type configFile struct {
 	SyncConnectorAddress           *string
 	SyncConnectorAuthToken         *string
 	SyncConnectorPullPeriodSeconds *int
+	SyncConnectorSendPeriodSeconds *int
 }
 
 // Config returned by this package to be used in the rest of the project
@@ -73,6 +74,9 @@ type Config struct {
 
 	// SyncConnectorPullPeriodSeconds how often should Resh daemon download history from Sync Connector
 	SyncConnectorPullPeriodSeconds int
+
+	// SyncConnectorSendPeriodSeconds how often should Resh daemon send history to the Sync Connector
+	SyncConnectorSendPeriodSeconds int
 }
 
 // defaults for config
@@ -85,7 +89,8 @@ var defaults = Config{
 	SessionWatchPeriodSeconds: 600,
 	ReshHistoryMinSize:        1000,
 
-	SyncConnectorPullPeriodSeconds: 60,
+	SyncConnectorPullPeriodSeconds: 30,
+	SyncConnectorSendPeriodSeconds: 30,
 }
 
 const headerComment = `##
@@ -197,6 +202,10 @@ func processAndFillDefaults(configF *configFile) (Config, error) {
 
 	if configF.SyncConnectorPullPeriodSeconds != nil {
 		config.SyncConnectorPullPeriodSeconds = *configF.SyncConnectorPullPeriodSeconds
+	}
+
+	if configF.SyncConnectorSendPeriodSeconds != nil {
+		config.SyncConnectorSendPeriodSeconds = *configF.SyncConnectorSendPeriodSeconds
 	}
 
 	return config, err

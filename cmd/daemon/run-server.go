@@ -84,7 +84,7 @@ func (s *Server) Run() {
 
 	s.sugar.Infow("", "sync_addr", s.config.SyncConnectorAddress)
 	if s.config.SyncConnectorAddress != nil {
-		sc, err := syncconnector.New(s.sugar, *s.config.SyncConnectorAddress, s.config.SyncConnectorAuthToken, s.config.SyncConnectorPullPeriodSeconds, history)
+		sc, err := syncconnector.New(s.sugar, *s.config.SyncConnectorAddress, s.config.SyncConnectorAuthToken, s.config.SyncConnectorPullPeriodSeconds, s.config.SyncConnectorSendPeriodSeconds, history)
 		if err != nil {
 			s.sugar.Errorw("Sync Connector init failed", "error", err)
 		} else {
