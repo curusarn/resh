@@ -16,6 +16,8 @@ import (
 
 	"github.com/awesome-gocui/gocui"
 	"github.com/curusarn/resh/internal/cfg"
+	"github.com/curusarn/resh/internal/datadir"
+	"github.com/curusarn/resh/internal/device"
 	"github.com/curusarn/resh/internal/logger"
 	"github.com/curusarn/resh/internal/msg"
 	"github.com/curusarn/resh/internal/output"
@@ -29,14 +31,14 @@ import (
 // info passed during build
 var version string
 var commit string
-var developement bool
+var development string
 
 // special constant recognized by RESH wrappers
 const exitCodeExecute = 111
 
 func main() {
 	config, errCfg := cfg.New()
-	logger, _ := logger.New("search-app", config.LogLevel, developement)
+	logger, _ := logger.New("search-app", config.LogLevel, development)
 	defer logger.Sync() // flushes buffer, if any
 	if errCfg != nil {
 		logger.Error("Error while getting configuration", zap.Error(errCfg))
@@ -50,7 +52,6 @@ func main() {
 
 func runReshCli(out *output.Output, config cfg.Config) (string, int) {
 	sessionID := flag.String("sessionID", "", "resh generated session id")
-	host := flag.String("host", "", "host")
 	pwd := flag.String("pwd", "", "present working directory")
 	gitOriginRemote := flag.String("gitOriginRemote", "DEFAULT", "git origin remote")
 	query := flag.String("query", "", "search query")
@@ -62,14 +63,19 @@ func runReshCli(out *output.Output, config cfg.Config) (string, int) {
 	if *sessionID == "" {
 		out.Fatal(errMsg, errors.New("missing option --sessionId"))
 	}
-	if *host == "" {
-		out.Fatal(errMsg, errors.New("missing option --host"))
-	}
 	if *pwd == "" {
 		out.Fatal(errMsg, errors.New("missing option --pwd"))
 	}
 	if *gitOriginRemote == "DEFAULT" {
 		out.Fatal(errMsg, errors.New("missing option --gitOriginRemote"))
+	}
+	dataDir, err := datadir.GetPath()
+	if err != nil {
+		out.Fatal("Could not get user data directory", err)
+	}
+	deviceName, err := device.GetName(dataDir)
+	if err != nil {
+		out.Fatal("Could not get device name", err)
 	}
 
 	g, err := gocui.NewGui(gocui.OutputNormal, false)
@@ -100,11 +106,12 @@ func runReshCli(out *output.Output, config cfg.Config) (string, int) {
 		initialQuery: *query,
 	}
 
+	// TODO: Use device ID
 	layout := manager{
 		out:             out,
 		config:          config,
 		sessionID:       *sessionID,
-		host:            *host,
+		host:            deviceName,
 		pwd:             *pwd,
 		gitOriginRemote: *gitOriginRemote,
 		s:               &st,

@@ -1,9 +1,6 @@
 #!/hint/sh
 
 # util.sh - resh utility functions 
-__resh_get_uuid() {
-    cat /proc/sys/kernel/random/uuid 2>/dev/null || resh-uuid
-}
 
 __resh_get_pid() {
     if [ -n "${ZSH_VERSION-}" ]; then

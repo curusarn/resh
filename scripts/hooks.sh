@@ -1,7 +1,7 @@
 #!/hint/sh
 
 __resh_reset_variables() {
-    __RESH_RECORD_ID=$(__resh_get_uuid)
+    __RESH_RECORD_ID=$(resh-generate-uuid)
 }
 
 __resh_preexec() {
@@ -43,8 +43,6 @@ __resh_collect() {
         resh-collect -requireVersion "$__RESH_VERSION" \
                     -requireRevision "$__RESH_REVISION" \
                     -shell "$__RESH_SHELL" \
-                    -device "$__RESH_HOST" \
-                    -deviceID "$(cat ~/.resh/resh-uuid 2>/dev/null)" \
                     -sessionID "$__RESH_SESSION_ID" \
                     -recordID "$__RESH_RECORD_ID" \
                     -home "$__RESH_HOME" \

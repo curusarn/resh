@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/curusarn/resh/internal/futil"
 	"github.com/curusarn/resh/internal/recconv"
 	"github.com/curusarn/resh/internal/recordint"
 	"github.com/curusarn/resh/record"
@@ -34,8 +35,8 @@ func (r *RecIO) ReadAndFixFile(fpath string, maxErrors int) ([]recordint.Indexed
 	r.sugar.Infow("Backing up current corrupted history file",
 		"backupFilename", fpathBak,
 	)
-	// TODO: maybe use upstram copy function
-	err = copyFile(fpath, fpathBak)
+	// TODO: maybe use upstream copy function
+	err = futil.CopyFile(fpath, fpathBak)
 	if err != nil {
 		r.sugar.Errorw("Failed to create a backup history file - aborting fixing history file",
 			"backupFilename", fpathBak,
@@ -99,31 +100,10 @@ func (r *RecIO) ReadFile(fpath string) ([]recordint.Indexed, int, error) {
 	return recs, numErrs, nil
 }
 
-func copyFile(source, dest string) error {
-	from, err := os.Open(source)
-	if err != nil {
-		return err
-	}
-	defer from.Close()
-
-	// This is equivalnet to: os.OpenFile(dest, os.O_RDWR|os.O_CREATE, 0666)
-	to, err := os.Create(dest)
-	if err != nil {
-		return err
-	}
-	defer to.Close()
-
-	_, err = io.Copy(to, from)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (r *RecIO) decodeLine(line string) (*record.V1, error) {
 	idx := strings.Index(line, "{")
 	if idx == -1 {
-		return nil, fmt.Errorf("no openning brace found")
+		return nil, fmt.Errorf("no opening brace found")
 	}
 	schema := line[:idx]
 	jsn := line[idx:]

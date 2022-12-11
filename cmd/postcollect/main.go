@@ -21,11 +21,11 @@ import (
 // info passed during build
 var version string
 var commit string
-var developement bool
+var development string
 
 func main() {
 	config, errCfg := cfg.New()
-	logger, _ := logger.New("postcollect", config.LogLevel, developement)
+	logger, _ := logger.New("postcollect", config.LogLevel, development)
 	defer logger.Sync() // flushes buffer, if any
 	if errCfg != nil {
 		logger.Error("Error while getting configuration", zap.Error(errCfg))

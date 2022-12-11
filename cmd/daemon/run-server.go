@@ -23,6 +23,9 @@ type Server struct {
 	reshHistoryPath string
 	bashHistoryPath string
 	zshHistoryPath  string
+
+	deviceID   string
+	deviceName string
 }
 
 func (s *Server) Run() {
@@ -63,7 +66,12 @@ func (s *Server) Run() {
 	// handlers
 	mux := http.NewServeMux()
 	mux.Handle("/status", &statusHandler{sugar: s.sugar})
-	mux.Handle("/record", &recordHandler{sugar: s.sugar, subscribers: recordSubscribers})
+	mux.Handle("/record", &recordHandler{
+		sugar:       s.sugar,
+		subscribers: recordSubscribers,
+		deviceID:    s.deviceID,
+		deviceName:  s.deviceName,
+	})
 	mux.Handle("/session_init", &sessionInitHandler{sugar: s.sugar, subscribers: sessionInitSubscribers})
 	mux.Handle("/dump", &dumpHandler{sugar: s.sugar, histfileBox: histfileBox})
 

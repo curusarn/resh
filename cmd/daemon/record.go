@@ -19,6 +19,9 @@ func NewRecordHandler(sugar *zap.SugaredLogger, subscribers []chan recordint.Col
 type recordHandler struct {
 	sugar       *zap.SugaredLogger
 	subscribers []chan recordint.Collect
+
+	deviceID   string
+	deviceName string
 }
 
 func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -51,6 +54,8 @@ func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			"cmdLine", rec.Rec.CmdLine,
 			"part", part,
 		)
+		rec.Rec.DeviceID = h.deviceID
+		rec.Rec.Device = h.deviceName
 		sugar.Debugw("Got record, sending to subscribers ...")
 		for _, sub := range h.subscribers {
 			sub <- rec

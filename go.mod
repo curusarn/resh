@@ -5,6 +5,8 @@ go 1.18
 require (
 	github.com/BurntSushi/toml v0.4.1
 	github.com/awesome-gocui/gocui v1.0.0
+	github.com/google/uuid v1.1.2
+	github.com/mattn/go-isatty v0.0.3
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/spf13/cobra v1.2.1
 	github.com/whilp/git-urls v1.0.0

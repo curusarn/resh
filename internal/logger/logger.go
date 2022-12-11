@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func New(executable string, level zapcore.Level, developement bool) (*zap.Logger, error) {
+func New(executable string, level zapcore.Level, development string) (*zap.Logger, error) {
 	dataDir, err := datadir.GetPath()
 	if err != nil {
 		return nil, fmt.Errorf("error while getting resh data dir: %w", err)
@@ -18,7 +18,7 @@ func New(executable string, level zapcore.Level, developement bool) (*zap.Logger
 	loggerConfig := zap.NewProductionConfig()
 	loggerConfig.OutputPaths = []string{logPath}
 	loggerConfig.Level.SetLevel(level)
-	loggerConfig.Development = developement // DPanic panics in developement
+	loggerConfig.Development = development == "true" // DPanic panics in development
 	logger, err := loggerConfig.Build()
 	if err != nil {
 		return logger, fmt.Errorf("error while creating logger: %w", err)

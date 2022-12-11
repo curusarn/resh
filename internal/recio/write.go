@@ -30,6 +30,7 @@ func (r *RecIO) AppendToFile(fpath string, recs []record.V1) error {
 }
 
 // TODO: better errors
+// TODO: rethink this
 func (r *RecIO) EditRecordFlagsInFile(fpath string, idx int, rec recordint.Flag) error {
 	// FIXME: implement
 	// open file "not as append"

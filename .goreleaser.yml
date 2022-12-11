@@ -94,18 +94,18 @@ builds:
       - arm
       - arm64
   -
-    id: "config-setup"
-    main: ./cmd/config-setup
-    binary: bin/resh-config-setup
+    id: "install-utils"
+    main: ./cmd/install-utils
+    binary: bin/resh-install-utils
     goarch:
       - 386
       - amd64
       - arm
       - arm64
   -
-    id: "install-utils"
-    main: ./cmd/install-utils
-    binary: bin/resh-install-utils
+    id: "generate-uuid"
+    main: ./cmd/generate-uuid
+    binary: bin/resh-generate-uuid
     goarch:
       - 386
       - amd64

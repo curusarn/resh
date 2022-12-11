@@ -3,17 +3,39 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/curusarn/resh/internal/cfg"
+	"github.com/curusarn/resh/internal/logger"
+	"github.com/curusarn/resh/internal/output"
+	"go.uber.org/zap"
 )
 
 // info passed during build
 var version string
 var commit string
-var developement bool
+var development string
 
 func main() {
+	config, errCfg := cfg.New()
+	logger, err := logger.New("install-utils", config.LogLevel, development)
+	if err != nil {
+		fmt.Printf("Error while creating logger: %v", err)
+	}
+	defer logger.Sync() // flushes buffer, if any
+	if errCfg != nil {
+		logger.Error("Error while getting configuration", zap.Error(errCfg))
+	}
+	sugar := logger.Sugar()
+	sugar.Infow("Install-utils invoked ...",
+		"version", version,
+		"commit", commit,
+	)
+	out := output.New(logger, "install-utils")
+
 	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr, "ERROR: Not eonugh arguments\n")
+		out.ErrorWOErr("ERROR: Not enough arguments\n")
 		printUsage(os.Stderr)
+		os.Exit(1)
 	}
 	command := os.Args[1]
 	switch command {
@@ -24,27 +46,31 @@ func main() {
 	case "migrate-config":
 		migrateConfig()
 	case "migrate-history":
-		migrateHistory()
+		migrateHistory(out)
+	case "setup-device":
+		setupDevice()
 	case "help":
 		printUsage(os.Stdout)
 	default:
-		fmt.Fprintf(os.Stderr, "ERROR: Unknown command: %s\n", command)
+		out.ErrorWOErr(fmt.Sprintf("ERROR: Unknown command: %s\n", command))
 		printUsage(os.Stderr)
+		os.Exit(1)
 	}
 }
 
 func printUsage(f *os.File) {
 	usage := `
 USAGE: ./install-utils COMMAND
-Utils used during RESH instalation.
+Utils used during RESH installation.
 
 COMMANDS:
-  backup		backup resh installation and data
-  rollback		restore resh installation and data from backup
-  migrate-config	update config to reflect updates
-  migrate-history	update history to reflect updates
-  help			show this help
+  backup            backup resh installation and data
+  rollback          restore resh installation and data from backup
+  migrate-config    update config to latest format
+  migrate-history   update history to latest format
+  setup-device      setup device name and device ID
+  help              show this help
 
 `
-	fmt.Fprintf(f, usage)
+	fmt.Fprint(f, usage)
 }

@@ -22,11 +22,11 @@ import (
 // info passed during build
 var version string
 var commit string
-var developement bool
+var development string
 
 func main() {
 	config, errCfg := cfg.New()
-	logger, _ := logger.New("collect", config.LogLevel, developement)
+	logger, _ := logger.New("collect", config.LogLevel, development)
 	defer logger.Sync() // flushes buffer, if any
 	if errCfg != nil {
 		logger.Error("Error while getting configuration", zap.Error(errCfg))
@@ -46,16 +46,11 @@ func main() {
 	home := flag.String("home", "", "$HOME")
 	pwd := flag.String("pwd", "", "$PWD - present working directory")
 
-	// FIXME: get device ID
-	deviceID := flag.String("deviceID", "", "RESH device ID")
 	sessionID := flag.String("sessionID", "", "resh generated session ID")
 	recordID := flag.String("recordID", "", "resh generated record ID")
 	sessionPID := flag.Int("sessionPID", -1, "PID at the start of the terminal session")
 
 	shell := flag.String("shell", "", "current shell")
-
-	// logname := flag.String("logname", "", "$LOGNAME")
-	device := flag.String("device", "", "device name, usually $HOSTNAME")
 
 	// non-posix
 	shlvl := flag.Int("shlvl", -1, "$SHLVL")
@@ -100,7 +95,6 @@ func main() {
 		Shell: *shell,
 
 		Rec: record.V1{
-			DeviceID:  *deviceID,
 			SessionID: *sessionID,
 			RecordID:  *recordID,
 
@@ -110,9 +104,6 @@ func main() {
 			Home:    *home,
 			Pwd:     *pwd,
 			RealPwd: realPwd,
-
-			// Logname:  *logname,
-			Device: *device,
 
 			GitOriginRemote: *gitRemote,
 

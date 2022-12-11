@@ -7,7 +7,7 @@ GOFLAGS=-ldflags "-X main.version=${VERSION} -X main.commit=${COMMIT} -X main.de
 
 build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect\
   bin/resh-daemon bin/resh-control bin/resh-config bin/resh-cli\
-  bin/resh-install-utils
+  bin/resh-install-utils bin/resh-generate-uuid
 
 install: build
 	scripts/install.sh
@@ -22,11 +22,11 @@ rebuild:
 	make build
 
 clean:
-	rm -f bin/*
+	rm -f -- bin/*
 
 uninstall:
 	# Uninstalling ...
-	-rm -rf ~/.resh/
+	-rm -rf -- ~/.resh/
 
 go_files = $(shell find -name '*.go')
 bin/resh-%: $(go_files)

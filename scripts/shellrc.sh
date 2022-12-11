@@ -15,10 +15,8 @@ PATH=$PATH:~/.resh/bin
 if [ -n "${ZSH_VERSION-}" ]; then
     # shellcheck disable=SC1009
     __RESH_SHELL="zsh"
-    __RESH_HOST="$HOST"
 elif [ -n "${BASH_VERSION-}" ]; then
     __RESH_SHELL="bash"
-    __RESH_HOST="$HOSTNAME"
 else
     echo "RESH PANIC: unrecognized shell - please report this to https://github.com/curusarn/resh/issues"
 fi
@@ -41,7 +39,7 @@ __resh_run_daemon
 # NOTE: nested shells are still the same session
 #       i.e. $__RESH_SESSION_ID will be set in nested shells
 if [ -z "${__RESH_SESSION_ID+x}" ]; then
-    export __RESH_SESSION_ID; __RESH_SESSION_ID=$(__resh_get_uuid)
+    export __RESH_SESSION_ID; __RESH_SESSION_ID=$(resh-generate-uuid)
     export __RESH_SESSION_PID="$$"
 
     __resh_reset_variables

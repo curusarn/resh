@@ -7,10 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// info passed during build
 var version string
 var commit string
-var developement bool
 
 // globals
 var config cfg.Config
@@ -22,12 +20,12 @@ var rootCmd = &cobra.Command{
 }
 
 // Execute reshctl
-func Execute(ver, com string) {
+func Execute(ver, com, development string) {
 	version = ver
 	commit = com
 
 	config, errCfg := cfg.New()
-	logger, _ := logger.New("reshctl", config.LogLevel, developement)
+	logger, _ := logger.New("reshctl", config.LogLevel, development)
 	defer logger.Sync() // flushes buffer, if any
 	out = output.New(logger, "ERROR")
 	if errCfg != nil {

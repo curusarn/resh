@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	"github.com/curusarn/resh/internal/cfg"
+	"github.com/curusarn/resh/internal/datadir"
+	"github.com/curusarn/resh/internal/device"
 	"github.com/curusarn/resh/internal/httpclient"
 	"github.com/curusarn/resh/internal/logger"
 	"go.uber.org/zap"
@@ -18,11 +20,11 @@ import (
 // info passed during build
 var version string
 var commit string
-var developement bool
+var development string
 
 func main() {
 	config, errCfg := cfg.New()
-	logger, err := logger.New("daemon", config.LogLevel, developement)
+	logger, err := logger.New("daemon", config.LogLevel, development)
 	if err != nil {
 		fmt.Printf("Error while creating logger: %v", err)
 	}
@@ -32,48 +34,60 @@ func main() {
 	}
 	sugar := logger.Sugar()
 	d := daemon{sugar: sugar}
-	sugar.Infow("Deamon starting ...",
+	sugar.Infow("Daemon starting ...",
 		"version", version,
 		"commit", commit,
 	)
-
-	// TODO: rethink PID file and logs location
+	dataDir, err := datadir.MakePath()
+	if err != nil {
+		sugar.Fatalw("Could not get user data directory", zap.Error(err))
+	}
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		sugar.Fatalw("Could not get user home dir", zap.Error(err))
+		sugar.Fatalw("Could not get user home directory", zap.Error(err))
 	}
-	PIDFile := filepath.Join(homeDir, ".resh/resh.pid")
-	reshHistoryPath := filepath.Join(homeDir, ".resh_history.json")
+	// TODO: These paths should be probably defined in a package
+	pidFile := filepath.Join(dataDir, "daemon.pid")
+	reshHistoryPath := filepath.Join(dataDir, "history.reshjson")
 	bashHistoryPath := filepath.Join(homeDir, ".bash_history")
 	zshHistoryPath := filepath.Join(homeDir, ".zsh_history")
+	deviceID, err := device.GetID(dataDir)
+	if err != nil {
+		sugar.Fatalw("Could not get resh device ID", zap.Error(err))
+	}
+	deviceName, err := device.GetName(dataDir)
+	if err != nil {
+		sugar.Fatalw("Could not get resh device name", zap.Error(err))
+	}
 
 	sugar = sugar.With(zap.Int("daemonPID", os.Getpid()))
 
 	res, err := d.isDaemonRunning(config.Port)
 	if err != nil {
-		sugar.Errorw("Error while checking daemon status - "+
-			"it's probably not running", "error", err)
+		sugar.Errorw("Error while checking daemon status - it's probably not running",
+			"error", err)
 	}
 	if res {
 		sugar.Errorw("Daemon is already running - exiting!")
 		return
 	}
-	_, err = os.Stat(PIDFile)
+	_, err = os.Stat(pidFile)
 	if err == nil {
-		sugar.Warn("Pidfile exists")
+		sugar.Warnw("PID file exists",
+			"PIDFile", pidFile)
 		// kill daemon
-		err = d.killDaemon(PIDFile)
+		err = d.killDaemon(pidFile)
 		if err != nil {
 			sugar.Errorw("Could not kill daemon",
 				"error", err,
 			)
 		}
 	}
-	err = ioutil.WriteFile(PIDFile, []byte(strconv.Itoa(os.Getpid())), 0644)
+	err = ioutil.WriteFile(pidFile, []byte(strconv.Itoa(os.Getpid())), 0644)
 	if err != nil {
-		sugar.Fatalw("Could not create pidfile",
+		sugar.Fatalw("Could not create PID file",
 			"error", err,
-			"PIDFile", PIDFile,
+			"PIDFile", pidFile,
 		)
 	}
 	server := Server{
@@ -82,12 +96,15 @@ func main() {
 		reshHistoryPath: reshHistoryPath,
 		bashHistoryPath: bashHistoryPath,
 		zshHistoryPath:  zshHistoryPath,
+
+		deviceID:   deviceID,
+		deviceName: deviceName,
 	}
 	server.Run()
 	sugar.Infow("Removing PID file ...",
-		"PIDFile", PIDFile,
+		"PIDFile", pidFile,
 	)
-	err = os.Remove(PIDFile)
+	err = os.Remove(pidFile)
 	if err != nil {
 		sugar.Errorw("Could not delete PID file", "error", err)
 	}
@@ -96,16 +113,6 @@ func main() {
 
 type daemon struct {
 	sugar *zap.SugaredLogger
-}
-
-func (d *daemon) getEnvOrPanic(envVar string) string {
-	val, found := os.LookupEnv(envVar)
-	if !found {
-		d.sugar.Fatalw("Required env variable is not set",
-			"variableName", envVar,
-		)
-	}
-	return val
 }
 
 func (d *daemon) isDaemonRunning(port int) (bool, error) {
@@ -119,14 +126,14 @@ func (d *daemon) isDaemonRunning(port int) (bool, error) {
 	return true, nil
 }
 
-func (d *daemon) killDaemon(pidfile string) error {
-	dat, err := ioutil.ReadFile(pidfile)
+func (d *daemon) killDaemon(pidFile string) error {
+	dat, err := ioutil.ReadFile(pidFile)
 	if err != nil {
-		d.sugar.Errorw("Reading pid file failed",
-			"PIDFile", pidfile,
+		d.sugar.Errorw("Reading PID file failed",
+			"PIDFile", pidFile,
 			"error", err)
 	}
-	d.sugar.Infow("Succesfully read PID file", "contents", string(dat))
+	d.sugar.Infow("Successfully read PID file", "contents", string(dat))
 	pid, err := strconv.Atoi(strings.TrimSuffix(string(dat), "\n"))
 	if err != nil {
 		return fmt.Errorf("could not parse PID file contents: %w", err)

@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// Output wrapper for writting to logger and stdout/stderr at the same time
+// Output wrapper for writing to logger and stdout/stderr at the same time
 // useful for errors that should be presented to the user
 type Output struct {
 	Logger    *zap.Logger
@@ -22,21 +22,26 @@ func New(logger *zap.Logger, prefix string) *Output {
 }
 
 func (f *Output) Info(msg string) {
-	fmt.Fprintf(os.Stdout, msg)
+	fmt.Printf("%s\n", msg)
 	f.Logger.Info(msg)
 }
 
 func (f *Output) Error(msg string, err error) {
-	fmt.Fprintf(os.Stderr, "%s: %s: %v", f.ErrPrefix, msg, err)
+	fmt.Fprintf(os.Stderr, "%s: %s: %v\n", f.ErrPrefix, msg, err)
 	f.Logger.Error(msg, zap.Error(err))
 }
 
+func (f *Output) ErrorWOErr(msg string) {
+	fmt.Fprintf(os.Stderr, "%s: %s\n", f.ErrPrefix, msg)
+	f.Logger.Error(msg)
+}
+
 func (f *Output) Fatal(msg string, err error) {
-	fmt.Fprintf(os.Stderr, "%s: %s: %v", f.ErrPrefix, msg, err)
+	fmt.Fprintf(os.Stderr, "%s: %s: %v\n", f.ErrPrefix, msg, err)
 	f.Logger.Fatal(msg, zap.Error(err))
 }
 
-var msgDeamonNotRunning = `Resh-daemon didn't respond - it's probably not running.
+var msgDaemonNotRunning = `Resh-daemon didn't respond - it's probably not running.
 
  -> Try restarting this terminal window to bring resh-daemon back up
  -> If the problem persists you can check resh-daemon logs: ~/.local/share/resh/log.json (or ~/$XDG_DATA_HOME/resh/log.json)
@@ -51,12 +56,12 @@ It looks like you updated resh and didn't restart this terminal.
 `
 
 func (f *Output) ErrorDaemonNotRunning(err error) {
-	fmt.Fprintf(os.Stderr, "%s: %s", f.ErrPrefix, msgDeamonNotRunning)
+	fmt.Fprintf(os.Stderr, "%s: %s", f.ErrPrefix, msgDaemonNotRunning)
 	f.Logger.Error("Daemon is not running", zap.Error(err))
 }
 
 func (f *Output) FatalDaemonNotRunning(err error) {
-	fmt.Fprintf(os.Stderr, "%s: %s", f.ErrPrefix, msgDeamonNotRunning)
+	fmt.Fprintf(os.Stderr, "%s: %s", f.ErrPrefix, msgDaemonNotRunning)
 	f.Logger.Fatal("Daemon is not running", zap.Error(err))
 }
 
