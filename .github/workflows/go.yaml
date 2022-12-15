@@ -12,11 +12,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Go
+        run: ls && ls *
+
       - name: Get Go version
         run: echo "GO_VERSION=$(grep 'go \d\.' go.mod | cut -d ' ' -f 2)" >> $GITHUB_ENV && cat $GITHUB_ENV
 
-      - name: Go
-        run: echo ${{ env.GO_VERSION }}
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
