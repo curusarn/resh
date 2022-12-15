@@ -5,7 +5,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/curusarn/resh/record"
 	giturls "github.com/whilp/git-urls"
+	"go.uber.org/zap"
 )
 
 // SearchApp record used for sending records to RESH-CLI
@@ -27,7 +29,6 @@ type SearchApp struct {
 	Idx int
 }
 
-// NewCliRecordFromCmdLine
 func NewSearchAppFromCmdLine(cmdLine string) SearchApp {
 	return SearchApp{
 		IsRaw:   true,
@@ -35,36 +36,36 @@ func NewSearchAppFromCmdLine(cmdLine string) SearchApp {
 	}
 }
 
-// NewCliRecord from EnrichedRecord
-func NewSearchApp(r *Indexed) SearchApp {
-	// TODO: we used to validate records with recutil.Validate()
-	// TODO: handle this error
-	time, _ := strconv.ParseFloat(r.Rec.Time, 64)
+// The error handling here could be better
+func NewSearchApp(sugar *zap.SugaredLogger, r *record.V1) SearchApp {
+	time, err := strconv.ParseFloat(r.Time, 64)
+	if err != nil {
+		sugar.Errorw("Error while parsing time as float", zap.Error(err),
+			"time", time)
+	}
 	return SearchApp{
 		IsRaw:     false,
-		SessionID: r.Rec.SessionID,
-		CmdLine:   r.Rec.CmdLine,
-		Host:      r.Rec.Device,
-		Pwd:       r.Rec.Pwd,
-		Home:      r.Rec.Home,
+		SessionID: r.SessionID,
+		CmdLine:   r.CmdLine,
+		Host:      r.Device,
+		Pwd:       r.Pwd,
+		Home:      r.Home,
 		// TODO: is this the right place to normalize the git remote
-		GitOriginRemote: normalizeGitRemote(r.Rec.GitOriginRemote),
-		ExitCode:        r.Rec.ExitCode,
+		GitOriginRemote: normalizeGitRemote(sugar, r.GitOriginRemote),
+		ExitCode:        r.ExitCode,
 		Time:            time,
-
-		Idx: r.Idx,
 	}
 }
 
 // TODO: maybe move this to a more appropriate place
 // normalizeGitRemote helper
-func normalizeGitRemote(gitRemote string) string {
-	if strings.HasSuffix(gitRemote, ".git") {
-		gitRemote = gitRemote[:len(gitRemote)-4]
-	}
+func normalizeGitRemote(sugar *zap.SugaredLogger, gitRemote string) string {
+	gitRemote = strings.TrimSuffix(gitRemote, ".git")
 	parsedURL, err := giturls.Parse(gitRemote)
 	if err != nil {
-		// TODO: log this error
+		sugar.Errorw("Failed to parse git remote", zap.Error(err),
+			"gitRemote", gitRemote,
+		)
 		return gitRemote
 	}
 	if parsedURL.User == nil || parsedURL.User.Username() == "" {

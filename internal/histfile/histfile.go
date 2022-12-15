@@ -35,7 +35,7 @@ type Histfile struct {
 	rio *recio.RecIO
 }
 
-// New creates new histfile and runs its gorutines
+// New creates new histfile and runs its goroutines
 func New(sugar *zap.SugaredLogger, input chan recordint.Collect, sessionsToDrop chan string,
 	reshHistoryPath string, bashHistoryPath string, zshHistoryPath string,
 	maxInitHistSize int, minInitHistSizeKB int,
@@ -48,7 +48,7 @@ func New(sugar *zap.SugaredLogger, input chan recordint.Collect, sessionsToDrop 
 		historyPath:  reshHistoryPath,
 		bashCmdLines: histlist.New(sugar),
 		zshCmdLines:  histlist.New(sugar),
-		cliRecords:   histcli.New(),
+		cliRecords:   histcli.New(sugar),
 		rio:          &rio,
 	}
 	go hf.loadHistory(bashHistoryPath, zshHistoryPath, maxInitHistSize, minInitHistSizeKB)
@@ -58,7 +58,7 @@ func New(sugar *zap.SugaredLogger, input chan recordint.Collect, sessionsToDrop 
 }
 
 // load records from resh history, reverse, enrich and save
-func (h *Histfile) loadCliRecords(recs []recordint.Indexed) {
+func (h *Histfile) loadCliRecords(recs []record.V1) {
 	for _, cmdline := range h.bashCmdLines.List {
 		h.cliRecords.AddCmdLine(cmdline)
 	}
@@ -218,17 +218,15 @@ func (h *Histfile) mergeAndWriteRecord(sugar *zap.SugaredLogger, part1 recordint
 		return
 	}
 
+	recV1 := record.V1(rec)
 	func() {
 		cmdLine := rec.CmdLine
 		h.bashCmdLines.AddCmdLine(cmdLine)
 		h.zshCmdLines.AddCmdLine(cmdLine)
-		h.cliRecords.AddRecord(&recordint.Indexed{
-			// TODO: is this what we want?
-			Rec: rec,
-		})
+		h.cliRecords.AddRecord(&recV1)
 	}()
 
-	h.rio.AppendToFile(h.historyPath, []record.V1{rec})
+	h.rio.AppendToFile(h.historyPath, []record.V1{recV1})
 }
 
 // TODO: use errors in RecIO
@@ -261,13 +259,13 @@ func (h *Histfile) DumpCliRecords() histcli.Histcli {
 	return h.cliRecords
 }
 
-func loadCmdLines(sugar *zap.SugaredLogger, recs []recordint.Indexed) histlist.Histlist {
+func loadCmdLines(sugar *zap.SugaredLogger, recs []record.V1) histlist.Histlist {
 	hl := histlist.New(sugar)
 	// go from bottom and deduplicate
 	var cmdLines []string
 	cmdLinesSet := map[string]bool{}
 	for i := len(recs) - 1; i >= 0; i-- {
-		cmdLine := recs[i].Rec.CmdLine
+		cmdLine := recs[i].CmdLine
 		if cmdLinesSet[cmdLine] {
 			continue
 		}

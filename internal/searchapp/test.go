@@ -12,12 +12,12 @@ func LoadHistoryFromFile(sugar *zap.SugaredLogger, historyPath string, numLines 
 	rio := recio.New(sugar)
 	recs, _, err := rio.ReadFile(historyPath)
 	if err != nil {
-		sugar.Panicf("failed to read hisotry file: %w", err)
+		sugar.Panicf("failed to read history file: %w", err)
 	}
 	if numLines != 0 && numLines < len(recs) {
 		recs = recs[:numLines]
 	}
-	cliRecords := histcli.New()
+	cliRecords := histcli.New(sugar)
 	for i := len(recs) - 1; i >= 0; i-- {
 		rec := recs[i]
 		cliRecords.AddRecord(&rec)

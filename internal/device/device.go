@@ -1,3 +1,4 @@
+// device implements helpers that get/set device config files
 package device
 
 import (

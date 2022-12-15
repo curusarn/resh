@@ -1,3 +1,4 @@
+// futil implements common file-related utilities
 package futil
 
 import (
@@ -41,14 +42,14 @@ func FileExists(fpath string) (bool, error) {
 	return false, fmt.Errorf("could not stat file: %w", err)
 }
 
-func CreateFile(fpath string) error {
-	ff, err := os.Create(fpath)
+func TouchFile(fpath string) error {
+	file, err := os.OpenFile(fpath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not open/create file: %w", err)
 	}
-	err = ff.Close()
+	err = file.Close()
 	if err != nil {
-		return err
+		return fmt.Errorf("could not close file: %w", err)
 	}
 	return nil
 }

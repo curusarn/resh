@@ -46,8 +46,8 @@ type Config struct {
 	Debug bool
 	// SessionWatchPeriodSeconds is how often should daemon check if terminal
 	// sessions are still alive
-	// There is not much need to adjust the value both memory overhead of watched sessions
-	// and the CPU overhead of chacking them are relatively low
+	// There is not much need to adjust the value because both memory overhead of watched sessions
+	// and the CPU overhead of checking them are quite low
 	SessionWatchPeriodSeconds uint
 	// ReshHistoryMinSize is how large resh history needs to be for
 	// daemon to ignore standard shell history files
@@ -72,11 +72,11 @@ const headerComment = `##
 ## RESH config (v1) ##
 ######################
 ## Here you can find info about RESH configuration options.
-## You can uncomment the options and custimize them.
+## You can uncomment the options and customize them.
 
 ## Required.
 ## The config format can change in future versions.
-## ConfigVersion helps us seemlessly upgrade to the new formats.
+## ConfigVersion helps us seamlessly upgrade to the new formats.
 # ConfigVersion = "v1"
 
 ## Port used by RESH daemon and rest of the components to communicate.
@@ -88,7 +88,7 @@ const headerComment = `##
 ## Options: "debug", "info", "warn", "error", "fatal"
 # LogLevel = "info"
 
-## When BindControlR is "true" RESH search app is bound to CTRL+R on terminal startuA
+## When BindControlR is "true" RESH search app is bound to CTRL+R on terminal startup
 # BindControlR = true
 
 ## When Debug is "true" the RESH search app runs in debug mode.
@@ -101,7 +101,7 @@ const headerComment = `##
 # SessionWatchPeriodSeconds = 600
 
 ## When RESH is first installed there is no RESH history so there is nothing to search.
-## As a temporary woraround, RESH daemon parses bash/zsh shell history and searches it.
+## As a temporary workaround, RESH daemon parses bash/zsh shell history and searches it.
 ## Once RESH history is big enough RESH stops using bash/zsh history.
 ## ReshHistoryMinSize controls how big RESH history needs to be before this happens.
 ## You can increase this this to e.g. 10000 to get RESH to use bash/zsh history longer.

@@ -3,7 +3,6 @@ package histio
 import (
 	"path"
 
-	"github.com/curusarn/resh/internal/recordint"
 	"github.com/curusarn/resh/record"
 	"go.uber.org/zap"
 )
@@ -18,7 +17,7 @@ type Histio struct {
 	// moreHistories map[string]*histfile
 
 	recordsToAppend chan record.V1
-	recordsToFlag   chan recordint.Flag
+	// recordsToFlag   chan recordint.Flag
 }
 
 func New(sugar *zap.SugaredLogger, dataDir, deviceID string) *Histio {

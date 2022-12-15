@@ -10,86 +10,88 @@ import (
 
 	"github.com/curusarn/resh/internal/futil"
 	"github.com/curusarn/resh/internal/recconv"
-	"github.com/curusarn/resh/internal/recordint"
 	"github.com/curusarn/resh/record"
 	"go.uber.org/zap"
 )
 
-func (r *RecIO) ReadAndFixFile(fpath string, maxErrors int) ([]recordint.Indexed, error) {
-	recs, numErrs, err := r.ReadFile(fpath)
+func (r *RecIO) ReadAndFixFile(fpath string, maxErrors int) ([]record.V1, error) {
+	recs, err, decodeErrs := r.ReadFile(fpath)
 	if err != nil {
 		return nil, err
 	}
+	numErrs := len(decodeErrs)
 	if numErrs > maxErrors {
+		r.sugar.Errorw("Encountered too many decoding errors",
+			"corruptedRecords", numErrs,
+		)
 		return nil, fmt.Errorf("encountered too many decoding errors")
 	}
 	if numErrs == 0 {
 		return recs, nil
 	}
 
-	// TODO: check there error messages
+	// TODO: check the error messages
 	r.sugar.Warnw("Some history records could not be decoded - fixing resh history file by dropping them",
 		"corruptedRecords", numErrs,
 	)
 	fpathBak := fpath + ".bak"
 	r.sugar.Infow("Backing up current corrupted history file",
-		"backupFilename", fpathBak,
+		"historyFileBackup", fpathBak,
 	)
-	// TODO: maybe use upstream copy function
 	err = futil.CopyFile(fpath, fpathBak)
 	if err != nil {
 		r.sugar.Errorw("Failed to create a backup history file - aborting fixing history file",
-			"backupFilename", fpathBak,
+			"historyFileBackup", fpathBak,
 			zap.Error(err),
 		)
 		return recs, nil
 	}
 	r.sugar.Info("Writing resh history file without errors ...")
-	var recsV1 []record.V1
-	for _, rec := range recs {
-		recsV1 = append(recsV1, rec.Rec)
-	}
-	err = r.OverwriteFile(fpath, recsV1)
+	err = r.OverwriteFile(fpath, recs)
 	if err != nil {
-		r.sugar.Errorw("Failed write fixed history file - aborting fixing history file",
-			"filename", fpath,
+		r.sugar.Errorw("Failed write fixed history file - restoring history file from backup",
+			"historyFile", fpath,
 			zap.Error(err),
 		)
+
+		err = futil.CopyFile(fpathBak, fpath)
+		if err != nil {
+			r.sugar.Errorw("Failed restore history file from backup",
+				"historyFile", fpath,
+				"HistoryFileBackup", fpathBak,
+				zap.Error(err),
+			)
+		}
 	}
 	return recs, nil
 }
 
-func (r *RecIO) ReadFile(fpath string) ([]recordint.Indexed, int, error) {
-	var recs []recordint.Indexed
+func (r *RecIO) ReadFile(fpath string) ([]record.V1, error, []error) {
+	var recs []record.V1
 	file, err := os.Open(fpath)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to open history file: %w", err)
+		return nil, fmt.Errorf("failed to open history file: %w", err), nil
 	}
 	defer file.Close()
 
 	reader := bufio.NewReader(file)
-	numErrs := 0
-	var idx int
+	decodeErrs := []error{}
 	for {
 		var line string
 		line, err = reader.ReadString('\n')
 		if err != nil {
 			break
 		}
-		idx++
 		rec, err := r.decodeLine(line)
 		if err != nil {
-			numErrs++
+			r.sugar.Errorw("Error while decoding line", zap.Error(err),
+				"filePath", fpath,
+				"line", line,
+			)
+			decodeErrs = append(decodeErrs, err)
 			continue
 		}
-		recidx := recordint.Indexed{
-			Rec: *rec,
-			// TODO: Is line index actually enough?
-			// 	 Don't we want to count bytes because we will scan by number of bytes?
-			// 	 hint: https://benjamincongdon.me/blog/2018/04/10/Counting-Scanned-Bytes-in-Go/
-			Idx: idx,
-		}
-		recs = append(recs, recidx)
+		recs = append(recs, *rec)
 	}
 	if err != io.EOF {
 		r.sugar.Error("Error while loading file", zap.Error(err))
@@ -97,7 +99,7 @@ func (r *RecIO) ReadFile(fpath string) ([]recordint.Indexed, int, error) {
 	r.sugar.Infow("Loaded resh history records",
 		"recordCount", len(recs),
 	)
-	return recs, numErrs, nil
+	return recs, nil, decodeErrs
 }
 
 func (r *RecIO) decodeLine(line string) (*record.V1, error) {

@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/curusarn/resh/internal/recio"
-	"github.com/curusarn/resh/internal/recordint"
+	"github.com/curusarn/resh/record"
 	"go.uber.org/zap"
 )
 
@@ -16,7 +16,7 @@ type histfile struct {
 	path string
 
 	mu       sync.RWMutex
-	data     []recordint.Indexed
+	data     []record.V1
 	fileinfo os.FileInfo
 }
 

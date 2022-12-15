@@ -44,7 +44,7 @@ func main() {
 	case "rollback":
 		rollback()
 	case "migrate-config":
-		migrateConfig()
+		migrateConfig(out)
 	case "migrate-history":
 		migrateHistory(out)
 	case "setup-device":

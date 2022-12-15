@@ -5,21 +5,18 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
+	"github.com/curusarn/resh/internal/futil"
 )
 
 // Touch config file
 func Touch() error {
-	path, err := getConfigPath()
+	fpath, err := getConfigPath()
 	if err != nil {
 		return fmt.Errorf("could not get config file path: %w", err)
 	}
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
+	err = futil.TouchFile(fpath)
 	if err != nil {
-		return fmt.Errorf("could not open/create config file: %w", err)
-	}
-	err = file.Close()
-	if err != nil {
-		return fmt.Errorf("could not close config file: %w", err)
+		return fmt.Errorf("could not touch config file: %w", err)
 	}
 	return nil
 }
@@ -27,11 +24,11 @@ func Touch() error {
 // Migrate old config versions to current config version
 // returns true if any changes were made to the config
 func Migrate() (bool, error) {
-	path, err := getConfigPath()
+	fpath, err := getConfigPath()
 	if err != nil {
 		return false, fmt.Errorf("could not get config file path: %w", err)
 	}
-	configF, err := readConfig(path)
+	configF, err := readConfig(fpath)
 	if err != nil {
 		return false, fmt.Errorf("could not read config: %w", err)
 	}
@@ -50,7 +47,7 @@ func Migrate() (bool, error) {
 	if *configF.ConfigVersion != current {
 		return false, fmt.Errorf("unrecognized config version: '%s'", *configF.ConfigVersion)
 	}
-	err = writeConfig(configF, path)
+	err = writeConfig(configF, fpath)
 	if err != nil {
 		return true, fmt.Errorf("could not write migrated config: %w", err)
 	}

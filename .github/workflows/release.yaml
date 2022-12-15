@@ -18,7 +18,7 @@ jobs:
           fetch-depth: 0
 
       - name: Get Go version
-        run: echo "GO_VERSION=$(grep '^go ' go.mod | cut -d ' ' -f 2)" >> $GITHUB_ENV
+        run: echo "GO_VERSION=$(grep '^go ' go.mod | cut -d ' ' -f 2)" >> $GITHUB_ENV && cat $GITHUB_ENV
 
       - name: Set up Go
         uses: actions/setup-go@v3

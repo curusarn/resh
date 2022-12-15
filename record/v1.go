@@ -54,6 +54,9 @@ type V1 struct {
 
 	// these look like internal stuff
 
+	// TODO: rethink
+	// I don't really like this :/
+	// Maybe just one field 'NotMerged' with 'partOne' and 'partTwo' as values and empty string for merged
 	// records come in two parts (collect and postcollect)
 	PartOne        bool `json:"partOne,omitempty"` // false => part two
 	PartsNotMerged bool `json:"partsNotMerged,omitempty"`

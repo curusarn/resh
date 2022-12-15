@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/curusarn/resh/internal/recordint"
 	"github.com/curusarn/resh/record"
 )
 
@@ -27,16 +26,6 @@ func (r *RecIO) AppendToFile(fpath string, recs []record.V1) error {
 	}
 	defer file.Close()
 	return writeRecords(file, recs)
-}
-
-// TODO: better errors
-// TODO: rethink this
-func (r *RecIO) EditRecordFlagsInFile(fpath string, idx int, rec recordint.Flag) error {
-	// FIXME: implement
-	// open file "not as append"
-	// scan to the correct line
-	r.sugar.Error("not implemented yet (FIXME)")
-	return nil
 }
 
 func writeRecords(file *os.File, recs []record.V1) error {

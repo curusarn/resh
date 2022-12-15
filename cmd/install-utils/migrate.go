@@ -10,22 +10,19 @@ import (
 	"github.com/curusarn/resh/internal/futil"
 	"github.com/curusarn/resh/internal/output"
 	"github.com/curusarn/resh/internal/recio"
-	"github.com/curusarn/resh/record"
 )
 
-func migrateConfig() {
+func migrateConfig(out *output.Output) {
 	err := cfg.Touch()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: Failed to touch config file: %v\n", err)
-		os.Exit(1)
+		out.Fatal("ERROR: Failed to touch config file", err)
 	}
 	changes, err := cfg.Migrate()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: Failed to update config file: %v\n", err)
-		os.Exit(1)
+		out.Fatal("ERROR: Failed to update config file", err)
 	}
 	if changes {
-		fmt.Printf("RESH config file format has changed since last update - your config was updated to reflect the changes.\n")
+		out.Info("RESH config file format has changed since last update - your config was updated to reflect the changes.")
 	}
 }
 
@@ -34,6 +31,8 @@ func migrateHistory(out *output.Output) {
 	migrateHistoryFormat(out)
 }
 
+// find first existing history and use it
+// don't bother with merging of history in multiple locations - it could get messy and it shouldn't be necessary
 func migrateHistoryLocation(out *output.Output) {
 	dataDir, err := datadir.MakePath()
 	if err != nil {
@@ -92,9 +91,9 @@ func migrateHistoryFormat(out *output.Output) {
 	}
 	if !exists {
 		out.ErrorWOErr("There is no history file - this is normal if you are installing RESH for the first time on this device")
-		err = futil.CreateFile(historyPath)
+		err = futil.TouchFile(historyPath)
 		if err != nil {
-			out.Fatal("ERROR: Failed to create history file", err)
+			out.Fatal("ERROR: Failed to touch history file", err)
 		}
 		os.Exit(0)
 	}
@@ -110,12 +109,7 @@ func migrateHistoryFormat(out *output.Output) {
 	if err != nil {
 		out.Fatal("ERROR: Could not load history file", err)
 	}
-	// TODO: get rid of this conversion
-	var recsV1 []record.V1
-	for _, rec := range recs {
-		recsV1 = append(recsV1, rec.Rec)
-	}
-	err = rio.OverwriteFile(historyPath, recsV1)
+	err = rio.OverwriteFile(historyPath, recs)
 	if err != nil {
 		out.Error("ERROR: Could not update format of history file", err)
 
