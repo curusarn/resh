@@ -48,7 +48,7 @@ func main() {
 	case "migrate-history":
 		migrateHistory(out)
 	case "setup-device":
-		setupDevice()
+		setupDevice(out)
 	case "help":
 		printUsage(os.Stdout)
 	default:

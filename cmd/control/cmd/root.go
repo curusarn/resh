@@ -16,7 +16,7 @@ var out *output.Output
 
 var rootCmd = &cobra.Command{
 	Use:   "reshctl",
-	Short: "Reshctl (RESH control) - check status, update, enable/disable features, sanitize history and more.",
+	Short: "Reshctl (RESH control) - check status, update",
 }
 
 // Execute reshctl
@@ -31,10 +31,6 @@ func Execute(ver, com, development string) {
 	if errCfg != nil {
 		out.Error("Error while getting configuration", errCfg)
 	}
-
-	rootCmd.AddCommand(completionCmd)
-	completionCmd.AddCommand(completionBashCmd)
-	completionCmd.AddCommand(completionZshCmd)
 
 	rootCmd.AddCommand(versionCmd)
 

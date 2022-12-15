@@ -113,7 +113,7 @@ echo "Creating/updating config file ..."
 ./bin/resh-install-utils migrate-config
 
 echo "Checking/setting up device files ..."
-./bin/resh-install-utils setup-device 
+./bin/resh-install-utils setup-device
 
 echo "Updating format of history file ..."
 ./bin/resh-install-utils migrate-history

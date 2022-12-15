@@ -7,12 +7,15 @@ import (
 	"strings"
 
 	"github.com/curusarn/resh/internal/futil"
+	"github.com/curusarn/resh/internal/output"
 	"github.com/google/uuid"
 	isatty "github.com/mattn/go-isatty"
 )
 
 const fnameID = "device-id"
 const fnameName = "device-name"
+
+const fpathIDLegacy = ".resh/resh-uuid"
 
 const filePerm = 0644
 
@@ -29,11 +32,11 @@ func GetName(dataDir string) (string, error) {
 // Install helpers
 
 func SetupID(dataDir string) error {
-	return generateIDIfUnset(dataDir)
+	return setIDIfUnset(dataDir)
 }
 
-func SetupName(dataDir string) error {
-	return promptAndWriteNameIfUnset(dataDir)
+func SetupName(out *output.Output, dataDir string) error {
+	return promptAndWriteNameIfUnset(out, dataDir)
 }
 
 func readValue(dataDir, fname string) (string, error) {
@@ -46,7 +49,7 @@ func readValue(dataDir, fname string) (string, error) {
 	return val, nil
 }
 
-func generateIDIfUnset(dataDir string) error {
+func setIDIfUnset(dataDir string) error {
 	fpath := path.Join(dataDir, fnameID)
 	exists, err := futil.FileExists(fpath)
 	if err != nil {
@@ -56,6 +59,25 @@ func generateIDIfUnset(dataDir string) error {
 		return nil
 	}
 
+	// Try copy device ID from legacy location
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("could not get user home: %w", err)
+	}
+	fpathLegacy := path.Join(homeDir, fpathIDLegacy)
+	exists, err = futil.FileExists(fpath)
+	if err != nil {
+		return err
+	}
+	if exists {
+		futil.CopyFile(fpathLegacy, fpath)
+		if err != nil {
+			return fmt.Errorf("could not copy device ID from legacy location: %w", err)
+		}
+		return nil
+	}
+
+	// Generate new device ID
 	rnd, err := uuid.NewRandom()
 	if err != nil {
 		return fmt.Errorf("could not get new random source: %w", err)
@@ -71,7 +93,7 @@ func generateIDIfUnset(dataDir string) error {
 	return nil
 }
 
-func promptAndWriteNameIfUnset(dataDir string) error {
+func promptAndWriteNameIfUnset(out *output.Output, dataDir string) error {
 	fpath := path.Join(dataDir, fnameName)
 	exists, err := futil.FileExists(fpath)
 	if err != nil {
@@ -81,7 +103,7 @@ func promptAndWriteNameIfUnset(dataDir string) error {
 		return nil
 	}
 
-	name, err := promptForName(fpath)
+	name, err := promptForName(out, fpath)
 	if err != nil {
 		return fmt.Errorf("error while prompting for input: %w", err)
 	}
@@ -92,7 +114,7 @@ func promptAndWriteNameIfUnset(dataDir string) error {
 	return nil
 }
 
-func promptForName(fpath string) (string, error) {
+func promptForName(out *output.Output, fpath string) (string, error) {
 	// This function should be only ran from install-utils with attached terminal
 	if !isatty.IsTerminal(os.Stdout.Fd()) {
 		return "", fmt.Errorf("output is not a terminal - write name of this device to '%s' to bypass this error", fpath)
@@ -111,7 +133,7 @@ func promptForName(fpath string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("scanln error: %w", err)
 	}
-	fmt.Printf("Input was: %s\n", input)
+	out.Info(fmt.Sprintf("Device name set to '%s'", input))
 	fmt.Printf("You can change the device name at any time by editing '%s' file\n", fpath)
 	return input, nil
 }
