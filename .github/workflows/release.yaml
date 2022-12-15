@@ -8,6 +8,7 @@ on:
 jobs:
 
   goreleaser:
+    name: Goreleaser
     runs-on: ubuntu-latest
     steps:
 
