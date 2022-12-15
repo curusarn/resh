@@ -13,7 +13,11 @@ jobs:
           fetch-depth: 0
 
       - name: Install grep & coreutils
-        run: sudo apt update -yqq && sudo apt install grep coreutils -yqq
+        # run: sudo apt update -yqq && sudo apt install grep coreutils -yqq
+        run: cat go.mod
+
+      - name: grep 
+        run: grep 'go \d\.' go.mod 
 
       - name: Get Go version
         run: echo "GO_VERSION=$(grep 'go \d\.' go.mod | cut -d ' ' -f 2)" >> $GITHUB_ENV && cat $GITHUB_ENV
