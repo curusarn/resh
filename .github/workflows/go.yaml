@@ -12,9 +12,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install grep & coreutils
+      - name: cat
         # run: sudo apt update -yqq && sudo apt install grep coreutils -yqq
         run: cat go.mod
+
+      - name: which
+        run: which grep
 
       - name: grep 
         run: grep 'go \d\.' go.mod 
