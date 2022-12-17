@@ -3,7 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -22,27 +22,19 @@ var versionCmd = &cobra.Command{
 		commitEnv := getEnvVarWithDefault("__RESH_REVISION", "<unknown>")
 		printVersion("This terminal session", versionEnv, commitEnv)
 
-		// TODO: use output.Output.Error... for these
 		resp, err := getDaemonStatus(config.Port)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "\nERROR: Resh-daemon didn't respond - it's probably not running.\n\n")
-			fmt.Fprintf(os.Stderr, "-> Try restarting this terminal window to bring resh-daemon back up.\n")
-			fmt.Fprintf(os.Stderr, "-> If the problem persists you can check resh-daemon logs: ~/.resh/daemon.log\n")
-			fmt.Fprintf(os.Stderr, "-> You can file an issue at: https://github.com/curusarn/resh/issues\n")
+			out.ErrorDaemonNotRunning(err)
 			return
 		}
 		printVersion("Currently running daemon", resp.Version, resp.Commit)
 
 		if version != resp.Version {
-			fmt.Fprintf(os.Stderr, "\nWARN: Resh-daemon is running in different version than is installed now - it looks like something went wrong during resh update.\n\n")
-			fmt.Fprintf(os.Stderr, "-> Kill resh-daemon and then launch a new terminal window to fix that.\n")
-			fmt.Fprintf(os.Stderr, " $ pkill resh-daemon\n")
-			fmt.Fprintf(os.Stderr, "-> You can file an issue at: https://github.com/curusarn/resh/issues\n")
+			out.ErrorDaemonVersionMismatch(version, resp.Version)
 			return
 		}
 		if version != versionEnv {
-			fmt.Fprintf(os.Stderr, "\nWARN: This terminal session was started with different resh version than is installed now - it looks like you updated resh and didn't restart this terminal.\n\n")
-			fmt.Fprintf(os.Stderr, "-> Restart this terminal window to fix that.\n")
+			out.ErrorTerminalVersionMismatch(version, versionEnv)
 			return
 		}
 
@@ -69,7 +61,7 @@ func getDaemonStatus(port int) (msg.StatusResponse, error) {
 		return mess, err
 	}
 	defer resp.Body.Close()
-	jsn, err := ioutil.ReadAll(resp.Body)
+	jsn, err := io.ReadAll(resp.Body)
 	if err != nil {
 		out.Fatal("Error while reading 'daemon /status' response", err)
 	}

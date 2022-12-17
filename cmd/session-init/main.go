@@ -49,11 +49,11 @@ func main() {
 		os.Exit(0)
 	}
 	if *requireVersion != "" && *requireVersion != version {
-		out.FatalVersionMismatch(version, *requireVersion)
+		out.FatalTerminalVersionMismatch(version, *requireVersion)
 	}
 	if *requireRevision != "" && *requireRevision != commit {
 		// this is only relevant for dev versions so we can reuse FatalVersionMismatch()
-		out.FatalVersionMismatch("revision "+commit, "revision "+*requireVersion)
+		out.FatalTerminalVersionMismatch("revision "+commit, "revision "+*requireVersion)
 	}
 
 	rec := recordint.SessionInit{

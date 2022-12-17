@@ -55,6 +55,14 @@ It looks like you updated resh and didn't restart this terminal.
 
 `
 
+var msgDaemonVersionMismatch = `Resh-daemon is running in different version than is installed now.
+It looks like something went wrong during resh update.
+
+ -> Kill resh-daemon and then launch a new terminal window to fix that: pkill resh-daemon
+ -> You can create an issue at: https://github.com/curusarn/resh/issues
+
+`
+
 func (f *Output) ErrorDaemonNotRunning(err error) {
 	fmt.Fprintf(os.Stderr, "%s: %s", f.ErrPrefix, msgDaemonNotRunning)
 	f.Logger.Error("Daemon is not running", zap.Error(err))
@@ -65,7 +73,7 @@ func (f *Output) FatalDaemonNotRunning(err error) {
 	f.Logger.Fatal("Daemon is not running", zap.Error(err))
 }
 
-func (f *Output) ErrorVersionMismatch(installedVer, terminalVer string) {
+func (f *Output) ErrorTerminalVersionMismatch(installedVer, terminalVer string) {
 	fmt.Fprintf(os.Stderr, "%s: %s\n\n(installed version: %s, this terminal version: %s)",
 		f.ErrPrefix, msgVersionMismatch, installedVer, terminalVer)
 	f.Logger.Fatal("Version mismatch",
@@ -73,10 +81,26 @@ func (f *Output) ErrorVersionMismatch(installedVer, terminalVer string) {
 		zap.String("terminal", terminalVer))
 }
 
-func (f *Output) FatalVersionMismatch(installedVer, terminalVer string) {
+func (f *Output) FatalTerminalVersionMismatch(installedVer, terminalVer string) {
 	fmt.Fprintf(os.Stderr, "%s: %s\n(installed version: %s, this terminal version: %s)\n",
 		f.ErrPrefix, msgVersionMismatch, installedVer, terminalVer)
 	f.Logger.Fatal("Version mismatch",
 		zap.String("installed", installedVer),
 		zap.String("terminal", terminalVer))
+}
+
+func (f *Output) ErrorDaemonVersionMismatch(installedVer, daemonVer string) {
+	fmt.Fprintf(os.Stderr, "%s: %s\n(installed version: %s, running daemon version: %s)\n",
+		f.ErrPrefix, msgDaemonVersionMismatch, installedVer, daemonVer)
+	f.Logger.Error("Version mismatch",
+		zap.String("installed", installedVer),
+		zap.String("daemon", daemonVer))
+}
+
+func (f *Output) FatalDaemonVersionMismatch(installedVer, daemonVer string) {
+	fmt.Fprintf(os.Stderr, "%s: %s\n(installed version: %s, running daemon version: %s)\n",
+		f.ErrPrefix, msgDaemonVersionMismatch, installedVer, daemonVer)
+	f.Logger.Fatal("Version mismatch",
+		zap.String("installed", installedVer),
+		zap.String("daemon", daemonVer))
 }

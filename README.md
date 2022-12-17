@@ -17,15 +17,15 @@ Context-based replacement/enhancement for zsh and bash shell history
 <!-- Better zsh history -->
 <!-- PWD Directory -->
 
-**Search your history by commands and get relevant results based on current directory, git repo, exit status, and host.**
+**Search your history by commands or arguments and get relevant results based on current directory, git repo, exit status, and device.**
 
 ## Installation
 
 ### Prerequisites
 
-Standard stuff: `bash(4.3+)`, `curl`, `tar`, ...
+Nohup
 
-Bash completions will only work if you have `bash-completion` installed
+Standard stuff: `bash(4.3+)`, `curl`, `tar`, ...
 
 MacOS: `coreutils` (`brew install coreutils`)
 
@@ -62,7 +62,7 @@ reshctl update
 
 This is the most important part of this project.
 
-RESH SEARCH app searches your history by commands. It uses host, directories, git remote, and exit status to show you relevant results first.  
+RESH SEARCH app searches your history by commands. It uses device, directories, git remote, and exit status to show you relevant results first.
 
 All this context is not in the regular shell history. RESH records shell history with context to use it when searching.
 
@@ -74,7 +74,7 @@ Eventually most of your history will have context and RESH SEARCH app will get m
 
 ![resh search app](img/screen-resh-cli-v2-7.png)
 
-Without a query, RESH SEARCH app shows you the latest history based on the current context (host, directory, git).
+Without a query, RESH SEARCH app shows you the latest history based on the current context (device, directory, git).
 
 ![resh search app](img/screen-resh-cli-v2-7-no-query.png)
 
@@ -99,13 +99,15 @@ reshctl disable ctrl_r_binding
 
 ### View the recorded history
 
-Resh history is saved to `~/.resh_history.json`
+FIXME: redo/update this section
 
-Each line is a JSON that represents one executed command line.
+Resh history is saved to: `~/.resh_history.json`
+
+Each line is a versioned JSON that represents one executed command line.
 
 This is how I view it `tail -f ~/.resh_history.json | jq` or `jq < ~/.resh_history.json`.  
 
-You can install `jq` using your favourite package manager or you can use other JSON parser to view the history.
+You can install `jq` using your favorite package manager or you can use other JSON parser to view the history.
 
 ![screenshot](img/screen.png)
 
@@ -115,13 +117,13 @@ You can install `jq` using your favourite package manager or you can use other J
 
 ### Q: I use bash on macOS and resh doesn't work
 
-**A:** You have to add `[ -f ~/.bashrc ] && . ~/.bashrc` to your `~/.bash_profile`.  
+**A:** Add line `[ -f ~/.bashrc ] && . ~/.bashrc` to your `~/.bash_profile`.
 
-**Long Answer:** Under macOS bash shell only loads `~/.bash_profile` because every shell runs as login shell. I will definitely work around this in the future but since this doesn't affect many people I decided to not solve this issue at the moment.
+**Long Answer:** Under macOS bash shell only loads `~/.bash_profile` because every shell runs as login shell.
 
 ## Issues and ideas
 
-Please do create issues if you encounter any problems or if you have a suggestions: https://github.com/curusarn/resh/issues
+Please do create issues if you encounter any problems or if you have suggestions: https://github.com/curusarn/resh/issues
 
 ## Uninstallation
 
