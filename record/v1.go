@@ -1,10 +1,10 @@
 package record
 
 type V1 struct {
-	// flags
+	// future-proofing so that we can add this later without version bump
 	// deleted, favorite
-	// FIXME: is this the best way? .. what about string, separate fields, or something similar
-	Flags int `json:"flags"`
+	Deleted  bool `json:"deleted,omitempty"`
+	Favorite bool `json:"favorite,omitempty"`
 
 	// cmdline, exitcode
 	CmdLine  string `json:"cmdLine"`
@@ -21,10 +21,8 @@ type V1 struct {
 	Pwd     string `json:"pwd"`
 	RealPwd string `json:"realPwd"`
 
-	// hostname + logname (not sure if we actually need logname)
-	// Logname  string `json:"logname"`
-	// Device is usually hostname but not stricly hostname
-	// It can be configured in RESH configuration
+	// Device is set during installation/setup
+	// It is stored in RESH configuration
 	Device string `json:"device"`
 
 	// git info

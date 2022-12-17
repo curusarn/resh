@@ -15,7 +15,7 @@ import (
 )
 
 func (r *RecIO) ReadAndFixFile(fpath string, maxErrors int) ([]record.V1, error) {
-	recs, err, decodeErrs := r.ReadFile(fpath)
+	recs, decodeErrs, err := r.ReadFile(fpath)
 	if err != nil {
 		return nil, err
 	}
@@ -66,16 +66,16 @@ func (r *RecIO) ReadAndFixFile(fpath string, maxErrors int) ([]record.V1, error)
 	return recs, nil
 }
 
-func (r *RecIO) ReadFile(fpath string) ([]record.V1, error, []error) {
+func (r *RecIO) ReadFile(fpath string) ([]record.V1, []error, error) {
 	var recs []record.V1
 	file, err := os.Open(fpath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open history file: %w", err), nil
+		return nil, nil, fmt.Errorf("failed to open history file: %w", err)
 	}
 	defer file.Close()
 
 	reader := bufio.NewReader(file)
-	decodeErrs := []error{}
+	var decodeErrs []error
 	for {
 		var line string
 		line, err = reader.ReadString('\n')
@@ -93,13 +93,14 @@ func (r *RecIO) ReadFile(fpath string) ([]record.V1, error, []error) {
 		}
 		recs = append(recs, *rec)
 	}
-	if err != io.EOF {
-		r.sugar.Error("Error while loading file", zap.Error(err))
-	}
 	r.sugar.Infow("Loaded resh history records",
 		"recordCount", len(recs),
 	)
-	return recs, nil, decodeErrs
+	if err != io.EOF {
+		r.sugar.Error("Error while reading file", zap.Error(err))
+		return recs, decodeErrs, err
+	}
+	return recs, decodeErrs, nil
 }
 
 func (r *RecIO) decodeLine(line string) (*record.V1, error) {

@@ -8,35 +8,47 @@ import (
 	"github.com/curusarn/resh/record"
 )
 
-// TODO: better errors
 func (r *RecIO) OverwriteFile(fpath string, recs []record.V1) error {
 	file, err := os.Create(fpath)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not create/truncate file: %w", err)
 	}
-	defer file.Close()
-	return writeRecords(file, recs)
+	err = writeRecords(file, recs)
+	if err != nil {
+		return fmt.Errorf("error while writing records: %w", err)
+	}
+	err = file.Close()
+	if err != nil {
+		return fmt.Errorf("could not close file: %w", err)
+	}
+	return nil
 }
 
-// TODO: better errors
 func (r *RecIO) AppendToFile(fpath string, recs []record.V1) error {
 	file, err := os.OpenFile(fpath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not open/create file: %w", err)
 	}
-	defer file.Close()
-	return writeRecords(file, recs)
+	err = writeRecords(file, recs)
+	if err != nil {
+		return fmt.Errorf("error while writing records: %w", err)
+	}
+	err = file.Close()
+	if err != nil {
+		return fmt.Errorf("could not close file: %w", err)
+	}
+	return nil
 }
 
 func writeRecords(file *os.File, recs []record.V1) error {
 	for _, rec := range recs {
 		jsn, err := encodeV1Record(rec)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not encode record: %w", err)
 		}
 		_, err = file.Write(jsn)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not write json: %w", err)
 		}
 	}
 	return nil
