@@ -83,17 +83,17 @@ func ReadFileContent(logger *zap.Logger, path string) string {
 }
 
 // GetGitDirs based on result of git "cdup" command
-func GetGitDirs(logger *zap.Logger, cdup string, exitCode int, pwd string) (string, string) {
+func GetGitDirs(logger *zap.Logger, cdUp string, exitCode int, pwd string) (string, string) {
 	if exitCode != 0 {
 		return "", ""
 	}
-	abspath := filepath.Clean(filepath.Join(pwd, cdup))
-	realpath, err := filepath.EvalSymlinks(abspath)
+	absPath := filepath.Clean(filepath.Join(pwd, cdUp))
+	realPath, err := filepath.EvalSymlinks(absPath)
 	if err != nil {
 		logger.Error("Error while handling git dir paths", zap.Error(err))
 		return "", ""
 	}
-	return abspath, realpath
+	return absPath, realPath
 }
 
 // GetTimezoneOffsetInSeconds based on zone returned by date command
