@@ -12,8 +12,8 @@ import (
 	"github.com/curusarn/resh/internal/cfg"
 	"github.com/curusarn/resh/internal/datadir"
 	"github.com/curusarn/resh/internal/device"
-	"github.com/curusarn/resh/internal/httpclient"
 	"github.com/curusarn/resh/internal/logger"
+	"github.com/curusarn/resh/internal/status"
 	"go.uber.org/zap"
 )
 
@@ -62,7 +62,7 @@ func main() {
 
 	sugar = sugar.With(zap.Int("daemonPID", os.Getpid()))
 
-	res, err := d.isDaemonRunning(config.Port)
+	res, err := status.IsDaemonRunning(config.Port)
 	if err != nil {
 		sugar.Errorw("Error while checking daemon status - it's probably not running",
 			"error", err)
@@ -113,17 +113,6 @@ func main() {
 
 type daemon struct {
 	sugar *zap.SugaredLogger
-}
-
-func (d *daemon) isDaemonRunning(port int) (bool, error) {
-	url := "http://localhost:" + strconv.Itoa(port) + "/status"
-	client := httpclient.New()
-	resp, err := client.Get(url)
-	if err != nil {
-		return false, err
-	}
-	defer resp.Body.Close()
-	return true, nil
 }
 
 func (d *daemon) killDaemon(pidFile string) error {

@@ -38,7 +38,10 @@ const exitCodeExecute = 111
 
 func main() {
 	config, errCfg := cfg.New()
-	logger, _ := logger.New("search-app", config.LogLevel, development)
+	logger, err := logger.New("search-app", config.LogLevel, development)
+	if err != nil {
+		fmt.Printf("Error while creating logger: %v", err)
+	}
 	defer logger.Sync() // flushes buffer, if any
 	if errCfg != nil {
 		logger.Error("Error while getting configuration", zap.Error(errCfg))

@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/curusarn/resh/internal/cfg"
 	"github.com/curusarn/resh/internal/logger"
 	"github.com/curusarn/resh/internal/output"
@@ -11,7 +13,6 @@ var version string
 var commit string
 
 // globals
-var config cfg.Config
 var out *output.Output
 
 var rootCmd = &cobra.Command{
@@ -25,14 +26,22 @@ func Execute(ver, com, development string) {
 	commit = com
 
 	config, errCfg := cfg.New()
-	logger, _ := logger.New("reshctl", config.LogLevel, development)
+	logger, err := logger.New("reshctl", config.LogLevel, development)
+	if err != nil {
+		fmt.Printf("Error while creating logger: %v", err)
+	}
 	defer logger.Sync() // flushes buffer, if any
 	out = output.New(logger, "ERROR")
 	if errCfg != nil {
 		out.Error("Error while getting configuration", errCfg)
 	}
 
-	rootCmd.AddCommand(versionCmd)
+	var versionCmd = cobra.Command{
+		Use:   "version",
+		Short: "show RESH version",
+		Run:   versionCmdFunc(config),
+	}
+	rootCmd.AddCommand(&versionCmd)
 
 	updateCmd.Flags().BoolVar(&betaFlag, "beta", false, "Update to latest version even if it's beta.")
 	rootCmd.AddCommand(updateCmd)

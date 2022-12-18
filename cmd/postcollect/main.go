@@ -25,7 +25,10 @@ var development string
 
 func main() {
 	config, errCfg := cfg.New()
-	logger, _ := logger.New("postcollect", config.LogLevel, development)
+	logger, err := logger.New("postcollect", config.LogLevel, development)
+	if err != nil {
+		fmt.Printf("Error while creating logger: %v", err)
+	}
 	defer logger.Sync() // flushes buffer, if any
 	if errCfg != nil {
 		logger.Error("Error while getting configuration", zap.Error(errCfg))

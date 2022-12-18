@@ -2,6 +2,10 @@
 
 set -euo pipefail
 
+# TODO: There is a lot of hardcoded stuff here (paths mostly)
+# TODO: Split this into installation and setup because we want to suport package manager installation eventually
+# TODO: "installation" should stay here and be simple, "setup" should be moved behind "reshctl setup"
+
 echo
 echo "Checking your system ..."
 
@@ -14,6 +18,9 @@ if [ "$login_shell" != bash ] && [ "$login_shell" != zsh ]; then
 fi
 echo " * Login shell: $login_shell - OK"
 
+# TODO: Explicitly ask users if they want to enable RESH in shells
+#       Only offer shells with supported versions
+#       E.g. Enable RESH in: Zsh (your login shell), Bash, Both shells
 
 # check like we are not running bash
 bash_version=$(bash -c 'echo ${BASH_VERSION}')
@@ -108,6 +115,23 @@ cp -f scripts/rawinstall.sh ~/.resh/
 # Copy all executables. We don't really need to omit install-utils from the bin directory
 echo "Copying more files ..."
 cp -f bin/resh-* ~/.resh/bin/
+# rename reshctl
+mv ~/.resh/bin/resh-control ~/.resh/bin/reshctl
+
+# Shutting down resh daemon ...
+echo "Shutting down resh daemon ..."
+pid_file="${XDG_DATA_HOME-~/.local/share}/resh/daemon.pid"
+if [ ! -f "$pid_file" ]; then
+    # old pid file location
+    pid_file=~/.resh/resh.pid
+fi
+
+if [ -f "$pid_file" ]; then
+    kill -SIGTERM "$pid_file"
+    rm "$pid_file"
+else
+    pkill -SIGTERM "resh-daemon"
+fi
 
 echo "Creating/updating config file ..."
 ./bin/resh-install-utils migrate-config
@@ -141,13 +165,7 @@ fi
 # shellcheck source=util.sh
 . ~/.resh/util.sh
 
-# Restarting resh daemon ...
-if [ -f ~/.resh/resh.pid ]; then
-    kill -SIGTERM "$(cat ~/.resh/resh.pid)" || true
-    rm ~/.resh/resh.pid
-else
-    pkill -SIGTERM "resh-daemon" || true
-fi
+echo "Launching resh daemon ..."
 __resh_run_daemon
 
 
