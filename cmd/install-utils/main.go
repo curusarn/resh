@@ -30,7 +30,7 @@ func main() {
 		"version", version,
 		"commit", commit,
 	)
-	out := output.New(logger, "install-utils")
+	out := output.New(logger, "install-utils ERROR")
 
 	if len(os.Args) < 2 {
 		out.ErrorWOErr("ERROR: Not enough arguments\n")
