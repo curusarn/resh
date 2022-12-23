@@ -1,3 +1,4 @@
+#!/hint/sh
 
 # shellcheck source=../submodules/bash-zsh-compat-widgets/bindfunc.sh
 . ~/.resh/bindfunc.sh
@@ -73,83 +74,6 @@ resh() {
     elif [ $status_code = 130 ]; then
         true
     else
-        local fpath_last_run="$__RESH_XDG_CACHE_HOME/cli_last_run_out.txt"
-        echo "$buffer" >| "$fpath_last_run"
-        echo "resh-cli failed - check '$fpath_last_run' and '~/.resh/cli.log'"
+        printf "%s" "$buffer" >&2
     fi
-}
-
-reshctl() {
-    # export current shell because resh-control needs to know
-    export __RESH_ctl_shell=$__RESH_SHELL
-    # run resh-control aka the real reshctl
-    resh-control "$@"
-
-    # modify current shell session based on exit status
-    local _status=$?
-    # echo $_status
-    # unexport current shell  
-    unset __RESH_ctl_shell
-    case "$_status" in
-    0|1)
-        # success | fail
-        return "$_status"
-        ;;
-    # enable
-    # 30)
-    #     # enable all
-    #     __resh_bind_all
-    #     return 0
-    #     ;;
-    32)
-        # enable control R
-        __resh_bind_control_R
-        return 0
-        ;;
-    # disable
-    # 40)
-    #     # disable all
-    #     __resh_unbind_all
-    #     return 0
-    #     ;;
-    42)
-        # disable control R
-        __resh_unbind_control_R
-        return 0
-        ;;
-    50)
-        # reload rc files
-        . ~/.resh/shellrc
-        return 0
-        ;;
-    51)
-        # inspect session history 
-        # reshctl debug inspect N
-        resh-inspect --sessionID "$__RESH_SESSION_ID" --count "${3-10}"
-        return 0
-        ;;
-    52)
-        # show status 
-        echo
-		echo 'Control R binding ...'
-        if [ "$(resh-config --key BindControlR)" = true ]; then
-			echo ' * future sessions: ENABLED'
-		else
-			echo ' * future sessions: DISABLED'
-        fi
-        if [ "${__RESH_control_R_bind_enabled-0}" != 0 ]; then
-            echo ' * this session: ENABLED'
-        else
-            echo ' * this session: DISABLED'
-        fi
-        return 0
-        ;;
-    *)
-        echo "reshctl() FATAL ERROR: unknown status ($_status)" >&2
-        echo "Possibly caused by version mismatch between installed resh and resh in this session." >&2
-        echo "Please REPORT this issue here: https://github.com/curusarn/resh/issues" >&2
-        echo "Please RESTART your terminal window." >&2
-        return "$_status"
-        ;;
-    esac
 }

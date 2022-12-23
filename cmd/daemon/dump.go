@@ -2,53 +2,46 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"log"
+	"github.com/curusarn/resh/internal/histcli"
+	"io"
 	"net/http"
 
-	"github.com/curusarn/resh/pkg/histfile"
-	"github.com/curusarn/resh/pkg/msg"
+	"github.com/curusarn/resh/internal/msg"
+	"go.uber.org/zap"
 )
 
 type dumpHandler struct {
-	histfileBox *histfile.Histfile
+	sugar   *zap.SugaredLogger
+	history *histcli.Histcli
 }
 
 func (h *dumpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if Debug {
-		log.Println("/dump START")
-		log.Println("/dump reading body ...")
-	}
-	jsn, err := ioutil.ReadAll(r.Body)
+	sugar := h.sugar.With(zap.String("endpoint", "/dump"))
+	sugar.Debugw("Handling request, reading body ...")
+	jsn, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Println("Error reading the body", err)
+		sugar.Errorw("Error reading body", "error", err)
 		return
 	}
 
+	sugar.Debugw("Unmarshalling record ...")
 	mess := msg.CliMsg{}
-	if Debug {
-		log.Println("/dump unmarshaling record ...")
-	}
 	err = json.Unmarshal(jsn, &mess)
 	if err != nil {
-		log.Println("Decoding error:", err)
-		log.Println("Payload:", jsn)
+		sugar.Errorw("Error during unmarshalling",
+			"error", err,
+			"payload", jsn,
+		)
 		return
 	}
-	if Debug {
-		log.Println("/dump dumping ...")
-	}
-	fullRecords := h.histfileBox.DumpCliRecords()
-	if err != nil {
-		log.Println("Dump error:", err)
-	}
+	sugar.Debugw("Getting records to send ...")
 
-	resp := msg.CliResponse{CliRecords: fullRecords.List}
+	resp := msg.CliResponse{Records: h.history.Dump()}
 	jsn, err = json.Marshal(&resp)
 	if err != nil {
-		log.Println("Encoding error:", err)
+		sugar.Errorw("Error when marshaling", "error", err)
 		return
 	}
 	w.Write(jsn)
-	log.Println("/dump END")
+	sugar.Infow("Request handled")
 }

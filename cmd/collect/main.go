@@ -3,42 +3,35 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 
-	"github.com/BurntSushi/toml"
-	"github.com/curusarn/resh/pkg/cfg"
-	"github.com/curusarn/resh/pkg/collect"
-	"github.com/curusarn/resh/pkg/records"
+	"github.com/curusarn/resh/internal/cfg"
+	"github.com/curusarn/resh/internal/collect"
+	"github.com/curusarn/resh/internal/logger"
+	"github.com/curusarn/resh/internal/output"
+	"github.com/curusarn/resh/internal/recordint"
+	"github.com/curusarn/resh/record"
+	"go.uber.org/zap"
 
 	//  "os/exec"
-	"os/user"
+
 	"path/filepath"
 	"strconv"
 )
 
-// version tag from git set during build
+// info passed during build
 var version string
-
-// Commit hash from git set during build
 var commit string
+var developement bool
 
 func main() {
-	usr, _ := user.Current()
-	dir := usr.HomeDir
-	configPath := filepath.Join(dir, "/.config/resh.toml")
-	reshUUIDPath := filepath.Join(dir, "/.resh/resh-uuid")
-
-	machineIDPath := "/etc/machine-id"
-
-	var config cfg.Config
-	if _, err := toml.DecodeFile(configPath, &config); err != nil {
-		log.Fatal("Error reading config:", err)
+	config, errCfg := cfg.New()
+	logger, _ := logger.New("collect", config.LogLevel, developement)
+	defer logger.Sync() // flushes buffer, if any
+	if errCfg != nil {
+		logger.Error("Error while getting configuration", zap.Error(errCfg))
 	}
-	// recall command
-	recall := flag.Bool("recall", false, "Recall command on position --histno")
-	recallHistno := flag.Int("histno", 0, "Recall command on position --histno")
-	recallPrefix := flag.String("prefix-search", "", "Recall command based on prefix --prefix-search")
+	out := output.New(logger, "resh-collect ERROR")
 
 	// version
 	showVersion := flag.Bool("version", false, "Show version and exit")
@@ -49,60 +42,27 @@ func main() {
 
 	// core
 	cmdLine := flag.String("cmdLine", "", "command line")
-	exitCode := flag.Int("exitCode", -1, "exit code")
-	shell := flag.String("shell", "", "actual shell")
-	uname := flag.String("uname", "", "uname")
-	sessionID := flag.String("sessionId", "", "resh generated session id")
-	recordID := flag.String("recordId", "", "resh generated record id")
 
-	// recall metadata
-	recallActions := flag.String("recall-actions", "", "recall actions that took place before executing the command")
-	recallStrategy := flag.String("recall-strategy", "", "recall strategy used during recall actions")
-	recallLastCmdLine := flag.String("recall-last-cmdline", "", "last recalled cmdline")
-
-	// posix variables
-	cols := flag.String("cols", "-1", "$COLUMNS")
-	lines := flag.String("lines", "-1", "$LINES")
 	home := flag.String("home", "", "$HOME")
-	lang := flag.String("lang", "", "$LANG")
-	lcAll := flag.String("lcAll", "", "$LC_ALL")
-	login := flag.String("login", "", "$LOGIN")
-	// path := flag.String("path", "", "$PATH")
 	pwd := flag.String("pwd", "", "$PWD - present working directory")
-	shellEnv := flag.String("shellEnv", "", "$SHELL")
-	term := flag.String("term", "", "$TERM")
+
+	// FIXME: get device ID
+	deviceID := flag.String("deviceID", "", "RESH device ID")
+	sessionID := flag.String("sessionID", "", "resh generated session ID")
+	recordID := flag.String("recordID", "", "resh generated record ID")
+	sessionPID := flag.Int("sessionPID", -1, "PID at the start of the terminal session")
+
+	shell := flag.String("shell", "", "current shell")
+
+	// logname := flag.String("logname", "", "$LOGNAME")
+	device := flag.String("device", "", "device name, usually $HOSTNAME")
 
 	// non-posix
-	pid := flag.Int("pid", -1, "$$")
-	sessionPid := flag.Int("sessionPid", -1, "$$ at session start")
 	shlvl := flag.Int("shlvl", -1, "$SHLVL")
 
-	host := flag.String("host", "", "$HOSTNAME")
-	hosttype := flag.String("hosttype", "", "$HOSTTYPE")
-	ostype := flag.String("ostype", "", "$OSTYPE")
-	machtype := flag.String("machtype", "", "$MACHTYPE")
-	gitCdup := flag.String("gitCdup", "", "git rev-parse --show-cdup")
 	gitRemote := flag.String("gitRemote", "", "git remote get-url origin")
 
-	gitCdupExitCode := flag.Int("gitCdupExitCode", -1, "... $?")
-	gitRemoteExitCode := flag.Int("gitRemoteExitCode", -1, "... $?")
-
-	// before after
-	timezoneBefore := flag.String("timezoneBefore", "", "")
-
-	osReleaseID := flag.String("osReleaseId", "", "/etc/os-release ID")
-	osReleaseVersionID := flag.String("osReleaseVersionId", "",
-		"/etc/os-release ID")
-	osReleaseIDLike := flag.String("osReleaseIdLike", "", "/etc/os-release ID")
-	osReleaseName := flag.String("osReleaseName", "", "/etc/os-release ID")
-	osReleasePrettyName := flag.String("osReleasePrettyName", "",
-		"/etc/os-release ID")
-
-	rtb := flag.String("realtimeBefore", "-1", "before $EPOCHREALTIME")
-	rtsess := flag.String("realtimeSession", "-1",
-		"on session start $EPOCHREALTIME")
-	rtsessboot := flag.String("realtimeSessSinceBoot", "-1",
-		"on session start $EPOCHREALTIME")
+	time_ := flag.String("time", "-1", "$EPOCHREALTIME")
 	flag.Parse()
 
 	if *showVersion == true {
@@ -114,142 +74,53 @@ func main() {
 		os.Exit(0)
 	}
 	if *requireVersion != "" && *requireVersion != version {
-		fmt.Println("Please restart/reload this terminal session " +
-			"(resh version: " + version +
-			"; resh version of this terminal session: " + *requireVersion +
-			")")
-		os.Exit(3)
+		out.FatalVersionMismatch(version, *requireVersion)
 	}
 	if *requireRevision != "" && *requireRevision != commit {
-		fmt.Println("Please restart/reload this terminal session " +
-			"(resh revision: " + commit +
-			"; resh revision of this terminal session: " + *requireRevision +
-			")")
-		os.Exit(3)
-	}
-	if *recallPrefix != "" && *recall == false {
-		log.Println("Option '--prefix-search' only works with '--recall' option - exiting!")
-		os.Exit(4)
+		// this is only relevant for dev versions so we can reuse FatalVersionMismatch()
+		out.FatalVersionMismatch("revision "+commit, "revision "+*requireVersion)
 	}
 
-	realtimeBefore, err := strconv.ParseFloat(*rtb, 64)
+	time, err := strconv.ParseFloat(*time_, 64)
 	if err != nil {
-		log.Fatal("Flag Parsing error (rtb):", err)
+		out.Fatal("Error while parsing flag --time", err)
 	}
-	realtimeSessionStart, err := strconv.ParseFloat(*rtsess, 64)
-	if err != nil {
-		log.Fatal("Flag Parsing error (rt sess):", err)
-	}
-	realtimeSessSinceBoot, err := strconv.ParseFloat(*rtsessboot, 64)
-	if err != nil {
-		log.Fatal("Flag Parsing error (rt sess boot):", err)
-	}
-	realtimeSinceSessionStart := realtimeBefore - realtimeSessionStart
-	realtimeSinceBoot := realtimeSessSinceBoot + realtimeSinceSessionStart
-
-	timezoneBeforeOffset := collect.GetTimezoneOffsetInSeconds(*timezoneBefore)
-	realtimeBeforeLocal := realtimeBefore + timezoneBeforeOffset
 
 	realPwd, err := filepath.EvalSymlinks(*pwd)
 	if err != nil {
-		log.Println("err while handling pwd realpath:", err)
+		logger.Error("Error while handling pwd realpath", zap.Error(err))
 		realPwd = ""
 	}
 
-	gitDir, gitRealDir := collect.GetGitDirs(*gitCdup, *gitCdupExitCode, *pwd)
-	if *gitRemoteExitCode != 0 {
-		*gitRemote = ""
-	}
+	rec := recordint.Collect{
+		SessionID:  *sessionID,
+		Shlvl:      *shlvl,
+		SessionPID: *sessionPID,
 
-	// if *osReleaseID == "" {
-	// 	*osReleaseID = "linux"
-	// }
-	// if *osReleaseName == "" {
-	// 	*osReleaseName = "Linux"
-	// }
-	// if *osReleasePrettyName == "" {
-	// 	*osReleasePrettyName = "Linux"
-	// }
+		Shell: *shell,
 
-	if *recall {
-		rec := records.SlimRecord{
-			SessionID:    *sessionID,
-			RecallHistno: *recallHistno,
-			RecallPrefix: *recallPrefix,
-		}
-		str, found := collect.SendRecallRequest(rec, strconv.Itoa(config.Port))
-		if found == false {
-			os.Exit(1)
-		}
-		fmt.Println(str)
-	} else {
-		rec := records.Record{
+		Rec: record.V1{
+			DeviceID:  *deviceID,
+			SessionID: *sessionID,
+			RecordID:  *recordID,
+
+			CmdLine: *cmdLine,
+
 			// posix
-			Cols:  *cols,
-			Lines: *lines,
-			// core
-			BaseRecord: records.BaseRecord{
-				RecallHistno: *recallHistno,
+			Home:    *home,
+			Pwd:     *pwd,
+			RealPwd: realPwd,
 
-				CmdLine:   *cmdLine,
-				ExitCode:  *exitCode,
-				Shell:     *shell,
-				Uname:     *uname,
-				SessionID: *sessionID,
-				RecordID:  *recordID,
+			// Logname:  *logname,
+			Device: *device,
 
-				// posix
-				Home:  *home,
-				Lang:  *lang,
-				LcAll: *lcAll,
-				Login: *login,
-				// Path:     *path,
-				Pwd:      *pwd,
-				ShellEnv: *shellEnv,
-				Term:     *term,
+			GitOriginRemote: *gitRemote,
 
-				// non-posix
-				RealPwd:    realPwd,
-				Pid:        *pid,
-				SessionPID: *sessionPid,
-				Host:       *host,
-				Hosttype:   *hosttype,
-				Ostype:     *ostype,
-				Machtype:   *machtype,
-				Shlvl:      *shlvl,
+			Time: fmt.Sprintf("%.4f", time),
 
-				// before after
-				TimezoneBefore: *timezoneBefore,
-
-				RealtimeBefore:      realtimeBefore,
-				RealtimeBeforeLocal: realtimeBeforeLocal,
-
-				RealtimeSinceSessionStart: realtimeSinceSessionStart,
-				RealtimeSinceBoot:         realtimeSinceBoot,
-
-				GitDir:          gitDir,
-				GitRealDir:      gitRealDir,
-				GitOriginRemote: *gitRemote,
-				MachineID:       collect.ReadFileContent(machineIDPath),
-
-				OsReleaseID:         *osReleaseID,
-				OsReleaseVersionID:  *osReleaseVersionID,
-				OsReleaseIDLike:     *osReleaseIDLike,
-				OsReleaseName:       *osReleaseName,
-				OsReleasePrettyName: *osReleasePrettyName,
-
-				PartOne: true,
-
-				ReshUUID:     collect.ReadFileContent(reshUUIDPath),
-				ReshVersion:  version,
-				ReshRevision: commit,
-
-				RecallActionsRaw:  *recallActions,
-				RecallPrefix:      *recallPrefix,
-				RecallStrategy:    *recallStrategy,
-				RecallLastCmdLine: *recallLastCmdLine,
-			},
-		}
-		collect.SendRecord(rec, strconv.Itoa(config.Port), "/record")
+			PartOne:        true,
+			PartsNotMerged: true,
+		},
 	}
+	collect.SendRecord(out, rec, strconv.Itoa(config.Port), "/record")
 }

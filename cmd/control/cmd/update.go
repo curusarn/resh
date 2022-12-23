@@ -3,10 +3,8 @@ package cmd
 import (
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
 
-	"github.com/curusarn/resh/cmd/control/status"
 	"github.com/spf13/cobra"
 )
 
@@ -15,9 +13,11 @@ var updateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "check for updates and update RESH",
 	Run: func(cmd *cobra.Command, args []string) {
-		usr, _ := user.Current()
-		dir := usr.HomeDir
-		rawinstallPath := filepath.Join(dir, ".resh/rawinstall.sh")
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			out.Fatal("Could not get user home dir", err)
+		}
+		rawinstallPath := filepath.Join(homeDir, ".resh/rawinstall.sh")
 		execArgs := []string{rawinstallPath}
 		if betaFlag {
 			execArgs = append(execArgs, "--beta")
@@ -25,9 +25,9 @@ var updateCmd = &cobra.Command{
 		execCmd := exec.Command("bash", execArgs...)
 		execCmd.Stdout = os.Stdout
 		execCmd.Stderr = os.Stderr
-		err := execCmd.Run()
-		if err == nil {
-			exitCode = status.Success
+		err = execCmd.Run()
+		if err != nil {
+			out.Fatal("Update ended with error", err)
 		}
 	},
 }
