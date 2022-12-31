@@ -111,6 +111,15 @@ builds:
       - amd64
       - arm
       - arm64
+  -
+    id: "get-epochtime"
+    main: ./cmd/get-epochtime
+    binary: bin/resh-get-epochtime
+    goarch:
+      - 386
+      - amd64
+      - arm
+      - arm64
 
 # signs:
 #   - artifacts: checksum

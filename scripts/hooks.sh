@@ -20,8 +20,7 @@ __resh_collect() {
     local __RESH_SHLVL="$SHLVL"
     local __RESH_GIT_REMOTE; __RESH_GIT_REMOTE="$(git remote get-url origin 2>/dev/null)"
 
-    # __RESH_RT_BEFORE="$EPOCHREALTIME"
-    __RESH_RT_BEFORE=$(__resh_get_epochrealtime)
+    __RESH_RT_BEFORE=$(resh-get-epochtime)
 
     if [ "$__RESH_VERSION" != "$(resh-collect -version)" ]; then
         # shellcheck source=shellrc.sh
@@ -61,7 +60,7 @@ __resh_precmd() {
     local __RESH_EXIT_CODE=$?
     local __RESH_RT_AFTER
     local __RESH_SHLVL="$SHLVL"
-    __RESH_RT_AFTER=$(__resh_get_epochrealtime)
+    __RESH_RT_AFTER=$(resh-get-epochtime)
     if [ -n "${__RESH_COLLECT}" ]; then
         if [ "$__RESH_VERSION" != "$(resh-postcollect -version)" ]; then
             # shellcheck source=shellrc.sh

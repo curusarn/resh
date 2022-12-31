@@ -2,48 +2,6 @@
 
 # util.sh - resh utility functions 
 
-__resh_get_pid() {
-    if [ -n "${ZSH_VERSION-}" ]; then
-        # assume Zsh
-        local __RESH_PID="$$" # current pid
-    elif [ -n "${BASH_VERSION-}" ]; then
-        # assume Bash
-        if [ "${BASH_VERSINFO[0]}" -ge "4" ]; then
-            # $BASHPID is only available in bash4+
-            # $$ is fairly similar so it should not be an issue
-            local __RESH_PID="$BASHPID" # current pid
-        else
-            local __RESH_PID="$$" # current pid
-        fi
-    fi
-    echo "$__RESH_PID"
-}
-
-__resh_get_epochrealtime() {
-    if date +%s.%N | grep -vq 'N'; then
-        # GNU date
-        date +%s.%N
-    elif gdate --version >/dev/null && gdate +%s.%N | grep -vq 'N'; then
-        # GNU date take 2
-        gdate +%s.%N
-    elif [ -n "${ZSH_VERSION-}" ]; then
-        # zsh fallback using $EPOCHREALTIME
-        if [ -z "${__RESH_ZSH_LOADED_DATETIME+x}" ]; then
-            zmodload zsh/datetime
-            __RESH_ZSH_LOADED_DATETIME=1
-        fi
-        echo "$EPOCHREALTIME"
-    else
-        # dumb date 
-        # XXX: we lost precison beyond seconds
-        date +%s
-        if [ -z "${__RESH_DATE_WARN+x}" ]; then
-            echo "resh WARN: can't get precise time - consider installing GNU date!"
-            __RESH_DATE_WARN=1
-        fi
-    fi
-}
-
 # FIXME: figure out if stdout/stderr should be discarded
 __resh_run_daemon() {
     if [ -n "${ZSH_VERSION-}" ]; then
