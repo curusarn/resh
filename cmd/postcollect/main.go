@@ -7,7 +7,6 @@ import (
 
 	"github.com/curusarn/resh/internal/cfg"
 	"github.com/curusarn/resh/internal/collect"
-	"github.com/curusarn/resh/internal/epochtime"
 	"github.com/curusarn/resh/internal/logger"
 	"github.com/curusarn/resh/internal/output"
 	"github.com/curusarn/resh/internal/recordint"
@@ -25,8 +24,6 @@ var commit string
 var development string
 
 func main() {
-	epochTime := epochtime.Now()
-
 	config, errCfg := cfg.New()
 	logger, err := logger.New("postcollect", config.LogLevel, development)
 	if err != nil {
