@@ -1,9 +1,6 @@
 #!/hint/sh
 
 PATH=$PATH:~/.resh/bin
-# if [ -n "$ZSH_VERSION" ]; then
-#     zmodload zsh/datetime
-# fi
 
 # shellcheck source=hooks.sh
 . ~/.resh/hooks.sh
@@ -31,7 +28,7 @@ export __RESH_VERSION=$(resh-collect -version)
 # shellcheck disable=2155
 export __RESH_REVISION=$(resh-collect -revision)
 
-__resh_run_daemon
+resh-daemon-start
 
 [ "$(resh-config --key BindControlR)" = true ] && __resh_bind_control_R
 

@@ -9,7 +9,12 @@ build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect\
   bin/resh-daemon bin/resh-control bin/resh-config bin/resh-cli\
   bin/resh-install-utils bin/resh-generate-uuid bin/resh-get-epochtime
 
+# we disable jobserver for the actual installation because we want it to run serially
+# Make waits to the daemon process we launch during install and hangs
 install: build
+	make -j1 _install
+
+_install:
 	scripts/install.sh
 
 test:
@@ -34,7 +39,6 @@ bin/resh-%: $(go_files)
 	go build ${GOFLAGS} -o $@ cmd/$*/*.go
 
 .PHONY: submodules build install rebuild uninstall clean test
-
 
 submodules: | submodules/bash-preexec/bash-preexec.sh submodules/bash-zsh-compat-widgets/bindfunc.sh
 	@# sets submodule.recurse to true if unset

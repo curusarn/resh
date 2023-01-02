@@ -37,7 +37,6 @@ __resh_collect() {
             echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh revision: $(resh-collect -revision); resh revision of this terminal session: ${__RESH_REVISION})"
         fi
     fi
-    # TODO: change how resh-uuid is read
     if [ "$__RESH_VERSION" = "$(resh-collect -version)" ] && [ "$__RESH_REVISION" = "$(resh-collect -revision)" ]; then
         resh-collect -requireVersion "$__RESH_VERSION" \
                     -requireRevision "$__RESH_REVISION" \
@@ -51,9 +50,9 @@ __resh_collect() {
                     -gitRemote "$__RESH_GIT_REMOTE" \
                     -time "$__RESH_RT_BEFORE" \
                     "$@"
-            return $?
-        fi
-        return 1
+        return $?
+    fi
+    return 1
 }
 
 __resh_precmd() {

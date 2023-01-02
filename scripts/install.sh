@@ -109,6 +109,7 @@ cp -f submodules/bash-preexec/bash-preexec.sh ~/.bash-preexec.sh
 cp -f submodules/bash-zsh-compat-widgets/bindfunc.sh ~/.resh/bindfunc.sh
 
 cp -f scripts/shellrc.sh ~/.resh/shellrc
+cp -f scripts/resh-daemon-start.sh ~/.resh/bin/resh-daemon-start
 cp -f scripts/reshctl.sh scripts/widgets.sh scripts/hooks.sh scripts/util.sh ~/.resh/
 cp -f scripts/rawinstall.sh ~/.resh/
 
@@ -126,11 +127,15 @@ if [ ! -f "$pid_file" ]; then
     pid_file=~/.resh/resh.pid
 fi
 
+failed_to_kill() {
+    echo "ERROR: Failed to kill the resh-daemon - maybe it wasn't running?"
+}
+
 if [ -f "$pid_file" ]; then
-    kill -SIGTERM "$pid_file"
+    kill -SIGKILL "$pid_file" || failed_to_kill
     rm "$pid_file"
 else
-    pkill -SIGTERM "resh-daemon"
+    pkill -SIGKILL "resh-daemon" || failed_to_kill
 fi
 
 echo "Creating/updating config file ..."
@@ -161,13 +166,8 @@ fi
 # Deleting zsh completion cache - for future use
 # [ ! -e ~/.zcompdump ] || rm ~/.zcompdump
 
-# Source utils to get __resh_run_daemon function
-# shellcheck source=util.sh
-. ~/.resh/util.sh
-
 echo "Launching resh daemon ..."
-__resh_run_daemon
-
+~/.resh/bin/resh-daemon-start
 
 info="---- Scroll down using arrow keys ----
 #####################################

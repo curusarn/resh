@@ -50,14 +50,6 @@ __resh_unbind_control_R() {
     return 0
 }
 
-__resh_bind_all() {
-    __resh_bind_control_R
-}
-
-__resh_unbind_all() {
-    __resh_unbind_control_R
-}
-
 # wrapper for resh-cli for calling resh directly
 resh() {
     local buffer

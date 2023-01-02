@@ -2,22 +2,6 @@
 
 # util.sh - resh utility functions 
 
-# FIXME: figure out if stdout/stderr should be discarded
-__resh_run_daemon() {
-    if [ -n "${ZSH_VERSION-}" ]; then
-        setopt LOCAL_OPTIONS NO_NOTIFY NO_MONITOR
-    fi
-    if [ "$(uname)" = Darwin ]; then
-        # hotfix
-        gnohup resh-daemon >/dev/null 2>/dev/null & disown
-    else
-        # TODO: switch to nohup for consistency once you confirm that daemon is
-        #       not getting killed anymore on macOS
-        nohup resh-daemon >/dev/null 2>/dev/null & disown
-        #setsid resh-daemon 2>&1 & disown
-    fi
-}
-
 __resh_session_init() {
     if [ "$__RESH_VERSION" != "$(resh-session-init -version)" ]; then
         # shellcheck source=shellrc.sh
