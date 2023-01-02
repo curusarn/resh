@@ -1,5 +1,10 @@
 package records
 
+// DEPRECATION NOTICE: This package should be removed in favor of:
+// - record: public record definitions
+// - recordint: internal record definitions
+// - recutil: record-related utils
+
 import (
 	"bufio"
 	"os"
