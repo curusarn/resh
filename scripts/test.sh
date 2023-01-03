@@ -9,7 +9,7 @@ for f in scripts/*.sh; do
     shellcheck "$f" --shell=bash --severity=error || exit 1
 done
 
-for f in scripts/{shellrc,util,reshctl,hooks}.sh; do
+for f in scripts/{shellrc,reshctl,hooks}.sh; do
     echo "Checking Zsh syntax of $f ..."
     ! zsh -n "$f" && echo "Zsh syntax check failed!" && exit 1
 done
