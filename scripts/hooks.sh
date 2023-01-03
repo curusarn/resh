@@ -1,5 +1,21 @@
 #!/hint/sh
 
+__resh_maybe_reload() {
+    if [ "$__RESH_VERSION" != "$(resh-collect -version)" ]; then
+        # shellcheck source=shellrc.sh
+        source ~/.resh/shellrc
+        local version="$(resh-collect -version)"
+        if [ "$__RESH_VERSION" != "$version" ]; then
+            # this should not happen
+            echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh version: $version); resh version of this terminal session: ${__RESH_VERSION})"
+            return 1
+        else
+            echo "RESH INFO: New RESH shellrc script was loaded - if you encounter any issues please restart this terminal session."
+        fi
+    fi
+    return 0
+}
+
 __resh_reset_variables() {
     __RESH_RECORD_ID=$(resh-generate-uuid)
 }
@@ -22,22 +38,7 @@ __resh_collect() {
 
     __RESH_RT_BEFORE=$(resh-get-epochtime)
 
-    if [ "$__RESH_VERSION" != "$(resh-collect -version)" ]; then
-        # shellcheck source=shellrc.sh
-        source ~/.resh/shellrc 
-        if [ "$__RESH_VERSION" != "$(resh-collect -version)" ]; then
-            echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh version: $(resh-collect -version); resh version of this terminal session: ${__RESH_VERSION})"
-        else
-            echo "RESH INFO: New RESH shellrc script was loaded - if you encounter any issues please restart this terminal session."
-        fi
-    elif [ "$__RESH_REVISION" != "$(resh-collect -revision)" ]; then
-        # shellcheck source=shellrc.sh
-        source ~/.resh/shellrc
-        if [ "$__RESH_REVISION" != "$(resh-collect -revision)" ]; then
-            echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh revision: $(resh-collect -revision); resh revision of this terminal session: ${__RESH_REVISION})"
-        fi
-    fi
-    if [ "$__RESH_VERSION" = "$(resh-collect -version)" ] && [ "$__RESH_REVISION" = "$(resh-collect -revision)" ]; then
+    if __resh_maybe_reload; then
         resh-collect -requireVersion "$__RESH_VERSION" \
                     -requireRevision "$__RESH_REVISION" \
                     -shell "$__RESH_SHELL" \
@@ -61,22 +62,7 @@ __resh_precmd() {
     local __RESH_SHLVL="$SHLVL"
     __RESH_RT_AFTER=$(resh-get-epochtime)
     if [ -n "${__RESH_COLLECT}" ]; then
-        if [ "$__RESH_VERSION" != "$(resh-postcollect -version)" ]; then
-            # shellcheck source=shellrc.sh
-            source ~/.resh/shellrc
-            if [ "$__RESH_VERSION" != "$(resh-postcollect -version)" ]; then
-                echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh version: $(resh-collect -version); resh version of this terminal session: ${__RESH_VERSION})"
-            else
-                echo "RESH INFO: New RESH shellrc script was loaded - if you encounter any issues please restart this terminal session."
-            fi
-        elif [ "$__RESH_REVISION" != "$(resh-postcollect -revision)" ]; then
-            # shellcheck source=shellrc.sh
-            source ~/.resh/shellrc
-            if [ "$__RESH_REVISION" != "$(resh-postcollect -revision)" ]; then
-                echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh revision: $(resh-collect -revision); resh revision of this terminal session: ${__RESH_REVISION})"
-            fi
-        fi
-        if [ "$__RESH_VERSION" = "$(resh-postcollect -version)" ] && [ "$__RESH_REVISION" = "$(resh-postcollect -revision)" ]; then
+        if __resh_maybe_reload; then
             resh-postcollect -requireVersion "$__RESH_VERSION" \
                         -requireRevision "$__RESH_REVISION" \
                         -timeBefore "$__RESH_RT_BEFORE" \
@@ -92,22 +78,7 @@ __resh_precmd() {
 }
 
 __resh_session_init() {
-    if [ "$__RESH_VERSION" != "$(resh-session-init -version)" ]; then
-        # shellcheck source=shellrc.sh
-        source ~/.resh/shellrc
-        if [ "$__RESH_VERSION" != "$(resh-session-init -version)" ]; then
-            echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh version: $(resh-session-init -version); resh version of this terminal session: ${__RESH_VERSION})"
-        else
-            echo "RESH INFO: New RESH shellrc script was loaded - if you encounter any issues please restart this terminal session."
-        fi
-    elif [ "$__RESH_REVISION" != "$(resh-session-init -revision)" ]; then
-        # shellcheck source=shellrc.sh
-        source ~/.resh/shellrc
-        if [ "$__RESH_REVISION" != "$(resh-session-init -revision)" ]; then
-            echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh revision: $(resh-session-init -revision); resh revision of this terminal session: ${__RESH_REVISION})"
-        fi
-    fi
-    if [ "$__RESH_VERSION" = "$(resh-session-init -version)" ] && [ "$__RESH_REVISION" = "$(resh-session-init -revision)" ]; then
+    if __resh_maybe_reload; then
         resh-session-init -requireVersion "$__RESH_VERSION" \
                     -requireRevision "$__RESH_REVISION" \
                     -sessionId "$__RESH_SESSION_ID" \

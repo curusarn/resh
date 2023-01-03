@@ -4,8 +4,6 @@ PATH=$PATH:~/.resh/bin
 
 # shellcheck source=hooks.sh
 . ~/.resh/hooks.sh
-# shellcheck source=util.sh
-. ~/.resh/util.sh
 # shellcheck source=reshctl.sh
 . ~/.resh/reshctl.sh
 

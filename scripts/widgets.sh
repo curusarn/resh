@@ -14,6 +14,9 @@ __resh_widget_control_R() {
 
     local status_code
     local git_remote; git_remote="$(git remote get-url origin 2>/dev/null)"
+    if ! __resh_maybe_reload; then
+        return 1
+    fi
     BUFFER=$(resh-cli --sessionID "$__RESH_SESSION_ID" --pwd "$PWD" --gitOriginRemote "$git_remote" --query "$BUFFER")
     status_code=$?
     if [ $status_code = 111 ]; then
