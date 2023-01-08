@@ -205,7 +205,13 @@ ISSUES & FEEDBACK
     Please report issues to: https://github.com/curusarn/resh/issues
     Feedback and suggestions are very welcome!
 "
-
+if [ -z "${__RESH_VERSION:-}" ]; then info="$info
+##############################################################
+#                                                            #
+#    Finish the installation by RESTARTING this terminal!    #
+#                                                            #
+##############################################################"
+fi
 info="$info
 ---- Close this by pressing Q ----" 
 
@@ -216,3 +222,11 @@ echo "All done!"
 echo "Thank you for using RESH"
 echo "Report issues here: https://github.com/curusarn/resh/issues"
 echo "Ctrl+R launches the RESH SEARCH app"
+
+if [ -z "${__RESH_VERSION:-}" ]; then printf "
+##############################################################
+#                                                            #
+#    Finish the installation by RESTARTING this terminal!    #
+#                                                            #
+##############################################################\n"
+fi

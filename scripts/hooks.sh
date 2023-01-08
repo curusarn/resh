@@ -21,9 +21,6 @@ __resh_reload_shellrc() {
 #   => The `__resh_preexec` function needs to exist in all future versions.
 #   => Make sure that `__RESH_NO_RELOAD` behavior is not broken in any future version.
 #   => Prefer only testing `__RESH_NO_RELOAD` for emptyness instead of specific value
-# Other:
-# - Return status code of `resh-collect` and `resh-postcollect` commands from `__resh_preexec` and `__resh_precmd` respectively.
-#   - Even nested calls of `__resh_preexec` should propagate the status.
 
 
 # (pre)collect
@@ -37,8 +34,8 @@ __resh_preexec() {
         # Reload shell files and restart __resh_preexec - i.e. the full command will be recorded only with a slight delay.
         # This should happens in every already open terminal after resh update.
 
-        # If `$2` is non-empty we play it safe, don't reload, and leave it up to resh-collect to error because of `--required-version` option.
-        # This behavior gives user and error instead of handling things silently and risking infinite recursion.
+        # If for any reason the __RESH_VERSION is still wrong we don't reload again to prevent potentially infinite recursion.
+        # User will most likely see error because of `resh-collect -requiredVersion`.
 
         __resh_reload_shellrc
         # Rerun self but prevent another reload. Extra protection against infinite recursion.
