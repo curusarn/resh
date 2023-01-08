@@ -82,10 +82,7 @@ RESH SEARCH app replaces the standard reverse search - launch it using Ctrl+R.
 
 Enable/disable the Ctrl+R keybinding:
 
-```sh
-reshctl enable ctrl_r_binding
-reshctl disable ctrl_r_binding
-```
+TODO: how to enable disable keybindings
 
 ### In-app key bindings
 

@@ -155,6 +155,73 @@ __resh_widget_control_R() {
     CURSOR=${#BUFFER}
 }
 
+# Wrapper for resh-cli for calling resh directly
+resh() {
+    if [ "$(resh-cli -version)" != "$__RESH_VERSION" ] && [ -z "${__RESH_NO_RELOAD-}" ]; then
+        source ~/.resh/shellrc
+        # Show reload message from the updated shell files
+        __resh_reload_msg
+        # Rerun self but prevent another reload. Extra protection against infinite recursion.
+        __RESH_NO_RELOAD=1 resh "$@"
+        return $?
+    fi
+    local buffer
+    local git_remote; git_remote="$(git remote get-url origin 2>/dev/null)"
+    buffer=$(resh-cli -requireVersion "$__RESH_VERSION" \
+        --git-origin-remote "$git_remote" \
+        --pwd "$PWD" \
+        --session-id "$__RESH_SESSION_ID" \
+        "$@"
+    )
+    status_code=$?
+    if [ $status_code = 111 ]; then
+        # execute
+        echo "$buffer"
+        eval "$buffer"
+    elif [ $status_code = 0 ]; then
+        # paste
+        echo "$buffer"
+    elif [ $status_code = 130 ]; then
+        true
+    else
+        printf "%s" "$buffer" >&2
+    fi
+}
+
 __resh_widget_control_R_compat() {
    __bindfunc_compat_wrapper __resh_widget_control_R
+}
+
+__resh_nop() {
+    # does nothing
+    true
+}
+
+# shellcheck source=../submodules/bash-zsh-compat-widgets/bindfunc.sh
+. ~/.resh/bindfunc.sh
+
+__resh_bind_control_R() {
+    bindfunc --revert '\C-r' __resh_widget_control_R_compat
+    if [ "${__RESH_control_R_bind_enabled-0}" != 0 ]; then
+        # Re-binding is a valid usecase but it shouldn't happen much
+        # so this is a warning
+        # echo "Re-binding RESH SEARCH app to Ctrl+R ..."
+    else
+        # Only save original binding if resh binding was not enabled
+        __RESH_bindfunc_revert_control_R_bind=$_bindfunc_revert
+    fi
+    __RESH_control_R_bind_enabled=1
+    if [ -n "${BASH_VERSION-}" ]; then
+        # fuck bash
+        bind '"\C-r": "\u[31~\u[32~"'
+        bind -x '"\u[31~": __resh_widget_control_R_compat'
+
+        # execute
+        # bind '"\u[32~": accept-line'
+
+        # just paste
+        # bind -x '"\u[32~": __resh_nop'
+        true
+    fi
+    return 0
 }

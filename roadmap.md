@@ -9,6 +9,8 @@
 
 *NOTE: Features can change in the future*
 
+TODO: Update this
+
 - :heavy_check_mark: Record shell history with metadata
   - :heavy_check_mark: save it as JSON to `~/.resh_history.json`
 

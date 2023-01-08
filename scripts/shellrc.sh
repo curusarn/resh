@@ -4,8 +4,6 @@ PATH=$PATH:~/.resh/bin
 
 # shellcheck source=hooks.sh
 . ~/.resh/hooks.sh
-# shellcheck source=reshctl.sh
-. ~/.resh/reshctl.sh
 
 if [ -n "${ZSH_VERSION-}" ]; then
     # shellcheck disable=SC1009

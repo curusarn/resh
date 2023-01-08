@@ -93,13 +93,13 @@ cp -f submodules/bash-zsh-compat-widgets/bindfunc.sh ~/.resh/bindfunc.sh
 
 cp -f scripts/shellrc.sh ~/.resh/shellrc
 cp -f scripts/resh-daemon-start.sh ~/.resh/bin/resh-daemon-start
-cp -f scripts/reshctl.sh scripts/hooks.sh ~/.resh/
+cp -f scripts/hooks.sh ~/.resh/
 cp -f scripts/rawinstall.sh ~/.resh/
 
 # Copy all executables. We don't really need to omit install-utils from the bin directory
 echo "Copying more files ..."
 cp -f bin/resh-* ~/.resh/bin/
-# rename reshctl
+# Rename reshctl
 mv ~/.resh/bin/resh-control ~/.resh/bin/reshctl
 
 # Shutting down resh daemon ...
