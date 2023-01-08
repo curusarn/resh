@@ -16,15 +16,8 @@ else
     echo "RESH PANIC: unrecognized shell - please report this to https://github.com/curusarn/resh/issues"
 fi
 
-# TODO: read this from resh-specific file
-#       create that file during install
-__RESH_DEVICE="$__RESH_HOST"
-__RESH_HOME="$HOME"
-
 # shellcheck disable=2155
 export __RESH_VERSION=$(resh-collect -version)
-# shellcheck disable=2155
-export __RESH_REVISION=$(resh-collect -revision)
 
 resh-daemon-start
 
@@ -34,10 +27,9 @@ resh-daemon-start
 # NOTE: nested shells are still the same session
 #       i.e. $__RESH_SESSION_ID will be set in nested shells
 if [ -z "${__RESH_SESSION_ID+x}" ]; then
-    export __RESH_SESSION_ID; __RESH_SESSION_ID=$(resh-generate-uuid)
-    export __RESH_SESSION_PID="$$"
+    # shellcheck disable=2155
+    export __RESH_SESSION_ID=$(resh-generate-uuid)
 
-    __resh_reset_variables
     __resh_session_init
 fi
 
@@ -47,8 +39,6 @@ fi
 if [ -z "${__RESH_INIT_DONE+x}" ]; then
     preexec_functions+=(__resh_preexec)
     precmd_functions+=(__resh_precmd)
-
-    __resh_reset_variables
 
     __RESH_INIT_DONE=1
 fi

@@ -1,15 +1,16 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 
 	"github.com/curusarn/resh/internal/cfg"
 	"github.com/curusarn/resh/internal/collect"
 	"github.com/curusarn/resh/internal/logger"
+	"github.com/curusarn/resh/internal/opt"
 	"github.com/curusarn/resh/internal/output"
 	"github.com/curusarn/resh/internal/recordint"
+	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 
 	"strconv"
@@ -32,32 +33,12 @@ func main() {
 	}
 	out := output.New(logger, "resh-collect ERROR")
 
-	showVersion := flag.Bool("version", false, "Show version and exit")
-	showRevision := flag.Bool("revision", false, "Show git revision and exit")
+	args := opt.HandleVersionOpts(out, os.Args, version, commit)
 
-	requireVersion := flag.String("requireVersion", "", "abort if version doesn't match")
-	requireRevision := flag.String("requireRevision", "", "abort if revision doesn't match")
-
-	sessionID := flag.String("sessionId", "", "resh generated session id")
-
-	sessionPID := flag.Int("sessionPid", -1, "$$ at session start")
-	flag.Parse()
-
-	if *showVersion == true {
-		fmt.Println(version)
-		os.Exit(0)
-	}
-	if *showRevision == true {
-		fmt.Println(commit)
-		os.Exit(0)
-	}
-	if *requireVersion != "" && *requireVersion != version {
-		out.FatalTerminalVersionMismatch(version, *requireVersion)
-	}
-	if *requireRevision != "" && *requireRevision != commit {
-		// this is only relevant for dev versions so we can reuse FatalVersionMismatch()
-		out.FatalTerminalVersionMismatch("revision "+commit, "revision "+*requireVersion)
-	}
+	flags := pflag.NewFlagSet("", pflag.ExitOnError)
+	sessionID := flags.String("session-id", "", "Resh generated session ID")
+	sessionPID := flags.Int("session-pid", -1, "$$ - Shell session PID")
+	flags.Parse(args)
 
 	rec := recordint.SessionInit{
 		SessionID:  *sessionID,

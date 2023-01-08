@@ -48,7 +48,7 @@ var msgDaemonNotRunning = `Resh-daemon didn't respond - it's probably not runnin
  -> You can create an issue at: https://github.com/curusarn/resh/issues
 
 `
-var msgVersionMismatch = `This terminal session was started with different resh version than is installed now.
+var msgTerminalVersionMismatch = `This terminal session was started with different resh version than is installed now.
 It looks like you updated resh and didn't restart this terminal.
 
  -> Restart this terminal window to fix that
@@ -74,23 +74,23 @@ func (f *Output) FatalDaemonNotRunning(err error) {
 }
 
 func (f *Output) ErrorTerminalVersionMismatch(installedVer, terminalVer string) {
-	fmt.Fprintf(os.Stderr, "%s: %s\n\n(installed version: %s, this terminal version: %s)",
-		f.ErrPrefix, msgVersionMismatch, installedVer, terminalVer)
+	fmt.Fprintf(os.Stderr, "%s: %s(installed version: %s, this terminal version: %s)\n\n",
+		f.ErrPrefix, msgTerminalVersionMismatch, installedVer, terminalVer)
 	f.Logger.Fatal("Version mismatch",
 		zap.String("installed", installedVer),
 		zap.String("terminal", terminalVer))
 }
 
 func (f *Output) FatalTerminalVersionMismatch(installedVer, terminalVer string) {
-	fmt.Fprintf(os.Stderr, "%s: %s\n(installed version: %s, this terminal version: %s)\n",
-		f.ErrPrefix, msgVersionMismatch, installedVer, terminalVer)
+	fmt.Fprintf(os.Stderr, "%s: %s(installed version: %s, this terminal version: %s)\n\n",
+		f.ErrPrefix, msgTerminalVersionMismatch, installedVer, terminalVer)
 	f.Logger.Fatal("Version mismatch",
 		zap.String("installed", installedVer),
 		zap.String("terminal", terminalVer))
 }
 
 func (f *Output) ErrorDaemonVersionMismatch(installedVer, daemonVer string) {
-	fmt.Fprintf(os.Stderr, "%s: %s\n(installed version: %s, running daemon version: %s)\n",
+	fmt.Fprintf(os.Stderr, "%s: %s(installed version: %s, running daemon version: %s)\n\n",
 		f.ErrPrefix, msgDaemonVersionMismatch, installedVer, daemonVer)
 	f.Logger.Error("Version mismatch",
 		zap.String("installed", installedVer),
@@ -98,7 +98,7 @@ func (f *Output) ErrorDaemonVersionMismatch(installedVer, daemonVer string) {
 }
 
 func (f *Output) FatalDaemonVersionMismatch(installedVer, daemonVer string) {
-	fmt.Fprintf(os.Stderr, "%s: %s\n(installed version: %s, running daemon version: %s)\n",
+	fmt.Fprintf(os.Stderr, "%s: %s(installed version: %s, running daemon version: %s)\n\n",
 		f.ErrPrefix, msgDaemonVersionMismatch, installedVer, daemonVer)
 	f.Logger.Fatal("Version mismatch",
 		zap.String("installed", installedVer),

@@ -1,87 +1,106 @@
 #!/hint/sh
 
-__resh_maybe_reload() {
-    if [ "$__RESH_VERSION" != "$(resh-collect -version)" ]; then
-        # shellcheck source=shellrc.sh
-        source ~/.resh/shellrc
-        local version="$(resh-collect -version)"
-        if [ "$__RESH_VERSION" != "$version" ]; then
-            # this should not happen
-            echo "RESH WARNING: You probably just updated RESH - PLEASE RESTART OR RELOAD THIS TERMINAL SESSION (resh version: $version); resh version of this terminal session: ${__RESH_VERSION})"
-            return 1
-        else
-            echo "RESH INFO: New RESH shellrc script was loaded - if you encounter any issues please restart this terminal session."
-        fi
-    fi
-    return 0
+__resh_reload_shellrc() {
+    source ~/.resh/shellrc
+    printf '\n'
+    printf '+--------------------------------------------------------------+\n'
+    printf '| New version of RESH shell files was loaded in this terminal. |\n'
+    printf '| This is an informative message - no action is necessary.     |\n'
+    printf '| Please restart this terminal if you encounter any issues.    |\n'
+    printf '+--------------------------------------------------------------+\n'
+    printf '\n'
 }
 
-__resh_reset_variables() {
-    __RESH_RECORD_ID=$(resh-generate-uuid)
-}
+# BACKWARDS COMPATIBILITY NOTES:
+#
+# Stable names and options:
+# * `resh-collect -version` / `resh-postcollect -version` is used to detect version mismatch.
+#   => The go-like/short `-version` option needs to exist for new resh-(post)collect commands in all future version.
+#   => Prefer using go-like/short `-version` option so that we don't have more options to support indefinitely.
+# * `__resh_preexec <CMDLINE>` with `__RESH_NO_RELOAD=1` is called on version mismatch.
+#   => The `__resh_preexec` function needs to exist in all future versions.
+#   => Make sure that `__RESH_NO_RELOAD` behavior is not broken in any future version.
+#   => Prefer only testing `__RESH_NO_RELOAD` for emptyness instead of specific value
+# Other:
+# - Return status code of `resh-collect` and `resh-postcollect` commands from `__resh_preexec` and `__resh_precmd` respectively.
+#   - Even nested calls of `__resh_preexec` should propagate the status.
 
+
+# (pre)collect
+# Backwards compatibilty: Please see notes above before making any changes here.
 __resh_preexec() {
-    # core
-    __RESH_COLLECT=1
-    __RESH_CMDLINE="$1" # not local to preserve it for postcollect (useful as sanity check)
-    __resh_collect --cmdLine "$__RESH_CMDLINE"
-}
+    # $1 is command line
+    # $2 can be --no-reload opt
+    # Backwards compatibity: Do not change -version opt.
+    #                        It is called by new shell files to detect version mismatch.
+    if [ "$(resh-collect -version)" != "$__RESH_VERSION" ] && [ -z "${__RESH_NO_RELOAD-}" ]; then
+        # Reload shell files and restart __resh_preexec - i.e. the full command will be recorded only with a slight delay.
+        # This should happens in every already open terminal after resh update.
 
-# used for collect and collect --recall
-__resh_collect() {
-    # posix
-    local __RESH_PWD="$PWD"
-    
-    # non-posix
-    local __RESH_SHLVL="$SHLVL"
-    local __RESH_GIT_REMOTE; __RESH_GIT_REMOTE="$(git remote get-url origin 2>/dev/null)"
+        # If `$2` is non-empty we play it safe, don't reload, and leave it up to resh-collect to error because of `--required-version` option.
+        # This behavior gives user and error instead of handling things silently and risking infinite recursion.
 
-    __RESH_RT_BEFORE=$(resh-get-epochtime)
-
-    if __resh_maybe_reload; then
-        resh-collect -requireVersion "$__RESH_VERSION" \
-                    -requireRevision "$__RESH_REVISION" \
-                    -shell "$__RESH_SHELL" \
-                    -sessionID "$__RESH_SESSION_ID" \
-                    -recordID "$__RESH_RECORD_ID" \
-                    -home "$__RESH_HOME" \
-                    -pwd "$__RESH_PWD" \
-                    -sessionPID "$__RESH_SESSION_PID" \
-                    -shlvl "$__RESH_SHLVL" \
-                    -gitRemote "$__RESH_GIT_REMOTE" \
-                    -time "$__RESH_RT_BEFORE" \
-                    "$@"
+        __resh_reload_shellrc
+        # Rerun self but prevent another reload. Extra protection against infinite recursion.
+        __RESH_NO_RELOAD=1 __resh_preexec "$@"
         return $?
     fi
-    return 1
+    __RESH_COLLECT=1
+    __RESH_RECORD_ID=$(resh-generate-uuid)
+    # TODO: do this in resh-collect
+    # shellcheck disable=2155
+    local git_remote="$(git remote get-url origin 2>/dev/null)"
+    # TODO: do this in resh-collect
+    __RESH_RT_BEFORE=$(resh-get-epochtime)
+    resh-collect -requireVersion "$__RESH_VERSION" \
+        --git-remote "$git_remote" \
+        --home "$HOME" \
+        --pwd "$PWD" \
+        --record-id "$__RESH_RECORD_ID" \
+        --session-id "$__RESH_SESSION_ID" \
+        --session-pid "$$" \
+        --shell "$__RESH_SHELL" \
+        --shlvl "$SHLVL" \
+        --time "$__RESH_RT_BEFORE" \
+        --cmd-line "$1"
+    return $?
 }
 
+# postcollect
+# Backwards compatibilty: Please see notes above before making any changes here.
 __resh_precmd() {
-    local __RESH_EXIT_CODE=$?
-    local __RESH_RT_AFTER
-    local __RESH_SHLVL="$SHLVL"
-    __RESH_RT_AFTER=$(resh-get-epochtime)
-    if [ -n "${__RESH_COLLECT}" ]; then
-        if __resh_maybe_reload; then
-            resh-postcollect -requireVersion "$__RESH_VERSION" \
-                        -requireRevision "$__RESH_REVISION" \
-                        -timeBefore "$__RESH_RT_BEFORE" \
-                        -exitCode "$__RESH_EXIT_CODE" \
-                        -sessionID "$__RESH_SESSION_ID" \
-                        -recordID "$__RESH_RECORD_ID" \
-                        -shlvl "$__RESH_SHLVL" \
-                        -timeAfter "$__RESH_RT_AFTER"
-        fi
-        __resh_reset_variables
+    # Get status first before it gets overriden by another command.
+    local exit_code=$?
+    # Don't do anything if __resh_preexec was not called.
+    # There are situations (in bash) where no command was submitted but __resh_precmd gets called anyway.
+    [ -n "${__RESH_COLLECT-}" ] || return
+    if [ "$(resh-postcollect -version)" != "$__RESH_VERSION" ]; then
+        # Reload shell files and return - i.e. skip recording part2 for this command.
+        # We don't call __resh_precmd because the new __resh_preexec might not be backwards compatible with variables set by old __resh_preexec.
+        # This should happen only in the one terminal where resh update was executed.
+        # And the resh-daemon was likely restarted so we likely don't even have the matching part1 of the comand in the resh-daemon memory.
+        __resh_reload_shellrc
+        return
     fi
     unset __RESH_COLLECT
+
+    # do this in resh-postcollect
+    # shellcheck disable=2155
+    local rt_after=$(resh-get-epochtime)
+    resh-postcollect -requireVersion "$__RESH_VERSION" \
+        --exit-code "$exit_code" \
+        --record-id "$__RESH_RECORD_ID" \
+        --session-id "$__RESH_SESSION_ID" \
+        --shlvl "$SHLVL" \
+        --time-after "$rt_after" \
+        --time-before "$__RESH_RT_BEFORE"
+    return $?
 }
 
+# Backwards compatibilty: No restrictions. This is only used at the start of the session.
 __resh_session_init() {
-    if __resh_maybe_reload; then
-        resh-session-init -requireVersion "$__RESH_VERSION" \
-                    -requireRevision "$__RESH_REVISION" \
-                    -sessionId "$__RESH_SESSION_ID" \
-                    -sessionPid "$__RESH_SESSION_PID"
-    fi
+    resh-session-init -requireVersion "$__RESH_VERSION" \
+        --session-id "$__RESH_SESSION_ID" \
+        --session-pid "$$"
+    return $?
 }

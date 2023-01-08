@@ -1,19 +1,18 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 
 	"github.com/curusarn/resh/internal/cfg"
 	"github.com/curusarn/resh/internal/collect"
 	"github.com/curusarn/resh/internal/logger"
+	"github.com/curusarn/resh/internal/opt"
 	"github.com/curusarn/resh/internal/output"
 	"github.com/curusarn/resh/internal/recordint"
 	"github.com/curusarn/resh/record"
+	"github.com/spf13/pflag"
 	"go.uber.org/zap"
-
-	//  "os/exec"
 
 	"strconv"
 )
@@ -35,49 +34,28 @@ func main() {
 	}
 	out := output.New(logger, "resh-postcollect ERROR")
 
-	showVersion := flag.Bool("version", false, "Show version and exit")
-	showRevision := flag.Bool("revision", false, "Show git revision and exit")
+	args := opt.HandleVersionOpts(out, os.Args, version, commit)
 
-	requireVersion := flag.String("requireVersion", "", "abort if version doesn't match")
-	requireRevision := flag.String("requireRevision", "", "abort if revision doesn't match")
-
-	exitCode := flag.Int("exitCode", -1, "exit code")
-	sessionID := flag.String("sessionID", "", "resh generated session id")
-	recordID := flag.String("recordID", "", "resh generated record id")
-
-	shlvl := flag.Int("shlvl", -1, "$SHLVL")
-
-	rtb := flag.String("timeBefore", "-1", "before $EPOCHREALTIME")
-	rta := flag.String("timeAfter", "-1", "after $EPOCHREALTIME")
-	flag.Parse()
-
-	if *showVersion == true {
-		fmt.Println(version)
-		os.Exit(0)
-	}
-	if *showRevision == true {
-		fmt.Println(commit)
-		os.Exit(0)
-	}
-	if *requireVersion != "" && *requireVersion != version {
-		out.FatalTerminalVersionMismatch(version, *requireVersion)
-	}
-	if *requireRevision != "" && *requireRevision != commit {
-		// this is only relevant for dev versions so we can reuse FatalVersionMismatch()
-		out.FatalTerminalVersionMismatch("revision "+commit, "revision "+*requireVersion)
-	}
+	flags := pflag.NewFlagSet("", pflag.ExitOnError)
+	exitCode := flags.Int("exit-code", -1, "Exit code")
+	sessionID := flags.String("session-id", "", "Resh generated session ID")
+	recordID := flags.String("record-id", "", "Resh generated record ID")
+	shlvl := flags.Int("shlvl", -1, "$SHLVL")
+	rtb := flags.String("time-before", "-1", "Before $EPOCHREALTIME")
+	rta := flags.String("time-after", "-1", "After $EPOCHREALTIME")
+	flags.Parse(args)
 
 	timeAfter, err := strconv.ParseFloat(*rta, 64)
 	if err != nil {
-		out.Fatal("Error while parsing flag --timeAfter", err)
+		out.Fatal("Error while parsing flag --time-after", err)
 	}
 	timeBefore, err := strconv.ParseFloat(*rtb, 64)
 	if err != nil {
-		out.Fatal("Error while parsing flag --timeBefore", err)
+		out.Fatal("Error while parsing flag --time-before", err)
 	}
 	duration := timeAfter - timeBefore
 
-	// FIXME: use recordint.Postollect
+	// FIXME: use recordint.Postcollect
 	rec := recordint.Collect{
 		SessionID: *sessionID,
 		Shlvl:     *shlvl,

@@ -34,7 +34,7 @@ func sendSignals(sugar *zap.SugaredLogger, sig os.Signal, subscribers []chan os.
 			time.Sleep(delay)
 		}
 		if time.Since(start) > timeout {
-			sugar.Errorw("Timouted while waiting for proper shutdown",
+			sugar.Errorw("Timeouted while waiting for proper shutdown",
 				"componentsStillUp", strconv.Itoa(chanCount),
 				"timeout", timeout.String(),
 			)
@@ -48,7 +48,7 @@ func Run(sugar *zap.SugaredLogger, subscribers []chan os.Signal, done chan strin
 	sugar = sugar.With("module", "signalhandler")
 	signals := make(chan os.Signal, 1)
 
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
 
 	var sig os.Signal
 	for {

@@ -11,18 +11,17 @@ import (
 
 func versionCmdFunc(config cfg.Config) func(*cobra.Command, []string) {
 	return func(cmd *cobra.Command, args []string) {
-		printVersion("Installed", version, commit)
+		fmt.Printf("Installed: %s\n", version)
 
 		versionEnv := getEnvVarWithDefault("__RESH_VERSION", "<unknown>")
-		commitEnv := getEnvVarWithDefault("__RESH_REVISION", "<unknown>")
-		printVersion("This terminal session", versionEnv, commitEnv)
+		fmt.Printf("This terminal session: %s\n", version)
 
 		resp, err := status.GetDaemonStatus(config.Port)
 		if err != nil {
 			out.ErrorDaemonNotRunning(err)
 			return
 		}
-		printVersion("Currently running daemon", resp.Version, resp.Commit)
+		fmt.Printf("Currently running daemon: %s\n", resp.Version)
 
 		if version != resp.Version {
 			out.ErrorDaemonVersionMismatch(version, resp.Version)
@@ -33,10 +32,6 @@ func versionCmdFunc(config cfg.Config) func(*cobra.Command, []string) {
 			return
 		}
 	}
-}
-
-func printVersion(title, version, commit string) {
-	fmt.Printf("%s: %s (commit: %s)\n", title, version, commit)
 }
 
 func getEnvVarWithDefault(varName, defaultValue string) string {

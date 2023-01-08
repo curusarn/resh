@@ -1,19 +1,18 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 
 	"github.com/curusarn/resh/internal/cfg"
 	"github.com/curusarn/resh/internal/collect"
 	"github.com/curusarn/resh/internal/logger"
+	"github.com/curusarn/resh/internal/opt"
 	"github.com/curusarn/resh/internal/output"
 	"github.com/curusarn/resh/internal/recordint"
 	"github.com/curusarn/resh/record"
+	"github.com/spf13/pflag"
 	"go.uber.org/zap"
-
-	//  "os/exec"
 
 	"path/filepath"
 	"strconv"
@@ -36,57 +35,29 @@ func main() {
 	}
 	out := output.New(logger, "resh-collect ERROR")
 
-	// version
-	showVersion := flag.Bool("version", false, "Show version and exit")
-	showRevision := flag.Bool("revision", false, "Show git revision and exit")
+	args := opt.HandleVersionOpts(out, os.Args, version, commit)
 
-	requireVersion := flag.String("requireVersion", "", "abort if version doesn't match")
-	requireRevision := flag.String("requireRevision", "", "abort if revision doesn't match")
+	flags := pflag.NewFlagSet("", pflag.ExitOnError)
+	cmdLine := flags.String("cmd-line", "", "Command line")
+	gitRemote := flags.String("git-remote", "", "> git remote get-url origin")
+	home := flags.String("home", "", "$HOME")
+	pwd := flags.String("pwd", "", "$PWD - present working directory")
+	recordID := flags.String("record-id", "", "Resh generated record ID")
+	sessionID := flags.String("session-id", "", "Resh generated session ID")
+	sessionPID := flags.Int("session-pid", -1, "$$ - Shell session PID")
+	shell := flags.String("shell", "", "Current shell")
+	shlvl := flags.Int("shlvl", -1, "$SHLVL")
+	timeStr := flags.String("time", "-1", "$EPOCHREALTIME")
+	flags.Parse(args)
 
-	// core
-	cmdLine := flag.String("cmdLine", "", "command line")
-
-	home := flag.String("home", "", "$HOME")
-	pwd := flag.String("pwd", "", "$PWD - present working directory")
-
-	sessionID := flag.String("sessionID", "", "resh generated session ID")
-	recordID := flag.String("recordID", "", "resh generated record ID")
-	sessionPID := flag.Int("sessionPID", -1, "PID at the start of the terminal session")
-
-	shell := flag.String("shell", "", "current shell")
-
-	// non-posix
-	shlvl := flag.Int("shlvl", -1, "$SHLVL")
-
-	gitRemote := flag.String("gitRemote", "", "git remote get-url origin")
-
-	time_ := flag.String("time", "-1", "$EPOCHREALTIME")
-	flag.Parse()
-
-	if *showVersion == true {
-		fmt.Println(version)
-		os.Exit(0)
-	}
-	if *showRevision == true {
-		fmt.Println(commit)
-		os.Exit(0)
-	}
-	if *requireVersion != "" && *requireVersion != version {
-		out.FatalTerminalVersionMismatch(version, *requireVersion)
-	}
-	if *requireRevision != "" && *requireRevision != commit {
-		// this is only relevant for dev versions so we can reuse FatalVersionMismatch()
-		out.FatalTerminalVersionMismatch("revision "+commit, "revision "+*requireVersion)
-	}
-
-	time, err := strconv.ParseFloat(*time_, 64)
+	time, err := strconv.ParseFloat(*timeStr, 64)
 	if err != nil {
 		out.Fatal("Error while parsing flag --time", err)
 	}
 
 	realPwd, err := filepath.EvalSymlinks(*pwd)
 	if err != nil {
-		logger.Error("Error while handling pwd realpath", zap.Error(err))
+		out.Error("Error while evaluating symlinks in PWD", err)
 		realPwd = ""
 	}
 

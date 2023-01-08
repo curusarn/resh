@@ -1,17 +1,23 @@
 SHELL=/bin/bash
 LATEST_TAG=$(shell git describe --tags)
-COMMIT=$(shell [ -z "$(git status --untracked-files=no --porcelain)" ] && git rev-parse --short=12 HEAD || echo "no_commit")
-VERSION="${LATEST_TAG}-DEV"
+VERSION:="${LATEST_TAG}-$(shell date +%s)"
+COMMIT:=$(shell [ -z "$(git status --untracked-files=no --porcelain)" ] && git rev-parse --short=12 HEAD || echo "no_commit")
 GOFLAGS=-ldflags "-X main.version=${VERSION} -X main.commit=${COMMIT} -X main.development=true"
-
 
 build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect\
   bin/resh-daemon bin/resh-control bin/resh-config bin/resh-cli\
   bin/resh-install-utils bin/resh-generate-uuid bin/resh-get-epochtime
 
-# we disable jobserver for the actual installation because we want it to run serially
+# We disable jobserver for the actual installation because we want it to run serially
 # Make waits to the daemon process we launch during install and hangs
 install: build
+	make -j1 _install
+
+# Rebuild binaries and install
+# Very useful to ensure that all binaries get new VERSION variable which is used for shell config reloading
+clean_install:
+	make clean
+	make build
 	make -j1 _install
 
 _install:
