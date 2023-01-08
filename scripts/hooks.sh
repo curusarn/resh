@@ -201,16 +201,7 @@ __resh_nop() {
 . ~/.resh/bindfunc.sh
 
 __resh_bind_control_R() {
-    bindfunc --revert '\C-r' __resh_widget_control_R_compat
-    if [ "${__RESH_control_R_bind_enabled-0}" != 0 ]; then
-        # Re-binding is a valid usecase but it shouldn't happen much
-        # so this is a warning
-        # echo "Re-binding RESH SEARCH app to Ctrl+R ..."
-    else
-        # Only save original binding if resh binding was not enabled
-        __RESH_bindfunc_revert_control_R_bind=$_bindfunc_revert
-    fi
-    __RESH_control_R_bind_enabled=1
+    bindfunc '\C-r' __resh_widget_control_R_compat
     if [ -n "${BASH_VERSION-}" ]; then
         # fuck bash
         bind '"\C-r": "\u[31~\u[32~"'
