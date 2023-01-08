@@ -1,7 +1,6 @@
 #!/hint/sh
 
-__resh_reload_shellrc() {
-    source ~/.resh/shellrc
+__resh_reload_msg() {
     printf '\n'
     printf '+--------------------------------------------------------------+\n'
     printf '| New version of RESH shell files was loaded in this terminal. |\n'
@@ -21,23 +20,25 @@ __resh_reload_shellrc() {
 #   => The `__resh_preexec` function needs to exist in all future versions.
 #   => Make sure that `__RESH_NO_RELOAD` behavior is not broken in any future version.
 #   => Prefer only testing `__RESH_NO_RELOAD` for emptyness instead of specific value
+# * `__resh_reload_msg` is called *after* shell files reload
+#   => The function shows a message from the already updated shell files
+#   => We can drop this function at any time - the old version will be used
+
 
 
 # (pre)collect
 # Backwards compatibilty: Please see notes above before making any changes here.
 __resh_preexec() {
-    # $1 is command line
-    # $2 can be --no-reload opt
-    # Backwards compatibity: Do not change -version opt.
-    #                        It is called by new shell files to detect version mismatch.
     if [ "$(resh-collect -version)" != "$__RESH_VERSION" ] && [ -z "${__RESH_NO_RELOAD-}" ]; then
         # Reload shell files and restart __resh_preexec - i.e. the full command will be recorded only with a slight delay.
         # This should happens in every already open terminal after resh update.
+        # __RESH_NO_RELOAD prevents recursive reloads
+        # We never repeatadly reload the shell files to prevent potentially infinite recursion.
+        # If the version is still wrong then error will be raised by `resh-collect -requiredVersion`.
 
-        # If for any reason the __RESH_VERSION is still wrong we don't reload again to prevent potentially infinite recursion.
-        # User will most likely see error because of `resh-collect -requiredVersion`.
-
-        __resh_reload_shellrc
+        source ~/.resh/shellrc
+        # Show reload message from the updated shell files
+        __resh_reload_msg
         # Rerun self but prevent another reload. Extra protection against infinite recursion.
         __RESH_NO_RELOAD=1 __resh_preexec "$@"
         return $?
@@ -76,7 +77,9 @@ __resh_precmd() {
         # We don't call __resh_precmd because the new __resh_preexec might not be backwards compatible with variables set by old __resh_preexec.
         # This should happen only in the one terminal where resh update was executed.
         # And the resh-daemon was likely restarted so we likely don't even have the matching part1 of the comand in the resh-daemon memory.
-        __resh_reload_shellrc
+        source ~/.resh/shellrc
+        # Show reload message from the updated shell files
+        __resh_reload_msg
         return
     fi
     unset __RESH_COLLECT

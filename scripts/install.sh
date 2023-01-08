@@ -70,23 +70,6 @@ else
     fi
 fi
 
-
-if [ "$(uname)" = Darwin ] && gnohup --version >/dev/null 2>&1; then
-    echo " * Nohup installed: OK"
-elif nohup --version >/dev/null 2>&1; then
-    echo " * Nohup installed: OK"
-else
-    echo " * Nohup installed: NOT INSTALLED!"
-    echo "   > You don't have nohup"
-    echo "   > Please install GNU coreutils"
-    echo
-    if [ "$(uname)" = Darwin ]; then
-        echo "   $ brew install coreutils"
-        echo
-    fi
-    exit 1
-fi
-
 # echo 
 # echo "Continue with installation? (Any key to CONTINUE / Ctrl+C to ABORT)"
 # # shellcheck disable=2034
@@ -96,7 +79,7 @@ echo "Creating directories ..."
 
 mkdir_if_not_exists() {
     if [ ! -d "$1" ]; then
-        mkdir "$1" 
+        mkdir "$1"
     fi
 }
 
@@ -153,14 +136,14 @@ if [ ! -f ~/.bashrc ]; then
     touch ~/.bashrc
 fi
 grep -q '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' ~/.bashrc ||\
-	echo -e '\n[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc # this line was added by RESH (Rich Enhanced Shell History)' >> ~/.bashrc
+	echo -e '\n[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc # this line was added by RESH (REcycle SHell)' >> ~/.bashrc
 # Adding bash-preexec to .bashrc ...
 grep -q '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' ~/.bashrc ||\
-	echo -e '\n[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh # this line was added by RESH (Rich Enhanced Shell History)' >> ~/.bashrc
+	echo -e '\n[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh # this line was added by RESH (REcycle SHell)' >> ~/.bashrc
 # Adding resh shellrc to .zshrc ...
 if [ -f ~/.zshrc ]; then
     grep -q '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' ~/.zshrc ||\
-        echo -e '\n[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc # this line was added by RESH (Rich Enhanced Shell History)' >> ~/.zshrc
+        echo -e '\n[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc # this line was added by RESH (REcycle SHell)' >> ~/.zshrc
 fi
 
 # Deleting zsh completion cache - for future use
@@ -176,7 +159,7 @@ info="---- Scroll down using arrow keys ----
 #     | |_) |  _| \___ \| |_| |     #
 #     |  _ <| |___ ___) |  _  |     #
 #     |_| \_\_____|____/|_| |_|     #
-#    Rich Enhanced Shell History    #
+#           REcycle SHell           #
 #####################################
 "
 
