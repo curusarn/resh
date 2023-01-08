@@ -2,8 +2,8 @@
 
 # shellcheck source=../submodules/bash-zsh-compat-widgets/bindfunc.sh
 . ~/.resh/bindfunc.sh
-# shellcheck source=widgets.sh
-. ~/.resh/widgets.sh
+# shellcheck source=hooks.sh
+. ~/.resh/hooks.sh
 
 __resh_nop() {
     # does nothing

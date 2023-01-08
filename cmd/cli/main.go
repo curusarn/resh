@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"sort"
@@ -20,9 +19,11 @@ import (
 	"github.com/curusarn/resh/internal/device"
 	"github.com/curusarn/resh/internal/logger"
 	"github.com/curusarn/resh/internal/msg"
+	"github.com/curusarn/resh/internal/opt"
 	"github.com/curusarn/resh/internal/output"
 	"github.com/curusarn/resh/internal/recordint"
 	"github.com/curusarn/resh/internal/searchapp"
+	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 
 	"strconv"
@@ -54,23 +55,28 @@ func main() {
 }
 
 func runReshCli(out *output.Output, config cfg.Config) (string, int) {
-	sessionID := flag.String("sessionID", "", "resh generated session id")
-	pwd := flag.String("pwd", "", "present working directory")
-	gitOriginRemote := flag.String("gitOriginRemote", "DEFAULT", "git origin remote")
-	query := flag.String("query", "", "search query")
-	testHistory := flag.String("test-history", "", "load history from a file instead from the daemon (for testing purposes only!)")
-	testHistoryLines := flag.Int("test-lines", 0, "the number of lines to load from a file passed with --test-history (for testing purposes only!)")
-	flag.Parse()
+	args := opt.HandleVersionOpts(out, os.Args, version, commit)
 
-	errMsg := "Failed to get necessary command-line arguments"
+	flags := pflag.NewFlagSet("", pflag.ExitOnError)
+	sessionID := flags.String("session-id", "", "Resh generated session ID")
+	pwd := flags.String("pwd", "", "$PWD - present working directory")
+	gitOriginRemote := flags.String("git-origin-remote", "<<<MISSING>>>", "> git origin remote")
+	query := flags.String("query", "", "Search query")
+	// TODO: Do we still need this?
+	testHistory := flags.String("test-history", "", "Load history from a file instead from the daemon (for testing purposes only!)")
+	testHistoryLines := flags.Int("test-lines", 0, "The number of lines to load from a file passed with --test-history (for testing purposes only!)")
+	flags.Parse(args)
+
+	// TODO: These errors should tell the user that they should not be running the command directly
+	errMsg := "Failed to get required command-line arguments"
 	if *sessionID == "" {
-		out.Fatal(errMsg, errors.New("missing option --sessionId"))
+		out.Fatal(errMsg, errors.New("missing required option --session-id"))
 	}
 	if *pwd == "" {
-		out.Fatal(errMsg, errors.New("missing option --pwd"))
+		out.Fatal(errMsg, errors.New("missing required option --pwd"))
 	}
-	if *gitOriginRemote == "DEFAULT" {
-		out.Fatal(errMsg, errors.New("missing option --gitOriginRemote"))
+	if *gitOriginRemote == "<<<MISSING>>>" {
+		out.Fatal(errMsg, errors.New("missing required option --git-origin-remote"))
 	}
 	dataDir, err := datadir.GetPath()
 	if err != nil {
@@ -242,11 +248,6 @@ func (m manager) AbortPaste(g *gocui.Gui, v *gocui.View) error {
 		return gocui.ErrQuit
 	}
 	return nil
-}
-
-type dedupRecord struct {
-	dataIndex int
-	score     float32
 }
 
 func (m manager) UpdateData(input string) {
@@ -432,14 +433,14 @@ func quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
 
-const smallTerminalTresholdWidth = 110
+const smallTerminalThresholdWidth = 110
 
 func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 	sugar := m.out.Logger.Sugar()
 	maxX, maxY := g.Size()
 
 	compactRenderingMode := false
-	if maxX < smallTerminalTresholdWidth {
+	if maxX < smallTerminalThresholdWidth {
 		compactRenderingMode = true
 	}
 
@@ -558,7 +559,7 @@ func (m manager) rawMode(g *gocui.Gui, v *gocui.View) error {
 		}
 		displayStr := itm.CmdLineWithColor
 		if m.s.highlightedItem == i {
-			// use actual min requried length instead of 420 constant
+			// Use actual min required length instead of 420 constant
 			displayStr = searchapp.DoHighlightString(displayStr, maxX*2)
 		}
 		if strings.Contains(displayStr, "\n") {
@@ -599,7 +600,7 @@ func SendCliMsg(out *output.Output, m msg.CliMsg, port string) msg.CliResponse {
 	}
 
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		out.Fatal("Failed read response", err)
 	}
@@ -609,7 +610,7 @@ func SendCliMsg(out *output.Output, m msg.CliMsg, port string) msg.CliResponse {
 	if err != nil {
 		out.Fatal("Failed decode response", err)
 	}
-	sugar.Debugw("Recieved records from daemon",
+	sugar.Debugw("Received records from daemon",
 		"recordCount", len(response.Records),
 	)
 	return response

@@ -1,15 +1,5 @@
 #!/hint/sh
 
-__resh_reload_msg() {
-    printf '\n'
-    printf '+--------------------------------------------------------------+\n'
-    printf '| New version of RESH shell files was loaded in this terminal. |\n'
-    printf '| This is an informative message - no action is necessary.     |\n'
-    printf '| Please restart this terminal if you encounter any issues.    |\n'
-    printf '+--------------------------------------------------------------+\n'
-    printf '\n'
-}
-
 # BACKWARDS COMPATIBILITY NOTES:
 #
 # Stable names and options:
@@ -24,7 +14,16 @@ __resh_reload_msg() {
 #   => The function shows a message from the already updated shell files
 #   => We can drop this function at any time - the old version will be used
 
-
+# Backwards compatibilty: Please see notes above before making any changes here.
+__resh_reload_msg() {
+    printf '\n'
+    printf '+--------------------------------------------------------------+\n'
+    printf '| New version of RESH shell files was loaded in this terminal. |\n'
+    printf '| This is an informative message - no action is necessary.     |\n'
+    printf '| Please restart this terminal if you encounter any issues.    |\n'
+    printf '+--------------------------------------------------------------+\n'
+    printf '\n'
+}
 
 # (pre)collect
 # Backwards compatibilty: Please see notes above before making any changes here.
@@ -103,4 +102,59 @@ __resh_session_init() {
         --session-id "$__RESH_SESSION_ID" \
         --session-pid "$$"
     return $?
+}
+
+# Backwards compatibilty: Please see notes above before making any changes here.
+__resh_widget_control_R() {
+    # This is a very bad workaround.
+    # Force bash-preexec to run repeatedly because otherwise premature run of bash-preexec overshadows the next proper run.
+    # I honestly think that it's impossible to make widgets work in bash without hacks like this.
+    # shellcheck disable=2034
+    __bp_preexec_interactive_mode="on"
+
+    local PREVBUFFER=$BUFFER
+
+    local status_code
+    local git_remote; git_remote="$(git remote get-url origin 2>/dev/null)"
+    if [ "$(resh-cli -version)" != "$__RESH_VERSION" ] && [ -z "${__RESH_NO_RELOAD-}" ]; then
+        source ~/.resh/shellrc
+        # Show reload message from the updated shell files
+        __resh_reload_msg
+        # Rerun self but prevent another reload. Extra protection against infinite recursion.
+        __RESH_NO_RELOAD=1 __resh_widget_control_R "$@"
+        return $?
+    fi
+    BUFFER=$(resh-cli -requireVersion "$__RESH_VERSION" \
+        --git-origin-remote "$git_remote" \
+        --pwd "$PWD" \
+        --query "$BUFFER" \
+        --session-id "$__RESH_SESSION_ID" \
+    )
+    status_code=$?
+    if [ $status_code = 111 ]; then
+        # execute
+        if [ -n "${ZSH_VERSION-}" ]; then
+            # zsh
+            zle accept-line
+        elif [ -n "${BASH_VERSION-}" ]; then
+            # bash
+            # set chained keyseq to accept-line
+            bind '"\u[32~": accept-line'
+        fi
+    elif [ $status_code = 0 ]; then
+        if [ -n "${BASH_VERSION-}" ]; then
+            # bash
+            # set chained keyseq to nothing
+            bind -x '"\u[32~": __resh_nop'
+        fi
+    else
+        echo "RESH SEARCH APP failed"
+        printf "%s" "$buffer" >&2
+        BUFFER="$PREVBUFFER"
+    fi
+    CURSOR=${#BUFFER}
+}
+
+__resh_widget_control_R_compat() {
+   __bindfunc_compat_wrapper __resh_widget_control_R
 }
