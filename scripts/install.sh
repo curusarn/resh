@@ -2,6 +2,43 @@
 
 set -euo pipefail
 
+# Setting this to `1` skips prompts and always uses the deault option
+SKIP_ASK_PROMPTS=0
+
+# Helper for "ask [Y/n]" and "ask [y/N]"
+ask() {
+    yn="$1"
+    shift
+    case "$yn" in
+        0) options="[Y/n]" ;;
+        1) options="[y/N]" ;;
+        *)
+            echo "FATAL: ask() got invalid argument."
+            exit 2
+        ;;
+    esac
+    if [ "$SKIP_ASK_PROMPTS" = "0" ]; then
+        echo
+        # We are using echo -e to allow multiline messages
+        echo -en "$@"
+        printf " %s\n" "$options"
+        read reply
+    else
+        reply=""
+    fi
+    case "$reply" in
+        y*|Y*) return 0 ;;
+        n*|N*) return 1 ;;
+        *)     return "$yn" ;;
+    esac
+}
+ask_Yn() {
+    ask 0 "$@"
+}
+ask_yN() {
+    ask 1 "$@"
+}
+
 echo
 echo "Checking your system ..."
 
@@ -15,7 +52,7 @@ fi
 echo " * Login shell: $login_shell - OK"
 
 
-# check like we are not running bash
+# check like if we are not running bash
 bash_version=$(bash -c 'echo ${BASH_VERSION}')
 bash_version_major=$(bash -c 'echo ${BASH_VERSINFO[0]}')
 bash_version_minor=$(bash -c 'echo ${BASH_VERSINFO[1]}')
@@ -88,10 +125,16 @@ else
     fi
 fi
 
-# echo 
-# echo "Continue with installation? (Any key to CONTINUE / Ctrl+C to ABORT)"
-# # shellcheck disable=2034
-# read -r x
+echo
+echo "This installations has two modes:"
+echo " * Automatic - no question asked - RECOMMENDED"
+echo " * Guided - prompts to give you more control - useful if you have heavily customized shell configuration"
+if ask_Yn ">>> Would you like to use the AUTOMATIC install mode?"; then
+    SKIP_ASK_PROMPTS=1
+    echo "Using automatic install mode ..."
+else
+    echo "Using guided install mode ..."
+fi
 
 echo 
 echo "Creating directories ..."
@@ -128,7 +171,6 @@ update_config() {
     fi
 }
 
-
 # Do not overwrite config if it exists
 if [ ! -f ~/.config/resh.toml ]; then
     echo "Copying config file ..."
@@ -139,7 +181,7 @@ if [ ! -f ~/.config/resh.toml ]; then
     # HINT: check which version are we updating FROM and make changes to config based on that 
 fi
 
-echo "Generating completions ..."
+echo "Generating shell completions ..."
 bin/resh-control completion bash > ~/.resh/bash_completion.d/_reshctl
 bin/resh-control completion zsh > ~/.resh/zsh_completion.d/_reshctl
 
@@ -152,21 +194,123 @@ cp -fr data/sanitizer ~/.resh/sanitizer_data
 # backward compatibility: We have a new location for resh history file 
 [ ! -f ~/.resh/history.json ] || mv ~/.resh/history.json ~/.resh_history.json 
 
+echo "Adding RESH to shell rc files ..."
+
+setup_bashrc() {
+    # Creating .bashrc ...
+    if [ ! -f ~/.bashrc ]; then
+        ask_Yn \
+           "It looks like there is no '~/.bashrc'." \
+           "RESH must be sourced when your shell starts otherwise it won't work." \
+           ">>> Create '~/.bashrc'?"
+        if [ "$?" = "0" ]; then
+            echo "Creating '~/.bashrc' ..."
+            touch ~/.bashrc
+        else
+            return 1
+        fi
+    fi
+    # Adding resh shellrc to .bashrc ...
+    if ! grep -q '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' ~/.bashrc; then
+        ask_Yn \
+           "It looks like there is no '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shelrc' directive in your '~/.bashrc'." \
+           "\nRESH must be sourced when your shell starts otherwise it won't work." \
+           "\n>>> Add source directive to '~/.bashrc'?"
+        if [ "$?" = "0" ]; then
+            echo "Adding RESH source directive to '~/.bashrc' ..."
+            echo -e '\n[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc # this line was added by RESH (Rich Enchanced Shell History)' >> ~/.bashrc
+        else
+            return 1
+        fi
+    fi
+    # Adding bash-preexec to .bashrc ...
+    if ! grep -q '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' ~/.bashrc; then
+        ask_Yn \
+           "It looks like there is no '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' directive in your '~/.bashrc'." \
+           "\nBash-preexec must be sourced when your shell starts otherwise RESH won't work." \
+           "\n>>> Add bash-preexec source directive to '~/.bashrc'?"
+        if [ "$?" = "0" ]; then
+            echo "Adding bash-preexec source directive to '~/.bashrc' ..."
+            echo -e '\n[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh # this line was added by RESH (Rich Enchanced Shell History)' >> ~/.bashrc
+        else
+            return 1
+        fi
+    fi
+}
+
+setup_zshrc() {
+    # Creating .zshrc ...
+    if [ ! -f ~/.zshrc ]; then
+        echo "There is no '~/.zshrc' - skipping zsh setup. (This is fine if you don't use zsh.)"
+        return 0
+    fi
+    # Adding resh shellrc to .zshrc ...
+    if ! grep -q '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' ~/.zshrc; then
+        ask_Yn \
+           "It looks like there is no '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' directive in your '~/.zshrc'." \
+           "\nRESH must be sourced when your shell starts otherwise it won't work." \
+           "\n>>> Add source directive to '~/.zshrc'?"
+        if [ "$?" = "0" ]; then
+            echo "Adding RESH source directive to '~/.zshrc' ..."
+            echo -e '\n[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc # this line was added by RESH (Rich Enchanced Shell History)' >> ~/.zshrc
+        else
+            return 1
+        fi
+    fi
+}
+
+bash_setup_info() {
+    echo
+    echo "WARNING: Shell config setup didn't complete for BASH! (You probably answered 'no' somewhere.)"
+    echo
+    echo "It is likely that you will need to modify your bash startup scripts to make RESH work in bash."
+    echo "Consider rerunning the installation if you do not want to modify your shell configs yourself."
+    echo
+    echo "Instructions for manual config setup for BASH:"
+    echo " 1) Add following lines to the end of your bash startup file:"
+    echo
+    echo "    [[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc # enable RESH"
+    echo "    [[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh # enable bash-preexec (required by RESH)"
+    echo
+    echo " 2) Make sure that you have the right config - '~/.bashrc' is usually the right one."
+    echo " 3) Make sure that you added the lines to the *end* of the file."
+    echo " 4) Make sure that you added the lines in the correct order - bash-preexec needs to come last."
+    echo
+    echo "Press any key to continue ..."
+    read -n 1 x
+    echo
+    echo
+}
+zsh_setup_info() {
+    echo
+    echo "WARNING: Shell config setup didn't complete for ZSH! (You probably answered 'no' somewhere.)"
+    echo
+    echo "It is likely that you will need to modify your zsh startup scripts to make RESH work in zsh."
+    echo "Consider rerunning the installation if you do not want to modify your shell configs yourself."
+    echo
+    echo "Instructions for manual config setup for ZSH:"
+    echo " 1) Add following line to the end of your zsh startup file:"
+    echo
+    echo "    [[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc # enable RESH"
+    echo
+    echo " 2) Make sure that you have the right config - '~/.zshrc' is usually the right one."
+    echo " 3) Make sure that you added the line to the *end* of the file."
+    echo
+    echo "Press any key to continue ..."
+    read -n 1 x
+    echo
+    echo
+}
+
+if ! setup_bashrc; then
+    bash_setup_info
+fi
+
+if ! setup_zshrc; then
+    zsh_setup_info
+fi
+
 echo "Finishing up ..."
-# Adding resh shellrc to .bashrc ...
-if [ ! -f ~/.bashrc ]; then
-    touch ~/.bashrc
-fi
-grep -q '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' ~/.bashrc ||\
-	echo -e '\n[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc # this line was added by RESH (Rich Enchanced Shell History)' >> ~/.bashrc
-# Adding bash-preexec to .bashrc ...
-grep -q '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' ~/.bashrc ||\
-	echo -e '\n[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh # this line was added by RESH (Rich Enchanced Shell History)' >> ~/.bashrc
-# Adding resh shellrc to .zshrc ...
-if [ -f ~/.zshrc ]; then
-    grep -q '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' ~/.zshrc ||\
-        echo -e '\n[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc # this line was added by RESH (Rich Enchanced Shell History)' >> ~/.zshrc
-fi
 
 # Deleting zsh completion cache - for future use
 # [ ! -e ~/.zcompdump ] || rm ~/.zcompdump
@@ -216,7 +360,7 @@ RESH SEARCH APPLICATION = Redesigned reverse search that actually works
     Host, directories, git remote, and exit status is used to display relevant results first.
 
     At first, the search application will use the standard shell history without context. 
-    All history recorded from now on will have context which will by the RESH SEARCH app.
+    All history recorded from now on will have context which will be used by the RESH SEARCH app.
 
     Enable/disable Ctrl+R binding using reshctl command:
      $ reshctl enable ctrl_r_binding
