@@ -11,17 +11,14 @@ build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect\
 # We disable jobserver for the actual installation because we want it to run serially
 # Make waits to the daemon process we launch during install and hangs
 install: build
-	make -j1 _install
+	scripts/install.sh
 
 # Rebuild binaries and install
 # Very useful to ensure that all binaries get new VERSION variable which is used for shell config reloading
 clean_install:
 	make clean
 	make build
-	make -j1 _install
-
-_install:
-	scripts/install.sh
+	make install
 
 test:
 	go test -v ./...
