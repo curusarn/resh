@@ -22,10 +22,12 @@ func LoginShell() (string, error) {
 }
 
 func msgShellVersion(shell, expectedVer, actualVer string) string {
-	return fmt.Sprintf(`Minimal supported %s version is %s. You have %s.
-
- -> Update your %s if you want to use RESH with it.
-`, shell, expectedVer, actualVer, shell)
+	return fmt.Sprintf(
+		"Minimal supported %s version is %s. You have %s.\n"+
+			" -> Update to %s %s+ if you want to use RESH with it",
+		shell, expectedVer, actualVer,
+		shell, expectedVer,
+	)
 }
 
 func BashVersion() (string, error) {

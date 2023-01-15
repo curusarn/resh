@@ -41,12 +41,10 @@ func printDivider() {
 }
 
 var msgFailedDaemonStart = `Failed to start RESH daemon.
-
  -> Start RESH daemon manually - run: resh-daemon-start
  -> Or restart this terminal window to bring RESH daemon back up
  -> You can check logs: ~/.local/share/resh/log.json (or ~/$XDG_DATA_HOME/resh/log.json)
  -> You can create an issue at: https://github.com/curusarn/resh/issues
-
 `
 
 func checkDaemon(config cfg.Config) bool {
@@ -93,12 +91,10 @@ func startDaemon(port int, maxRetries int, backoff time.Duration) (*msg.StatusRe
 	return resp, nil
 }
 
-var msgShellFilesNotLoaded = `RESH shell files were not properly loaded in this terminal.
-
+var msgShellFilesNotLoaded = `RESH shell files were not properly loaded in this terminal
  -> Try restarting this terminal to see if the issue persists
  -> Check your shell rc files (e.g. .zshrc, .bashrc, ...)
  -> You can create an issue at: https://github.com/curusarn/resh/issues
-
 `
 
 func checkShellSession() bool {
