@@ -91,7 +91,7 @@ printf '\e[0m' # reset
 echo "Stopping RESH daemon ..."
 pid_file="${XDG_DATA_HOME-~/.local/share}/resh/daemon.pid"
 if [ ! -f "$pid_file" ]; then
-    # old pid file location
+    # Use old pid file location
     pid_file=~/.resh/resh.pid
 fi
 
@@ -102,8 +102,10 @@ failed_to_kill() {
     fi
 }
 
+
 if [ -f "$pid_file" ]; then
-    kill -SIGTERM "$pid_file" || failed_to_kill
+    pid=$(cat "$pid_file")
+    kill -SIGTERM "$pid" || failed_to_kill
     rm "$pid_file"
 else
     killall -SIGTERM resh-daemon || failed_to_kill
