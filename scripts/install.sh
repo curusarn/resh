@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# TODO: Swith to sh shebang?
+
 set -euo pipefail
 
 # TODO: There is a lot of hardcoded stuff here (paths mostly)
@@ -21,8 +23,11 @@ echo " * Login shell: $login_shell - OK"
 # TODO: Explicitly ask users if they want to enable RESH in shells
 #       Only offer shells with supported versions
 #       E.g. Enable RESH in: Zsh (your login shell), Bash, Both shells
+# TODO: V3: We already partially have these checks in `reshctl doctor`
+#           figure out if we want to redo this in v3 or not
+#           the login shell logic is flawed
 
-# check like we are not running bash
+
 bash_version=$(bash -c 'echo ${BASH_VERSION}')
 bash_version_major=$(bash -c 'echo ${BASH_VERSINFO[0]}')
 bash_version_minor=$(bash -c 'echo ${BASH_VERSINFO[1]}')
@@ -130,6 +135,7 @@ echo "Checking/setting up device files ..."
 echo "Updating format of history file ..."
 ./bin/resh-install-utils migrate-history
 
+# FIXME: V3: I would really like to stop enabling resh in unsupported shells
 echo "Finishing up ..."
 # Adding resh shellrc to .bashrc ...
 if [ ! -f ~/.bashrc ]; then
@@ -152,7 +158,7 @@ fi
 echo "Launching resh daemon ..."
 ~/.resh/bin/resh-daemon-start
 
-# FIXME: Figure out how to give people enough time to read everything
+# FIXME: V3: Figure out how to give people enough time to read everything
 # sleep 1
 
 info="---- Scroll down using arrow keys ----
