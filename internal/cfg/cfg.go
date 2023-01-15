@@ -183,3 +183,9 @@ func New() (Config, error) {
 	}
 	return config, nil
 }
+
+// GetPath returns path to config
+// Shouldn't be necessary for basic use
+func GetPath() (string, error) {
+	return getConfigPath()
+}

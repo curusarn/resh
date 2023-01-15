@@ -5,21 +5,7 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
-	"github.com/curusarn/resh/internal/futil"
 )
-
-// Touch config file
-func Touch() error {
-	fpath, err := getConfigPath()
-	if err != nil {
-		return fmt.Errorf("could not get config file path: %w", err)
-	}
-	err = futil.TouchFile(fpath)
-	if err != nil {
-		return fmt.Errorf("could not touch config file: %w", err)
-	}
-	return nil
-}
 
 // Migrate old config versions to current config version
 // returns true if any changes were made to the config

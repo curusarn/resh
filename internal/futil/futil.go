@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 )
 
 func CopyFile(source, dest string) error {
@@ -19,13 +20,12 @@ func CopyFile(source, dest string) error {
 	if err != nil {
 		return err
 	}
-	defer to.Close()
 
 	_, err = io.Copy(to, from)
 	if err != nil {
 		return err
 	}
-	return nil
+	return to.Close()
 }
 
 func FileExists(fpath string) (bool, error) {
@@ -42,14 +42,72 @@ func FileExists(fpath string) (bool, error) {
 	return false, fmt.Errorf("could not stat file: %w", err)
 }
 
-func TouchFile(fpath string) error {
+// TouchFile touches file
+// Returns true if file was created false otherwise
+func TouchFile(fpath string) (bool, error) {
+	exists, err := FileExists(fpath)
+	if err != nil {
+		return false, err
+	}
+
 	file, err := os.OpenFile(fpath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
-		return fmt.Errorf("could not open/create file: %w", err)
+		return false, fmt.Errorf("could not open/create file: %w", err)
 	}
 	err = file.Close()
 	if err != nil {
-		return fmt.Errorf("could not close file: %w", err)
+		return false, fmt.Errorf("could not close file: %w", err)
+	}
+	return !exists, nil
+}
+
+func getBackupPath(fpath string) string {
+	ext := fmt.Sprintf(".backup-%d", time.Now().Unix())
+	return fpath + ext
+}
+
+// BackupFile backups file using unique suffix
+// Returns path to backup
+func BackupFile(fpath string) (*RestorableFile, error) {
+	fpathBackup := getBackupPath(fpath)
+	exists, err := FileExists(fpathBackup)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		return nil, fmt.Errorf("backup already exists in the determined path")
+	}
+	err = CopyFile(fpath, fpathBackup)
+	if err != nil {
+		return nil, fmt.Errorf("failed to copy file: %w ", err)
+	}
+	rf := RestorableFile{
+		Path:       fpath,
+		PathBackup: fpathBackup,
+	}
+	return &rf, nil
+}
+
+type RestorableFile struct {
+	Path       string
+	PathBackup string
+}
+
+func (r RestorableFile) Restore() error {
+	return restoreFileFromBackup(r.Path, r.PathBackup)
+}
+
+func restoreFileFromBackup(fpath, fpathBak string) error {
+	exists, err := FileExists(fpathBak)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("backup not found in given path: no such file or directory: %s", fpathBak)
+	}
+	err = CopyFile(fpathBak, fpath)
+	if err != nil {
+		return fmt.Errorf("failed to copy file: %w ", err)
 	}
 	return nil
 }

@@ -12,47 +12,112 @@ import (
 	"github.com/curusarn/resh/internal/recio"
 )
 
-func migrateConfig(out *output.Output) {
-	err := cfg.Touch()
+func printRecoveryInfo(rf *futil.RestorableFile) {
+	fmt.Printf(" -> Backup is '%s'"+
+		" -> Original file location is '%s'\n"+
+		" -> Please copy the backup over the file - run: cp -f '%s' '%s'\n\n",
+		rf.PathBackup, rf.Path,
+		rf.PathBackup, rf.Path,
+	)
+}
+
+func migrateAll(out *output.Output) {
+	cfgBackup, err := migrateConfig(out)
 	if err != nil {
-		out.FatalE("ERROR: Failed to touch config file", err)
+		// out.InfoE("Failed to update config file format", err)
+		out.FatalE("ERROR: Failed to update config file format", err)
 	}
+	err = migrateHistory(out)
+	if err != nil {
+		errHist := err
+		out.InfoE("Failed to update RESH history", errHist)
+		out.Info("Restoring config from backup ...")
+		err = cfgBackup.Restore()
+		if err != nil {
+			out.InfoE("FAILED TO RESTORE CONFIG FROM BACKUP!", err)
+			printRecoveryInfo(cfgBackup)
+		} else {
+			out.Info("Config file was restored successfully")
+		}
+		out.FatalE("ERROR: Failed to update history", err)
+	}
+}
+
+func migrateConfig(out *output.Output) (*futil.RestorableFile, error) {
+	cfgPath, err := cfg.GetPath()
+	if err != nil {
+		return nil, fmt.Errorf("could not get config file path: %w", err)
+	}
+
+	// Touch config to get rid of edge-cases
+	created, err := futil.TouchFile(cfgPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to touch config file: %w", err)
+	}
+
+	// Backup
+	backup, err := futil.BackupFile(cfgPath)
+	if err != nil {
+		return nil, fmt.Errorf("could not backup config file: %w", err)
+	}
+
+	// Migrate
 	changes, err := cfg.Migrate()
 	if err != nil {
-		out.FatalE("ERROR: Failed to update config file", err)
+		// Restore
+		errMigrate := err
+		errMigrateWrap := fmt.Errorf("failed to update config file: %w", errMigrate)
+		out.InfoE("Failed to update config file format", errMigrate)
+		out.Info("Restoring config from backup ...")
+		err = backup.Restore()
+		if err != nil {
+			out.InfoE("FAILED TO RESTORE CONFIG FROM BACKUP!", err)
+			printRecoveryInfo(backup)
+		} else {
+			out.Info("Config file was restored successfully")
+		}
+		// We are returning the root cause - there might be a better solution how to report the errors
+		return nil, errMigrateWrap
 	}
-	if changes {
+	if created {
+		out.Info(fmt.Sprintf("RESH config created in '%s'", cfgPath))
+	} else if changes {
 		out.Info("RESH config file format has changed since last update - your config was updated to reflect the changes.")
 	}
+	return backup, nil
 }
 
-func migrateHistory(out *output.Output) {
-	migrateHistoryLocation(out)
-	migrateHistoryFormat(out)
+func migrateHistory(out *output.Output) error {
+	err := migrateHistoryLocation(out)
+	if err != nil {
+		return fmt.Errorf("failed to move history to new location %w", err)
+	}
+	return migrateHistoryFormat(out)
 }
 
-// find first existing history and use it
-// don't bother with merging of history in multiple locations - it could get messy and it shouldn't be necessary
-func migrateHistoryLocation(out *output.Output) {
+// Find first existing history and use it
+// Don't bother with merging of history in multiple locations - it could get messy and it shouldn't be necessary
+func migrateHistoryLocation(out *output.Output) error {
 	dataDir, err := datadir.MakePath()
 	if err != nil {
-		out.FatalE("ERROR: Failed to get data directory", err)
+		return fmt.Errorf("failed to get data directory: %w", err)
 	}
 	// TODO: de-hardcode this
-	historyPath := path.Join(dataDir, "resh/history.reshjson")
+	historyPath := path.Join(dataDir, "history.reshjson")
 
 	exists, err := futil.FileExists(historyPath)
 	if err != nil {
-		out.FatalE("ERROR: Failed to check history file", err)
+		return fmt.Errorf("failed to check history file: %w", err)
 	}
 	if exists {
-		out.Info(fmt.Sprintf("Found history file in '%s'", historyPath))
-		return
+		// TODO: get rid of this output (later)
+		out.Info(fmt.Sprintf("Found history file in '%s' - nothing to move", historyPath))
+		return nil
 	}
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		out.FatalE("ERROR: Failed to get user home directory", err)
+		return fmt.Errorf("failed to get user home directory: %w", err)
 	}
 
 	legacyHistoryPaths := []string{
@@ -62,62 +127,71 @@ func migrateHistoryLocation(out *output.Output) {
 	for _, path := range legacyHistoryPaths {
 		exists, err = futil.FileExists(path)
 		if err != nil {
-			out.FatalE("ERROR: Failed to check legacy history file", err)
+			return fmt.Errorf("failed to check existence of legacy history file: %w", err)
 		}
 		if exists {
+			// TODO: maybe get rid of this output later
 			out.Info(fmt.Sprintf("Copying history file to new location: '%s' -> '%s' ...", path, historyPath))
 			err = futil.CopyFile(path, historyPath)
 			if err != nil {
-				out.FatalE("ERROR: Failed to copy history file", err)
+				return fmt.Errorf("failed to copy history file: %w", err)
 			}
 			out.Info("History file copied successfully")
-			return
+			return nil
 		}
 	}
+	// out.Info("WARNING: No RESH history file found (this is normal during new installation)")
+	return nil
 }
 
-func migrateHistoryFormat(out *output.Output) {
+func migrateHistoryFormat(out *output.Output) error {
 	dataDir, err := datadir.MakePath()
 	if err != nil {
-		out.FatalE("ERROR: Could not get user data directory", err)
+		return fmt.Errorf("could not get user data directory: %w", err)
 	}
 	// TODO: de-hardcode this
 	historyPath := path.Join(dataDir, "history.reshjson")
-	historyPathBak := historyPath + ".bak"
 
 	exists, err := futil.FileExists(historyPath)
 	if err != nil {
-		out.FatalE("ERROR: Failed to check existence of history file", err)
+		return fmt.Errorf("failed to check existence of history file: %w", err)
 	}
 	if !exists {
-		out.Error("There is no history file - this is normal if you are installing RESH for the first time on this device")
-		err = futil.TouchFile(historyPath)
+		out.Error("There is no RESH history file - this is normal if you are installing RESH for the first time on this device")
+		_, err = futil.TouchFile(historyPath)
 		if err != nil {
-			out.FatalE("ERROR: Failed to touch history file", err)
+			return fmt.Errorf("failed to touch history file: %w", err)
 		}
-		os.Exit(0)
+		return nil
 	}
 
-	err = futil.CopyFile(historyPath, historyPathBak)
+	backup, err := futil.BackupFile(historyPath)
 	if err != nil {
-		out.FatalE("ERROR: Could not back up history file", err)
+		return fmt.Errorf("could not back up history file: %w", err)
 	}
 
 	rio := recio.New(out.Logger.Sugar())
 
 	recs, err := rio.ReadAndFixFile(historyPath, 3)
 	if err != nil {
-		out.FatalE("ERROR: Could not load history file", err)
+		return fmt.Errorf("could not load history file: %w", err)
 	}
 	err = rio.OverwriteFile(historyPath, recs)
 	if err != nil {
-		out.ErrorE("ERROR: Could not update format of history file", err)
-
-		err = futil.CopyFile(historyPathBak, historyPath)
+		// Restore
+		errMigrate := err
+		errMigrateWrap := fmt.Errorf("failed to update format of history file: %w", errMigrate)
+		out.InfoE("Failed to update RESH history file format", errMigrate)
+		out.Info("Restoring RESH history from backup ...")
+		err = backup.Restore()
 		if err != nil {
-			out.FatalE("ERROR: Could not restore history file from backup!", err)
-			// TODO: history restoration tutorial
+			out.InfoE("FAILED TO RESTORE resh HISTORY FROM BACKUP!", err)
+			printRecoveryInfo(backup)
+		} else {
+			out.Info("RESH history file was restored successfully")
 		}
-		out.Info("History file was restored to the original form")
+		// We are returning the root cause - there might be a better solution how to report the errors
+		return errMigrateWrap
 	}
+	return nil
 }

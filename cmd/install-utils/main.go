@@ -39,16 +39,10 @@ func main() {
 	}
 	command := os.Args[1]
 	switch command {
-	case "backup":
-		backup()
-	case "rollback":
-		rollback()
-	case "migrate-config":
-		migrateConfig(out)
-	case "migrate-history":
-		migrateHistory(out)
 	case "setup-device":
 		setupDevice(out)
+	case "migrate-all":
+		migrateAll(out)
 	case "help":
 		printUsage(os.Stdout)
 	default:
@@ -64,11 +58,8 @@ USAGE: ./install-utils COMMAND
 Utils used during RESH installation.
 
 COMMANDS:
-  backup            backup resh installation and data
-  rollback          restore resh installation and data from backup
-  migrate-config    update config to latest format
-  migrate-history   update history to latest format
   setup-device      setup device name and device ID
+  migrate-all       update config and history to latest format
   help              show this help
 
 `
