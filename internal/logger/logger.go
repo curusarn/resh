@@ -10,9 +10,9 @@ import (
 )
 
 func New(executable string, level zapcore.Level, development string) (*zap.Logger, error) {
-	dataDir, err := datadir.GetPath()
+	dataDir, err := datadir.MakePath()
 	if err != nil {
-		return nil, fmt.Errorf("error while getting resh data dir: %w", err)
+		return nil, fmt.Errorf("error while getting RESH data dir: %w", err)
 	}
 	logPath := filepath.Join(dataDir, "log.json")
 	loggerConfig := zap.NewProductionConfig()

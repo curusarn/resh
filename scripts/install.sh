@@ -96,7 +96,10 @@ if [ ! -f "$pid_file" ]; then
 fi
 
 failed_to_kill() {
-    echo "ERROR: Failed to kill the resh-daemon - maybe it wasn't running?"
+    # Do not print error during first installation
+    if [ -n "${__RESH_VERSION-}" ]; then
+        echo "ERROR: Failed to kill the resh-daemon - maybe it wasn't running?"
+    fi
 }
 
 if [ -f "$pid_file" ]; then
