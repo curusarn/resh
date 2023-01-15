@@ -33,7 +33,7 @@ func main() {
 	out := output.New(logger, "install-utils ERROR")
 
 	if len(os.Args) < 2 {
-		out.ErrorWOErr("ERROR: Not enough arguments\n")
+		out.Error("ERROR: Not enough arguments\n")
 		printUsage(os.Stderr)
 		os.Exit(1)
 	}
@@ -52,7 +52,7 @@ func main() {
 	case "help":
 		printUsage(os.Stdout)
 	default:
-		out.ErrorWOErr(fmt.Sprintf("ERROR: Unknown command: %s\n", command))
+		out.Error(fmt.Sprintf("ERROR: Unknown command: %s\n", command))
 		printUsage(os.Stderr)
 		os.Exit(1)
 	}

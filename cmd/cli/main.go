@@ -62,34 +62,31 @@ func runReshCli(out *output.Output, config cfg.Config) (string, int) {
 	pwd := flags.String("pwd", "", "$PWD - present working directory")
 	gitOriginRemote := flags.String("git-origin-remote", "<<<MISSING>>>", "> git origin remote")
 	query := flags.String("query", "", "Search query")
-	// TODO: Do we still need this?
-	testHistory := flags.String("test-history", "", "Load history from a file instead from the daemon (for testing purposes only!)")
-	testHistoryLines := flags.Int("test-lines", 0, "The number of lines to load from a file passed with --test-history (for testing purposes only!)")
 	flags.Parse(args)
 
 	// TODO: These errors should tell the user that they should not be running the command directly
 	errMsg := "Failed to get required command-line arguments"
 	if *sessionID == "" {
-		out.Fatal(errMsg, errors.New("missing required option --session-id"))
+		out.FatalE(errMsg, errors.New("missing required option --session-id"))
 	}
 	if *pwd == "" {
-		out.Fatal(errMsg, errors.New("missing required option --pwd"))
+		out.FatalE(errMsg, errors.New("missing required option --pwd"))
 	}
 	if *gitOriginRemote == "<<<MISSING>>>" {
-		out.Fatal(errMsg, errors.New("missing required option --git-origin-remote"))
+		out.FatalE(errMsg, errors.New("missing required option --git-origin-remote"))
 	}
 	dataDir, err := datadir.GetPath()
 	if err != nil {
-		out.Fatal("Could not get user data directory", err)
+		out.FatalE("Could not get user data directory", err)
 	}
 	deviceName, err := device.GetName(dataDir)
 	if err != nil {
-		out.Fatal("Could not get device name", err)
+		out.FatalE("Could not get device name", err)
 	}
 
 	g, err := gocui.NewGui(gocui.OutputNormal, false)
 	if err != nil {
-		out.Fatal("Failed to launch TUI", err)
+		out.FatalE("Failed to launch TUI", err)
 	}
 	defer g.Close()
 
@@ -99,15 +96,11 @@ func runReshCli(out *output.Output, config cfg.Config) (string, int) {
 	g.Highlight = true
 
 	var resp msg.CliResponse
-	if *testHistory == "" {
-		mess := msg.CliMsg{
-			SessionID: *sessionID,
-			PWD:       *pwd,
-		}
-		resp = SendCliMsg(out, mess, strconv.Itoa(config.Port))
-	} else {
-		resp = searchapp.LoadHistoryFromFile(out.Logger.Sugar(), *testHistory, *testHistoryLines)
+	mess := msg.CliMsg{
+		SessionID: *sessionID,
+		PWD:       *pwd,
 	}
+	resp = SendCliMsg(out, mess, strconv.Itoa(config.Port))
 
 	st := state{
 		// lock sync.Mutex
@@ -129,46 +122,46 @@ func runReshCli(out *output.Output, config cfg.Config) (string, int) {
 
 	errMsg = "Failed to set keybindings"
 	if err := g.SetKeybinding("", gocui.KeyTab, gocui.ModNone, layout.Next); err != nil {
-		out.Fatal(errMsg, err)
+		out.FatalE(errMsg, err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyArrowDown, gocui.ModNone, layout.Next); err != nil {
-		out.Fatal(errMsg, err)
+		out.FatalE(errMsg, err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlN, gocui.ModNone, layout.Next); err != nil {
-		out.Fatal(errMsg, err)
+		out.FatalE(errMsg, err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyArrowUp, gocui.ModNone, layout.Prev); err != nil {
-		out.Fatal(errMsg, err)
+		out.FatalE(errMsg, err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlP, gocui.ModNone, layout.Prev); err != nil {
-		out.Fatal(errMsg, err)
+		out.FatalE(errMsg, err)
 	}
 
 	if err := g.SetKeybinding("", gocui.KeyArrowRight, gocui.ModNone, layout.SelectPaste); err != nil {
-		out.Fatal(errMsg, err)
+		out.FatalE(errMsg, err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyEnter, gocui.ModNone, layout.SelectExecute); err != nil {
-		out.Fatal(errMsg, err)
+		out.FatalE(errMsg, err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlG, gocui.ModNone, layout.AbortPaste); err != nil {
-		out.Fatal(errMsg, err)
+		out.FatalE(errMsg, err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
-		out.Fatal(errMsg, err)
+		out.FatalE(errMsg, err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlD, gocui.ModNone, quit); err != nil {
-		out.Fatal(errMsg, err)
+		out.FatalE(errMsg, err)
 	}
 
 	if err := g.SetKeybinding("", gocui.KeyCtrlR, gocui.ModNone, layout.SwitchModes); err != nil {
-		out.Fatal(errMsg, err)
+		out.FatalE(errMsg, err)
 	}
 
 	layout.UpdateData(*query)
 	layout.UpdateRawData(*query)
 	err = g.MainLoop()
 	if err != nil && !errors.Is(err, gocui.ErrQuit) {
-		out.Fatal("Main application loop finished with error", err)
+		out.FatalE("Main application loop finished with error", err)
 	}
 	return layout.s.output, layout.s.exitCode
 }
@@ -393,7 +386,7 @@ func (m manager) Layout(g *gocui.Gui) error {
 
 	v, err := g.SetView("input", 0, 0, maxX-1, 2, b)
 	if err != nil && !errors.Is(err, gocui.ErrUnknownView) {
-		m.out.Fatal("Failed to set view 'input'", err)
+		m.out.FatalE("Failed to set view 'input'", err)
 	}
 
 	v.Editable = true
@@ -416,7 +409,7 @@ func (m manager) Layout(g *gocui.Gui) error {
 
 	v, err = g.SetView("body", 0, 2, maxX-1, maxY, b)
 	if err != nil && !errors.Is(err, gocui.ErrUnknownView) {
-		m.out.Fatal("Failed to set view 'body'", err)
+		m.out.FatalE("Failed to set view 'body'", err)
 	}
 	v.Frame = false
 	v.Autoscroll = false
@@ -579,7 +572,7 @@ func SendCliMsg(out *output.Output, m msg.CliMsg, port string) msg.CliResponse {
 	sugar := out.Logger.Sugar()
 	recJSON, err := json.Marshal(m)
 	if err != nil {
-		out.Fatal("Failed to marshal message", err)
+		out.FatalE("Failed to marshal message", err)
 	}
 
 	req, err := http.NewRequest(
@@ -587,7 +580,7 @@ func SendCliMsg(out *output.Output, m msg.CliMsg, port string) msg.CliResponse {
 		"http://localhost:"+port+"/dump",
 		bytes.NewBuffer(recJSON))
 	if err != nil {
-		out.Fatal("Failed to build request", err)
+		out.FatalE("Failed to build request", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
@@ -602,13 +595,13 @@ func SendCliMsg(out *output.Output, m msg.CliMsg, port string) msg.CliResponse {
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		out.Fatal("Failed read response", err)
+		out.FatalE("Failed read response", err)
 	}
 	// sugar.Println(string(body))
 	response := msg.CliResponse{}
 	err = json.Unmarshal(body, &response)
 	if err != nil {
-		out.Fatal("Failed decode response", err)
+		out.FatalE("Failed decode response", err)
 	}
 	sugar.Debugw("Received records from daemon",
 		"recordCount", len(response.Records),

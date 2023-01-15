@@ -33,7 +33,7 @@ func Execute(ver, com, development string) {
 	defer logger.Sync() // flushes buffer, if any
 	out = output.New(logger, "ERROR")
 	if errCfg != nil {
-		out.Error("Error while getting configuration", errCfg)
+		out.ErrorE("Error while getting configuration", errCfg)
 	}
 
 	var versionCmd = cobra.Command{
@@ -43,10 +43,17 @@ func Execute(ver, com, development string) {
 	}
 	rootCmd.AddCommand(&versionCmd)
 
+	doctorCmd := cobra.Command{
+		Use:   "doctor",
+		Short: "check common problems",
+		Run:   doctorCmdFunc(config),
+	}
+	rootCmd.AddCommand(&doctorCmd)
+
 	updateCmd.Flags().BoolVar(&betaFlag, "beta", false, "Update to latest version even if it's beta.")
 	rootCmd.AddCommand(updateCmd)
 
 	if err := rootCmd.Execute(); err != nil {
-		out.Fatal("Command ended with error", err)
+		out.FatalE("Command ended with error", err)
 	}
 }

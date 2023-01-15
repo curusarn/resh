@@ -23,8 +23,6 @@ Context-based replacement/enhancement for zsh and bash shell history
 
 ### Prerequisites
 
-Nohup
-
 Standard stuff: `bash(4.3+)`, `curl`, `tar`, ...
 
 MacOS: `coreutils` (`brew install coreutils`)

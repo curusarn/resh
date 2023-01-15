@@ -47,11 +47,11 @@ func main() {
 
 	timeAfter, err := strconv.ParseFloat(*rta, 64)
 	if err != nil {
-		out.Fatal("Error while parsing flag --time-after", err)
+		out.FatalE("Error while parsing flag --time-after", err)
 	}
 	timeBefore, err := strconv.ParseFloat(*rtb, 64)
 	if err != nil {
-		out.Fatal("Error while parsing flag --time-before", err)
+		out.FatalE("Error while parsing flag --time-before", err)
 	}
 	duration := timeAfter - timeBefore
 

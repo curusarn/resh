@@ -11,6 +11,7 @@ import (
 
 func versionCmdFunc(config cfg.Config) func(*cobra.Command, []string) {
 	return func(cmd *cobra.Command, args []string) {
+
 		fmt.Printf("Installed: %s\n", version)
 
 		versionEnv := getEnvVarWithDefault("__RESH_VERSION", "<unknown>")
@@ -18,6 +19,7 @@ func versionCmdFunc(config cfg.Config) func(*cobra.Command, []string) {
 
 		resp, err := status.GetDaemonStatus(config.Port)
 		if err != nil {
+			fmt.Printf("Running checks: %s\n", version)
 			out.ErrorDaemonNotRunning(err)
 			return
 		}

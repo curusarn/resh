@@ -15,7 +15,7 @@ var updateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			out.Fatal("Could not get user home dir", err)
+			out.FatalE("Could not get user home dir", err)
 		}
 		rawinstallPath := filepath.Join(homeDir, ".resh/rawinstall.sh")
 		execArgs := []string{rawinstallPath}
@@ -27,7 +27,7 @@ var updateCmd = &cobra.Command{
 		execCmd.Stderr = os.Stderr
 		err = execCmd.Run()
 		if err != nil {
-			out.Fatal("Update ended with error", err)
+			out.FatalE("Update ended with error", err)
 		}
 	},
 }

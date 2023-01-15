@@ -115,10 +115,10 @@ failed_to_kill() {
 }
 
 if [ -f "$pid_file" ]; then
-    kill -SIGKILL "$pid_file" || failed_to_kill
+    kill -SIGTERM "$pid_file" || failed_to_kill
     rm "$pid_file"
 else
-    pkill -SIGKILL "resh-daemon" || failed_to_kill
+    killall -SIGTERM resh-daemon || failed_to_kill
 fi
 
 echo "Creating/updating config file ..."
@@ -151,6 +151,9 @@ fi
 
 echo "Launching resh daemon ..."
 ~/.resh/bin/resh-daemon-start
+
+# FIXME: Figure out how to give people enough time to read everything
+# sleep 1
 
 info="---- Scroll down using arrow keys ----
 #####################################
@@ -188,6 +191,7 @@ ISSUES & FEEDBACK
     Please report issues to: https://github.com/curusarn/resh/issues
     Feedback and suggestions are very welcome!
 "
+# Show banner if RESH is not loaded in the terminal
 if [ -z "${__RESH_VERSION:-}" ]; then info="$info
 ##############################################################
 #                                                            #
@@ -206,6 +210,7 @@ echo "Thank you for using RESH"
 echo "Report issues here: https://github.com/curusarn/resh/issues"
 echo "Ctrl+R launches the RESH SEARCH app"
 
+# Show banner if RESH is not loaded in the terminal
 if [ -z "${__RESH_VERSION:-}" ]; then printf "
 ##############################################################
 #                                                            #

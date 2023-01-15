@@ -52,12 +52,12 @@ func main() {
 
 	time, err := strconv.ParseFloat(*timeStr, 64)
 	if err != nil {
-		out.Fatal("Error while parsing flag --time", err)
+		out.FatalE("Error while parsing flag --time", err)
 	}
 
 	realPwd, err := filepath.EvalSymlinks(*pwd)
 	if err != nil {
-		out.Error("Error while evaluating symlinks in PWD", err)
+		out.ErrorE("Error while evaluating symlinks in PWD", err)
 		realPwd = ""
 	}
 

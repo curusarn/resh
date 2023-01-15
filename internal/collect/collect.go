@@ -23,13 +23,13 @@ func SendRecord(out *output.Output, r recordint.Collect, port, path string) {
 	)
 	recJSON, err := json.Marshal(r)
 	if err != nil {
-		out.Fatal("Error while encoding record", err)
+		out.FatalE("Error while encoding record", err)
 	}
 
 	req, err := http.NewRequest("POST", "http://localhost:"+port+path,
 		bytes.NewBuffer(recJSON))
 	if err != nil {
-		out.Fatal("Error while sending record", err)
+		out.FatalE("Error while sending record", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
@@ -50,13 +50,13 @@ func SendSessionInit(out *output.Output, r recordint.SessionInit, port string) {
 	)
 	recJSON, err := json.Marshal(r)
 	if err != nil {
-		out.Fatal("Error while encoding record", err)
+		out.FatalE("Error while encoding record", err)
 	}
 
 	req, err := http.NewRequest("POST", "http://localhost:"+port+"/session_init",
 		bytes.NewBuffer(recJSON))
 	if err != nil {
-		out.Fatal("Error while sending record", err)
+		out.FatalE("Error while sending record", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
