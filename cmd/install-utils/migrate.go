@@ -102,8 +102,7 @@ func migrateHistoryLocation(out *output.Output) error {
 	if err != nil {
 		return fmt.Errorf("failed to get data directory: %w", err)
 	}
-	// TODO: de-hardcode this
-	historyPath := path.Join(dataDir, "history.reshjson")
+	historyPath := path.Join(dataDir, datadir.HistoryFileName)
 
 	exists, err := futil.FileExists(historyPath)
 	if err != nil {
@@ -149,8 +148,7 @@ func migrateHistoryFormat(out *output.Output) error {
 	if err != nil {
 		return fmt.Errorf("could not get user data directory: %w", err)
 	}
-	// TODO: de-hardcode this
-	historyPath := path.Join(dataDir, "history.reshjson")
+	historyPath := path.Join(dataDir, datadir.HistoryFileName)
 
 	exists, err := futil.FileExists(historyPath)
 	if err != nil {

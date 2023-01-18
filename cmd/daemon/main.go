@@ -48,7 +48,7 @@ func main() {
 	}
 	// TODO: These paths should be probably defined in a package
 	pidFile := filepath.Join(dataDir, "daemon.pid")
-	reshHistoryPath := filepath.Join(dataDir, "history.reshjson")
+	reshHistoryPath := filepath.Join(dataDir, datadir.HistoryFileName)
 	bashHistoryPath := filepath.Join(homeDir, ".bash_history")
 	zshHistoryPath := filepath.Join(homeDir, ".zsh_history")
 	deviceID, err := device.GetID(dataDir)
