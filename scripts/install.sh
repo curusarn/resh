@@ -10,15 +10,27 @@ set -euo pipefail
 
 echo
 echo "Checking your system ..."
+printf '\e[31;1m' # red color on
+
+reset() {
+    printf '\e[0m' # reset
+    exit
+}
+trap reset EXIT INT TERM
 
 # /usr/bin/zsh -> zsh
 login_shell=$(echo "$SHELL" | rev | cut -d'/' -f1 | rev)
 
 if [ "$login_shell" != bash ] && [ "$login_shell" != zsh ]; then
-    echo "ERROR: Unsupported/unknown login shell: $login_shell"
-    exit 1
+    echo "* UNSUPPORTED login shell: $login_shell"
+    echo " -> RESH supports zsh and bash"
+    echo
+    if [ -z "${RESH_INSTALL_IGNORE_LOGIN_SHELL-}" ]; then
+        echo 'EXITING!'
+        echo ' -> You can skip this check with `export RESH_INSTALL_IGNORE_LOGIN_SHELL=1`'
+        exit 1
+    fi
 fi
-echo " * Login shell: $login_shell - OK"
 
 # TODO: Explicitly ask users if they want to enable RESH in shells
 #       Only offer shells with supported versions
@@ -27,88 +39,56 @@ echo " * Login shell: $login_shell - OK"
 #           figure out if we want to redo this in v3 or not
 #           the login shell logic is flawed
 
-
 bash_version=$(bash -c 'echo ${BASH_VERSION}')
 bash_version_major=$(bash -c 'echo ${BASH_VERSINFO[0]}')
 bash_version_minor=$(bash -c 'echo ${BASH_VERSINFO[1]}')
-bash_too_old=""
-if [ "$bash_version_major" -le 3 ]; then 
-    bash_too_old=true
-elif [ "$bash_version_major" -eq 4 ] && [ "$bash_version_minor" -lt 3 ]; then 
-    bash_too_old=true
+bash_ok=1
+if [ "$bash_version_major" -le 3 ]; then
+    bash_ok=0
+elif [ "$bash_version_major" -eq 4 ] && [ "$bash_version_minor" -lt 3 ]; then
+    bash_ok=0
 fi
 
-if [ "$bash_too_old" = true ]; then
-    echo " * Bash version: $bash_version - WARNING!"
-    if [ "$login_shell" = bash ]; then
-        echo "   > Your bash version is old."
-        echo "   > Bash is also your login shell."
-        echo "   > Updating to bash 4.3+ is STRONGLY RECOMMENDED!"
-    else
-        echo "   > Your bash version is old"
-        echo "   > Bash is not your login shell so it should not be an issue."
-        echo "   > Updating to bash 4.3+ is recommended."
-    fi
-else
-    echo " * Bash version: $bash_version - OK"
+if [ "$bash_ok" != 1 ]; then
+    echo "* UNSUPPORTED bash version: $bash_version"
+    echo " -> Update to bash 4.3+ if you want to use RESH in bash"
+    echo
 fi
 
-
+zsh_ok=1
 if ! zsh --version >/dev/null 2>&1; then
-    echo " * Zsh version: ? - not installed!"
+    echo "* Zsh not installed"
+    zsh_ok=0
 else
     zsh_version=$(zsh -c 'echo ${ZSH_VERSION}')
     zsh_version_major=$(echo "$zsh_version" | cut -d'.' -f1)
-    if [ "$zsh_version_major" -lt 5 ]; then 
-        echo " * Zsh version: $zsh_version - UNSUPPORTED!"
-        if [ "$login_shell" = zsh ]; then
-            echo "   > Your zsh version is old."
-            echo "   > Zsh is also your login shell."
-            echo "   > Updating to Zsh 5.0+ is STRONGLY RECOMMENDED!"
-        else
-            echo "   > Your zsh version is old"
-            echo "   > Zsh is not your login shell so it should not be an issue."
-            echo "   > Updating to zsh 5.0+ is recommended."
-        fi
-    else
-        echo " * Zsh version: $zsh_version - OK"
+    if [ "$zsh_version_major" -lt 5 ]; then
+        echo "* UNSUPPORTED zsh version: $zsh_version"
+        echo " -> Updatie to zsh 5.0+ if you want to use RESH in zsh"
+        echo
+        zsh_ok=0
     fi
 fi
 
-# echo 
+if [ "$bash_ok" != 1 ] && [ "$zsh_ok" != 1 ]; then
+    echo "* You have no shell that is supported by RESH!"
+    echo " -> Please install/update zsh or bash and run this installation again"
+    echo
+    if [ -z "${RESH_INSTALL_IGNORE_NO_SHELL-}" ]; then
+        echo 'EXITING!'
+        echo ' -> You can prevent this check by setting `export RESH_INSTALL_IGNORE_NO_SHELL=1`'
+        echo
+        exit 1
+    fi
+fi
+
+printf '\e[0m' # reset
 # echo "Continue with installation? (Any key to CONTINUE / Ctrl+C to ABORT)"
 # # shellcheck disable=2034
 # read -r x
 
-echo "Creating directories ..."
-
-mkdir_if_not_exists() {
-    if [ ! -d "$1" ]; then
-        mkdir "$1"
-    fi
-}
-
-mkdir_if_not_exists ~/.resh
-mkdir_if_not_exists ~/.resh/bin
-mkdir_if_not_exists ~/.config
-
-echo "Copying files ..."
-cp -f submodules/bash-preexec/bash-preexec.sh ~/.bash-preexec.sh
-cp -f submodules/bash-zsh-compat-widgets/bindfunc.sh ~/.resh/bindfunc.sh
-
-cp -f scripts/shellrc.sh ~/.resh/shellrc
-cp -f scripts/resh-daemon-start.sh ~/.resh/bin/resh-daemon-start
-cp -f scripts/hooks.sh ~/.resh/
-cp -f scripts/rawinstall.sh ~/.resh/
-
-# Copy all executables. We don't really need to omit install-utils from the bin directory
-echo "Copying more files ..."
-cp -f bin/resh-* ~/.resh/bin/
-# Rename reshctl
-mv ~/.resh/bin/resh-control ~/.resh/bin/reshctl
-
 # Shutting down resh daemon ...
-echo "Shutting down resh daemon ..."
+echo "Stopping RESH daemon ..."
 pid_file="${XDG_DATA_HOME-~/.local/share}/resh/daemon.pid"
 if [ ! -f "$pid_file" ]; then
     # old pid file location
@@ -126,42 +106,75 @@ else
     killall -SIGTERM resh-daemon || failed_to_kill
 fi
 
-echo "Creating/updating config file ..."
-./bin/resh-install-utils migrate-config
+echo "Installing ..."
 
-echo "Checking/setting up device files ..."
+# Crete dirs first to get rid of edge-cases
+# If we fail we don't roll back - directories are harmless
+mkdir_if_not_exists() {
+    if [ ! -d "$1" ]; then
+        mkdir "$1"
+    fi
+}
+
+mkdir_if_not_exists ~/.resh
+mkdir_if_not_exists ~/.resh/bin
+mkdir_if_not_exists ~/.config
+
+# Run setup and update tasks
+
 ./bin/resh-install-utils setup-device
+# migrate-all updates format of config and history
+# migrate-all restores original config and history on error
+# There is no need to roll back anything else because we haven't replaced
+#   anything in the previous installation.
+./bin/resh-install-utils migrate-all
 
-echo "Updating format of history file ..."
-./bin/resh-install-utils migrate-history
 
-# FIXME: V3: I would really like to stop enabling resh in unsupported shells
-echo "Finishing up ..."
-# Adding resh shellrc to .bashrc ...
-if [ ! -f ~/.bashrc ]; then
-    touch ~/.bashrc
+# Copy files
+
+# echo "Copying files ..."
+cp -f submodules/bash-preexec/bash-preexec.sh ~/.bash-preexec.sh
+cp -f submodules/bash-zsh-compat-widgets/bindfunc.sh ~/.resh/bindfunc.sh
+
+cp -f scripts/shellrc.sh ~/.resh/shellrc
+cp -f scripts/resh-daemon-start.sh ~/.resh/bin/resh-daemon-start
+cp -f scripts/hooks.sh ~/.resh/
+cp -f scripts/rawinstall.sh ~/.resh/
+
+# echo "Copying more files ..."
+# Copy all go executables. We don't really need to omit install-utils from the bin directory
+cp -f bin/resh-* ~/.resh/bin/
+# Rename reshctl
+mv ~/.resh/bin/resh-control ~/.resh/bin/reshctl
+
+
+echo "Handling shell files ..."
+# Only add shell directives into bash if it passed version checks
+if [ "$bash_ok" = 1 ]; then
+    if [ ! -f ~/.bashrc ]; then
+        touch ~/.bashrc
+    fi
+    # Adding resh shellrc to .bashrc ...
+    grep -q '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' ~/.bashrc ||\
+        echo -e '\n[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc # this line was added by RESH (REcycle SHell)' >> ~/.bashrc
+    # Adding bash-preexec to .bashrc ...
+    grep -q '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' ~/.bashrc ||\
+        echo -e '\n[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh # this line was added by RESH (REcycle SHell)' >> ~/.bashrc
 fi
-grep -q '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' ~/.bashrc ||\
-	echo -e '\n[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc # this line was added by RESH (REcycle SHell)' >> ~/.bashrc
-# Adding bash-preexec to .bashrc ...
-grep -q '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' ~/.bashrc ||\
-	echo -e '\n[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh # this line was added by RESH (REcycle SHell)' >> ~/.bashrc
-# Adding resh shellrc to .zshrc ...
-if [ -f ~/.zshrc ]; then
-    grep -q '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' ~/.zshrc ||\
-        echo -e '\n[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc # this line was added by RESH (REcycle SHell)' >> ~/.zshrc
+
+# Only add shell directives into zsh if it passed version checks
+if [ "$zsh_ok" = 1 ]; then
+    # Adding resh shellrc to .zshrc ...
+    if [ -f ~/.zshrc ]; then
+        grep -q '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' ~/.zshrc ||\
+            echo -e '\n[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc # this line was added by RESH (REcycle SHell)' >> ~/.zshrc
+    fi
 fi
 
-# Deleting zsh completion cache - for future use
-# [ ! -e ~/.zcompdump ] || rm ~/.zcompdump
-
-echo "Launching resh daemon ..."
+echo "Starting RESH daemon ..."
 ~/.resh/bin/resh-daemon-start
 
-# FIXME: V3: Figure out how to give people enough time to read everything
-# sleep 1
-
-info="---- Scroll down using arrow keys ----
+printf '
 #####################################
 #      ____  _____ ____  _   _      #
 #     |  _ \| ____/ ___|| | | |     #
@@ -170,57 +183,46 @@ info="---- Scroll down using arrow keys ----
 #     |_| \_\_____|____/|_| |_|     #
 #           REcycle SHell           #
 #####################################
-"
+'
 
-info="$info
-RESH SEARCH APPLICATION = Redesigned reverse search that actually works
+# bright green
+high='\e[1m'
+reset='\e[0m'
 
-    >>> Launch RESH SEARCH app by pressing CTRL+R <<<
-    (you will need to restart your terminal first)
-     
-    Search your history by commands. 
+printf '
+RESH HISTORY SEARCH
+\e[32;1m    Press CTRL+R to launch RESH SEARCH    \e[0m
+    (you will need to restart your terminal if you just installed RESH)
+
+    Searches your history by commands.
     Device, directories, git remote, and exit status is used to display relevant results first.
 
-    At first, the search application will use the standard shell history without context. 
-    All history recorded from now on will have context which will be used by the RESH SEARCH app.
+    At first, RESH SEARCH will use the standard shell history without context.
+    All history recorded from now on will have context which will be used by the RESH SEARCH.
 
 CHECK FOR UPDATES
     To check for (and install) updates use reshctl command:
      $ reshctl update
-
-HISTORY
+'
+printf "
+RECORDED HISTORY
     Your resh history will be recorded to '${XDG_DATA_HOME-~/.local/share}/resh/history.reshjson'
     Look at it using e.g. following command (you might need to install jq)
      $ cat ${XDG_DATA_HOME-~/.local/share}/resh/history.reshjson | sed 's/^v[^{]*{/{/' | jq .
-
+"
+printf '
 ISSUES & FEEDBACK
     Please report issues to: https://github.com/curusarn/resh/issues
     Feedback and suggestions are very welcome!
-"
+    Thank you for using RESH!
+'
+
 # Show banner if RESH is not loaded in the terminal
-if [ -z "${__RESH_VERSION:-}" ]; then info="$info
+if [ -z "${__RESH_VERSION-}" ]; then printf '
 ##############################################################
 #                                                            #
 #    Finish the installation by RESTARTING this terminal!    #
 #                                                            #
-##############################################################"
-fi
-info="$info
----- Close this by pressing Q ----" 
-
-printf "%s\n" "$info" | ${PAGER:-less}
-
-echo
-echo "All done!"
-echo "Thank you for using RESH"
-echo "Report issues here: https://github.com/curusarn/resh/issues"
-echo "Ctrl+R launches the RESH SEARCH app"
-
-# Show banner if RESH is not loaded in the terminal
-if [ -z "${__RESH_VERSION:-}" ]; then printf "
 ##############################################################
-#                                                            #
-#    Finish the installation by RESTARTING this terminal!    #
-#                                                            #
-##############################################################\n"
+'
 fi
