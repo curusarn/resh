@@ -13,7 +13,7 @@ import (
 )
 
 func printRecoveryInfo(rf *futil.RestorableFile) {
-	fmt.Printf(" -> Backup is '%s'"+
+	fmt.Printf(" -> Backup is '%s'\n"+
 		" -> Original file location is '%s'\n"+
 		" -> Please copy the backup over the file - run: cp -f '%s' '%s'\n\n",
 		rf.PathBackup, rf.Path,
@@ -25,7 +25,7 @@ func migrateAll(out *output.Output) {
 	cfgBackup, err := migrateConfig(out)
 	if err != nil {
 		// out.InfoE("Failed to update config file format", err)
-		out.FatalE("ERROR: Failed to update config file format", err)
+		out.FatalE("Failed to update config file format", err)
 	}
 	err = migrateHistory(out)
 	if err != nil {
@@ -39,7 +39,7 @@ func migrateAll(out *output.Output) {
 		} else {
 			out.Info("Config file was restored successfully")
 		}
-		out.FatalE("ERROR: Failed to update history", err)
+		out.FatalE("Failed to update history", errHist)
 	}
 }
 
@@ -183,7 +183,7 @@ func migrateHistoryFormat(out *output.Output) error {
 		out.Info("Restoring RESH history from backup ...")
 		err = backup.Restore()
 		if err != nil {
-			out.InfoE("FAILED TO RESTORE resh HISTORY FROM BACKUP!", err)
+			out.InfoE("FAILED TO RESTORE RESH HISTORY FROM BACKUP!", err)
 			printRecoveryInfo(backup)
 		} else {
 			out.Info("RESH history file was restored successfully")
