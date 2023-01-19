@@ -100,7 +100,7 @@ func (h *Histfile) loadHistory(bashHistoryPath, zshHistoryPath string, maxInitHi
 	)
 	history, err := h.rio.ReadAndFixFile(h.historyPath, 3)
 	if err != nil {
-		h.sugar.Panicf("Failed to read file: %w", err)
+		h.sugar.Fatalf("Failed to read history file: %v", err)
 	}
 	h.sugar.Infow("Resh history loaded from file",
 		"historyFile", h.historyPath,
@@ -113,7 +113,7 @@ func (h *Histfile) loadHistory(bashHistoryPath, zshHistoryPath string, maxInitHi
 	h.sugar.Infow("Resh history loaded and processed",
 		"recordCount", len(reshCmdLines.List),
 	)
-	if useNativeHistories == false {
+	if !useNativeHistories {
 		h.bashCmdLines = reshCmdLines
 		h.zshCmdLines = histlist.Copy(reshCmdLines)
 		return

@@ -1,6 +1,4 @@
-#!/usr/bin/env bash
-
-# TODO: Swith to sh shebang?
+#!/usr/bin/env sh
 
 set -euo pipefail
 
@@ -12,11 +10,11 @@ echo
 echo "Checking your system ..."
 printf '\e[31;1m' # red color on
 
-reset() {
+cleanup() {
     printf '\e[0m' # reset
     exit
 }
-trap reset EXIT INT TERM
+trap cleanup EXIT INT TERM
 
 # /usr/bin/zsh -> zsh
 login_shell=$(echo "$SHELL" | rev | cut -d'/' -f1 | rev)
@@ -35,9 +33,6 @@ fi
 # TODO: Explicitly ask users if they want to enable RESH in shells
 #       Only offer shells with supported versions
 #       E.g. Enable RESH in: Zsh (your login shell), Bash, Both shells
-# TODO: V3: We already partially have these checks in `reshctl doctor`
-#           figure out if we want to redo this in v3 or not
-#           the login shell logic is flawed
 
 bash_version=$(bash -c 'echo ${BASH_VERSION}')
 bash_version_major=$(bash -c 'echo ${BASH_VERSINFO[0]}')
@@ -87,28 +82,13 @@ printf '\e[0m' # reset
 # # shellcheck disable=2034
 # read -r x
 
-# Shutting down resh daemon ...
-echo "Stopping RESH daemon ..."
-pid_file="${XDG_DATA_HOME-~/.local/share}/resh/daemon.pid"
-if [ ! -f "$pid_file" ]; then
-    # Use old pid file location
-    pid_file=~/.resh/resh.pid
-fi
-
-failed_to_kill() {
-    # Do not print error during first installation
-    if [ -n "${__RESH_VERSION-}" ]; then
-        echo "ERROR: Failed to kill the resh-daemon - maybe it wasn't running?"
-    fi
-}
-
-
-if [ -f "$pid_file" ]; then
-    pid=$(cat "$pid_file")
-    kill -SIGTERM "$pid" || failed_to_kill
-    rm "$pid_file"
+if [ -z "${__RESH_VERSION-}" ]; then
+    # First installation
+    # Stop the daemon anyway just to be sure
+    # But don't output anything
+    ./scripts/resh-daemon-stop.sh -q
 else
-    killall -SIGTERM resh-daemon || failed_to_kill
+    ./scripts/resh-daemon-stop.sh
 fi
 
 echo "Installing ..."
@@ -143,6 +123,8 @@ cp -f submodules/bash-zsh-compat-widgets/bindfunc.sh ~/.resh/bindfunc.sh
 
 cp -f scripts/shellrc.sh ~/.resh/shellrc
 cp -f scripts/resh-daemon-start.sh ~/.resh/bin/resh-daemon-start
+cp -f scripts/resh-daemon-stop.sh ~/.resh/bin/resh-daemon-stop
+cp -f scripts/resh-daemon-restart.sh ~/.resh/bin/resh-daemon-restart
 cp -f scripts/hooks.sh ~/.resh/
 cp -f scripts/rawinstall.sh ~/.resh/
 
@@ -161,10 +143,10 @@ if [ "$bash_ok" = 1 ]; then
     fi
     # Adding resh shellrc to .bashrc ...
     grep -q '[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc' ~/.bashrc ||\
-        echo -e '\n[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc # this line was added by RESH (REcycle SHell)' >> ~/.bashrc
+        echo -e '\n[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc # this line was added by RESH' >> ~/.bashrc
     # Adding bash-preexec to .bashrc ...
     grep -q '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' ~/.bashrc ||\
-        echo -e '\n[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh # this line was added by RESH (REcycle SHell)' >> ~/.bashrc
+        echo -e '\n[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh # this line was added by RESH' >> ~/.bashrc
 fi
 
 # Only add shell directives into zsh if it passed version checks
@@ -172,11 +154,10 @@ if [ "$zsh_ok" = 1 ]; then
     # Adding resh shellrc to .zshrc ...
     if [ -f ~/.zshrc ]; then
         grep -q '[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc' ~/.zshrc ||\
-            echo -e '\n[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc # this line was added by RESH (REcycle SHell)' >> ~/.zshrc
+            echo -e '\n[ -f ~/.resh/shellrc ] && source ~/.resh/shellrc # this line was added by RESH' >> ~/.zshrc
     fi
 fi
 
-echo "Starting RESH daemon ..."
 ~/.resh/bin/resh-daemon-start
 
 printf '
@@ -202,18 +183,23 @@ RESH HISTORY SEARCH
     Searches your history by commands.
     Device, directories, git remote, and exit status is used to display relevant results first.
 
-    At first, RESH SEARCH will use the standard shell history without context.
+    At first, RESH SEARCH will use bash/zsh history without context.
     All history recorded from now on will have context which will be used by the RESH SEARCH.
 
 CHECK FOR UPDATES
-    To check for (and install) updates use reshctl command:
+    To check for (and install) updates use:
      $ reshctl update
 '
+# TODO: recorded history section would be better in github readme
 printf "
 RECORDED HISTORY
     Your resh history will be recorded to '${XDG_DATA_HOME-~/.local/share}/resh/history.reshjson'
     Look at it using e.g. following command (you might need to install jq)
      $ cat ${XDG_DATA_HOME-~/.local/share}/resh/history.reshjson | sed 's/^v[^{]*{/{/' | jq .
+
+LOGS
+    RESH logs to '${XDG_DATA_HOME-~/.local/share}/resh/log.json'
+    Logs are useful for troubleshooting issues.
 "
 printf '
 ISSUES & FEEDBACK

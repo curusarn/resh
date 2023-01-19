@@ -17,7 +17,7 @@ fi
 # shellcheck disable=2155
 export __RESH_VERSION=$(resh-collect -version)
 
-resh-daemon-start
+resh-daemon-start -q
 
 [ "$(resh-config --key BindControlR)" = true ] && __resh_bind_control_R
 

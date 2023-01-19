@@ -1,6 +1,7 @@
 package opt
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/curusarn/resh/internal/output"
@@ -17,10 +18,10 @@ func HandleVersionOpts(out *output.Output, args []string, version, commit string
 	// and adding "more correct" variants would mean supporting more variants.
 	switch os.Args[1] {
 	case "-version":
-		out.Info(version)
+		fmt.Print(version)
 		os.Exit(0)
 	case "-revision":
-		out.Info(commit)
+		fmt.Print(commit)
 		os.Exit(0)
 	case "-requireVersion":
 		if len(os.Args) < 3 {

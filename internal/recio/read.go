@@ -22,18 +22,21 @@ func (r *RecIO) ReadAndFixFile(fpath string, maxErrors int) ([]record.V1, error)
 	numErrs := len(decodeErrs)
 	if numErrs > maxErrors {
 		r.sugar.Errorw("Encountered too many decoding errors",
-			"corruptedRecords", numErrs,
+			"errorsCount", numErrs,
+			"individualErrors", "<Search 'Error while decoding line' to see individual errors>",
 		)
-		return nil, fmt.Errorf("encountered too many decoding errors")
+		return nil, fmt.Errorf("encountered too many decoding errors, last error: %w", decodeErrs[len(decodeErrs)-1])
 	}
 	if numErrs == 0 {
 		return recs, nil
 	}
 
-	// TODO: check the error messages
-	r.sugar.Warnw("Some history records could not be decoded - fixing resh history file by dropping them",
+	r.sugar.Warnw("Some history records could not be decoded - fixing RESH history file by dropping them",
 		"corruptedRecords", numErrs,
+		"lastError", decodeErrs[len(decodeErrs)-1],
+		"individualErrors", "<Search 'Error while decoding line' to see individual errors>",
 	)
+
 	fpathBak := fpath + ".bak"
 	r.sugar.Infow("Backing up current corrupted history file",
 		"historyFileBackup", fpathBak,
@@ -93,13 +96,13 @@ func (r *RecIO) ReadFile(fpath string) ([]record.V1, []error, error) {
 		}
 		recs = append(recs, *rec)
 	}
-	r.sugar.Infow("Loaded resh history records",
-		"recordCount", len(recs),
-	)
 	if err != io.EOF {
 		r.sugar.Error("Error while reading file", zap.Error(err))
 		return recs, decodeErrs, err
 	}
+	r.sugar.Infow("Loaded resh history records",
+		"recordCount", len(recs),
+	)
 	return recs, decodeErrs, nil
 }
 

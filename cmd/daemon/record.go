@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/curusarn/resh/internal/recordint"
@@ -28,7 +28,7 @@ func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sugar := h.sugar.With(zap.String("endpoint", "/record"))
 	sugar.Debugw("Handling request, sending response, reading body ...")
 	w.Write([]byte("OK\n"))
-	jsn, err := ioutil.ReadAll(r.Body)
+	jsn, err := io.ReadAll(r.Body)
 	// run rest of the handler as goroutine to prevent any hangups
 	go func() {
 		if err != nil {

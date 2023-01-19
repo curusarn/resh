@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -22,7 +21,37 @@ var version string
 var commit string
 var development string
 
+const helpMsg = `ERROR: resh-daemon doesn't accept any arguments
+
+WARNING:
+  You shouldn't typically need to start RESH daemon yourself.
+  Unless its already running, RESH daemon is started when a new terminal is opened.
+  RESH daemon will not start if it's already running even when you run it manually.
+
+USAGE:
+  $ resh-daemon
+  Runs the daemon as foreground process. You can kill it with CTRL+C.
+
+  $ resh-daemon-start
+  Runs the daemon as background process detached from terminal.
+
+LOGS & DEBUGGING:
+  Logs are located in:
+    ${XDG_DATA_HOME}/resh/log.json (if XDG_DATA_HOME is set)
+    ~/.local/share/resh/log.json   (otherwise - more common)
+
+  A good way to see the logs as they are being produced is:
+    $ tail -f ~/.local/share/resh/log.json
+
+MORE INFO:
+  https://github.com/curusarn/resh/
+`
+
 func main() {
+	if len(os.Args) > 1 {
+		fmt.Fprint(os.Stderr, helpMsg)
+		os.Exit(1)
+	}
 	config, errCfg := cfg.New()
 	logger, err := logger.New("daemon", config.LogLevel, development)
 	if err != nil {
@@ -83,7 +112,7 @@ func main() {
 			)
 		}
 	}
-	err = ioutil.WriteFile(pidFile, []byte(strconv.Itoa(os.Getpid())), 0644)
+	err = os.WriteFile(pidFile, []byte(strconv.Itoa(os.Getpid())), 0644)
 	if err != nil {
 		sugar.Fatalw("Could not create PID file",
 			"error", err,
@@ -116,7 +145,7 @@ type daemon struct {
 }
 
 func (d *daemon) killDaemon(pidFile string) error {
-	dat, err := ioutil.ReadFile(pidFile)
+	dat, err := os.ReadFile(pidFile)
 	if err != nil {
 		d.sugar.Errorw("Reading PID file failed",
 			"PIDFile", pidFile,
@@ -128,8 +157,7 @@ func (d *daemon) killDaemon(pidFile string) error {
 		return fmt.Errorf("could not parse PID file contents: %w", err)
 	}
 	d.sugar.Infow("Successfully parsed PID", "PID", pid)
-	cmd := exec.Command("kill", "-s", "sigint", strconv.Itoa(pid))
-	err = cmd.Run()
+	err = exec.Command("kill", "-SIGTERM", fmt.Sprintf("%d", pid)).Run()
 	if err != nil {
 		return fmt.Errorf("kill command finished with error: %w", err)
 	}

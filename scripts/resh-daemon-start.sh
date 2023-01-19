@@ -1,4 +1,8 @@
-#! /usr/bin/env sh
+#!/usr/bin/env sh
+if [ "${1-}" != "-q" ]; then
+  echo "Starting RESH daemon ..."
+  printf "Logs are in: %s\n" "${XDG_DATA_HOME-~/.local/share}/resh/log.json"
+fi
 # Run daemon in background - don't block
 # Redirect stdin, stdout, and stderr to /dev/null - detach all I/O
 resh-daemon </dev/null >/dev/null 2>/dev/null &

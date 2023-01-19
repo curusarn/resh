@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/curusarn/resh/internal/histfile"
@@ -18,7 +18,7 @@ type dumpHandler struct {
 func (h *dumpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sugar := h.sugar.With(zap.String("endpoint", "/dump"))
 	sugar.Debugw("Handling request, reading body ...")
-	jsn, err := ioutil.ReadAll(r.Body)
+	jsn, err := io.ReadAll(r.Body)
 	if err != nil {
 		sugar.Errorw("Error reading body", "error", err)
 		return
