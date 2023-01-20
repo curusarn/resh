@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 # very simple tests to catch simple errors in scripts
 
 for f in scripts/*.sh; do
