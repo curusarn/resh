@@ -37,14 +37,15 @@ make install
 
 ## Uninstallation
 
-You can uninstall RESH by running: `rm -rf ~/.resh/`.
-Restart your terminal after uninstall.
+You can uninstall RESH by running: `rm -rf ~/.resh/`.  
+Restart your terminal after uninstall!
 
 ### Installed files
 
 Binaries and shell files are in: `~/.resh/`
 
 Recorded history, device files, and logs are in: `~/.local/share/resh/` (or `${XDG_DATA_HOME}/resh/`)
+
 RESH config file is in: `~/.config/resh.toml`
 
 Also check your `~/.zshrc` and `~/.bashrc`.

@@ -3,7 +3,7 @@
 
 for f in scripts/*.sh; do
     echo "Running shellcheck on $f ..."
-    shellcheck "$f" --shell=bash --severity=error || exit 1
+    shellcheck "$f" --shell=sh --severity=error || exit 1
 done
 
 for f in scripts/{shellrc,hooks}.sh; do
