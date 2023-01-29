@@ -1,11 +1,17 @@
 
-![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/curusarn/resh?sort=semver)
-![Go test](https://github.com/curusarn/resh/actions/workflows/go.yaml/badge.svg)
-![Shell test](https://github.com/curusarn/resh/actions/workflows/sh.yaml/badge.svg)
+[![Latest version](https://img.shields.io/github/v/tag/curusarn/resh?sort=semver)](https://github.com/curusarn/resh/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/curusarn/resh)](https://goreportcard.com/report/github.com/curusarn/resh)
+[![Go test](https://github.com/curusarn/resh/actions/workflows/go.yaml/badge.svg)](https://github.com/curusarn/resh/actions/workflows/go.yaml)
+[![Shell test](https://github.com/curusarn/resh/actions/workflows/sh.yaml/badge.svg)](https://github.com/curusarn/resh/actions/workflows/sh.yaml)
 
-# Rich Enhanced Shell History
 
-Context-based replacement/enhancement for zsh and bash shell history
+# REcycle SHell
+
+Context-based replacement for `zsh` and `bash` shell history.
+
+Find any command you have ran before.  
+Releveant results are displayed first based on current directory, git repo, and exit status.
+
 <!-- Contextual shell history -->
 <!-- Contextual bash history -->
 <!-- Contextual zsh history -->
@@ -17,9 +23,11 @@ Context-based replacement/enhancement for zsh and bash shell history
 <!-- Better zsh history -->
 <!-- PWD Directory -->
 
-**Search your history by commands or arguments and get relevant results based on current directory, git repo, exit status, and device.**
 
-## Install with one command
+
+## Install
+
+Install RESH with one command:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawinstall.sh | sh
@@ -27,7 +35,7 @@ curl -fsSL https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawins
 
 You will need to have `curl` and `tar` installed.
 
-More options on [Installation page](./installation.md)
+More options on [Installation page ⇗](./installation.md)
 
 ## Update
 
@@ -72,6 +80,6 @@ TODO: This doesn't seem like the right place for keybindings
 
 ## Issues & Ideas
 
-Find help on [Troubleshooting page](./troubleshooting.md)
+Find help on [Troubleshooting page ⇗](./troubleshooting.md)
 
-Still got an issue? Create an issue: https://github.com/curusarn/resh/issues
+Still got an issue? [Create an issue](https://github.com/curusarn/resh/issues)
