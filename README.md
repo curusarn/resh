@@ -76,7 +76,7 @@ TODO: This doesn't seem like the right place for keybindings
 - Ctrl+G to abort and paste the current query onto the command line
 - Ctrl+R to switch between RAW and NORMAL mode
 
-## Issues & Ideas
+## Issues & ideas
 
 Find help on [Troubleshooting page ⇗](./troubleshooting.md)
 
