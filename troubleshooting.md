@@ -59,11 +59,13 @@ Restart RESH daemon for the config change to take effect: `resh-daemon-restart`
 
 ### Using RESH in bash on macOS
 
+ℹ️ It is recommended to use zsh on macOS.
+
 MacOS comes with really old bash (`bash 3.2`).  
 Update it using: `brew install bash`
 
 On macOS, bash shell does not load `~/.bashrc` because every shell runs as login shell.  
-Run  `echo '[ -f ~/.bashrc ] && . ~/.bashrc' >> ~/.bash_profile`
+Fix it by running: `echo '[ -f ~/.bashrc ] && . ~/.bashrc' >> ~/.bash_profile`
 
 ## Github issues
 
