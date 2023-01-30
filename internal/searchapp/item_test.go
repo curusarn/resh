@@ -87,3 +87,45 @@ func TestRightCutPadString(t *testing.T) {
 		t.Fatal("Incorrect right pad from ♥♥♥♥ to '♥♥♥♥  '")
 	}
 }
+
+// TestRightCutLeftPadString
+func TestRightCutLeftPadString(t *testing.T) {
+	if rightCutLeftPadString("abc", -1) != "" {
+		t.Fatal("Incorrect right cut from abc to '' (negative)")
+	}
+	if rightCutLeftPadString("abc", 0) != "" {
+		t.Fatal("Incorrect right cut from abc to ''")
+	}
+	if rightCutLeftPadString("abc", 1) != "…" {
+		t.Fatal("Incorrect right cut from abc to …")
+	}
+	if rightCutLeftPadString("abc", 2) != "a…" {
+		t.Fatal("Incorrect right cut from abc to a…")
+	}
+	if rightCutLeftPadString("abc", 3) != "abc" {
+		t.Fatal("Incorrect right cut from abc to abc")
+	}
+	if rightCutLeftPadString("abc", 5) != "  abc" {
+		t.Fatal("Incorrect right pad from abc to '  abc'")
+	}
+
+	// unicode
+	if rightCutLeftPadString("♥♥♥♥", -1) != "" {
+		t.Fatal("Incorrect right cut from ♥♥♥♥ to '' (negative)")
+	}
+	if rightCutLeftPadString("♥♥♥♥", 0) != "" {
+		t.Fatal("Incorrect right cut from ♥♥♥♥ to ''")
+	}
+	if rightCutLeftPadString("♥♥♥♥", 1) != "…" {
+		t.Fatal("Incorrect right cut from ♥♥♥♥ to …")
+	}
+	if rightCutLeftPadString("♥♥♥♥", 2) != "♥…" {
+		t.Fatal("Incorrect right cut from ♥♥♥♥ to ♥…")
+	}
+	if rightCutLeftPadString("♥♥♥♥", 4) != "♥♥♥♥" {
+		t.Fatal("Incorrect right cut from ♥♥♥♥ to ♥♥♥♥")
+	}
+	if rightCutLeftPadString("♥♥♥♥", 6) != "  ♥♥♥♥" {
+		t.Fatal("Incorrect right pad from ♥♥♥♥ to '  ♥♥♥♥'")
+	}
+}

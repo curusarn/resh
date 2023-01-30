@@ -234,7 +234,14 @@ func produceLocation(length int, host string, pwdTilde string, differentHost boo
 	// pwd length is the rest of the length
 	newPwdLen := length - colonLen - newHostLen
 
-	hostWithColor := rightCutPadString(host, newHostLen)
+	// adjust pwd length
+	if newPwdLen > pwdLen {
+		diff := newPwdLen - pwdLen
+		newHostLen += diff
+		newPwdLen -= diff
+	}
+
+	hostWithColor := rightCutLeftPadString(host, newHostLen)
 	if differentHost {
 		hostWithColor = highlightHost(hostWithColor)
 	}
@@ -275,6 +282,16 @@ func (ic ItemColumns) ProduceLine(dateLength int, locationLength int, flagsLengt
 	return line, length, err
 }
 
+func rightCutLeftPadString(str string, newLen int) string {
+	if len(str) > newLen {
+		return rightCutPadString(str, newLen)
+	}
+	if len(str) < newLen {
+		return leftCutPadString(str, newLen)
+	}
+	return str
+}
+
 func leftCutPadString(str string, newLen int) string {
 	if newLen <= 0 {
 		return ""
@@ -304,24 +321,22 @@ func rightCutPadString(str string, newLen int) string {
 }
 
 // proper match for path is when whole directory is matched
-// proper match for command is when term matches word delimeted by whitespace
+// proper match for command is when term matches word delimited by whitespace
 func properMatch(str, term, padChar string) bool {
-	if strings.Contains(padChar+str+padChar, padChar+term+padChar) {
-		return true
-	}
-	return false
+	return strings.Contains(padChar+str+padChar, padChar+term+padChar)
 }
 
 // NewItemFromRecordForQuery creates new item from record based on given query
-//		returns error if the query doesn't match the record
+//
+//	returns error if the query doesn't match the record
 func NewItemFromRecordForQuery(record recordint.SearchApp, query Query, debug bool) (Item, error) {
 	// Use numbers that won't add up to same score for any number of query words
-	// query score weigth 1.51
+	// query score weight 1.51
 	const hitScore = 1.517              // 1 * 1.51
 	const properMatchScore = 0.501      // 0.33 * 1.51
 	const hitScoreConsecutive = 0.00302 // 0.002 * 1.51
 
-	// context score weigth 1
+	// context score weight 1
 	// Host penalty
 	var actualPwdScore = 0.9
 	var sameGitRepoScore = 0.8
@@ -469,7 +484,8 @@ type RawItem struct {
 }
 
 // NewRawItemFromRecordForQuery creates new item from record based on given query
-//		returns error if the query doesn't match the record
+//
+//	returns error if the query doesn't match the record
 func NewRawItemFromRecordForQuery(record recordint.SearchApp, terms []string, debug bool) (RawItem, error) {
 	const hitScore = 1.0
 	const hitScoreConsecutive = 0.01
