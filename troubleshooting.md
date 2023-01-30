@@ -5,7 +5,7 @@
 Run RESH doctor to detect common issues:
 ```sh
 reshctl doctor
-```
+```  
 
 ## Restarting RESH daemon
 
