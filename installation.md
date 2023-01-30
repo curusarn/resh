@@ -56,16 +56,20 @@ Restart all open terminals after uninstall!
 
 ### Installed files
 
-Binaries and shell files are in: `~/.resh/`
+Binaries and shell files are in `~/.resh/`.
 
 Recorded history, device files, and logs are in one of:
 - `~/.local/share/resh/`
-- `${XDG_DATA_HOME}/resh/`
+- `$XDG_DATA_HOME/resh/` (if set)
 
-RESH config file is in: `~/.config/resh.toml`
+RESH config file is read from one of:
+- `~/.config/resh.toml`
+- `$XDG_CONFIG_HOME/resh.toml` (if set)
 
 RESH also adds a following lines to `~/.zshrc` and `~/.bashrc` to load itself on terminal startup:
 ```sh
 [[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc
 [[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh # bashrc only
 ```
+
+:information_source: RESH follows [XDG directory specification ⇗](https://maex.me/2019/12/the-power-of-the-xdg-base-directory-specification/)
