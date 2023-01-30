@@ -10,13 +10,6 @@ curl -fsSL https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawins
 
 You will need to have `curl` and `tar` installed.
 
-## Update
-
-Once installed RESH can be updated using:
-```sh
-reshctl update
-```
-
 ## Clone & Install
 
 ```sh
@@ -35,18 +28,44 @@ cd resh
 make install
 ```
 
+## Update
+
+Once installed RESH can be updated using:
+```sh
+reshctl update
+```
+
+## Disabling RESH
+
+If you have a persistent issue with RESH you can temporarily disable it and then enable it later.  
+You won't lose your history nor configuration.
+
+Go to `~/.zshrc` and `~/.bashrc` and comment out following lines:
+```sh
+[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc
+[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh # bashrc only
+```
+The second line is bash-specific so you won't find it in `~/.zshrc`
+
+You can re-enable RESH by uncommenting the lines above or by re-installing it.
+
 ## Uninstallation
 
 You can uninstall RESH by running: `rm -rf ~/.resh/`.  
-Restart your terminal after uninstall!
+Restart all open terminals after uninstall!
 
 ### Installed files
 
 Binaries and shell files are in: `~/.resh/`
 
-Recorded history, device files, and logs are in: `~/.local/share/resh/` (or `${XDG_DATA_HOME}/resh/`)
+Recorded history, device files, and logs are in one of:
+- `~/.local/share/resh/`
+- `${XDG_DATA_HOME}/resh/`
 
 RESH config file is in: `~/.config/resh.toml`
 
-Also check your `~/.zshrc` and `~/.bashrc`.
-RESH adds a necessary line there to load itself on terminal startup.
+RESH also adds a following lines to `~/.zshrc` and `~/.bashrc` to load itself on terminal startup:
+```sh
+[[ -f ~/.resh/shellrc ]] && source ~/.resh/shellrc
+[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh # bashrc only
+```
