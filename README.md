@@ -4,12 +4,11 @@
 [![Go test](https://github.com/curusarn/resh/actions/workflows/go.yaml/badge.svg)](https://github.com/curusarn/resh/actions/workflows/go.yaml)
 [![Shell test](https://github.com/curusarn/resh/actions/workflows/sh.yaml/badge.svg)](https://github.com/curusarn/resh/actions/workflows/sh.yaml)
 
-
 # REcycle SHell
 
 Context-based replacement for `zsh` and `bash` shell history.
 
-Find any command you have ran before.  
+Find any command you have used before.  
 Releveant results are displayed first based on current directory, git repo, and exit status.
 
 <!-- Contextual shell history -->
@@ -22,8 +21,6 @@ Releveant results are displayed first based on current directory, git repo, and 
 <!-- Better bash history -->
 <!-- Better zsh history -->
 <!-- PWD Directory -->
-
-
 
 ## Install
 
@@ -40,6 +37,7 @@ More options on [Installation page ⇗](./installation.md)
 ## Update
 
 Once installed RESH can be updated using:
+
 ```sh
 reshctl update
 ```
@@ -82,4 +80,4 @@ TODO: This doesn't seem like the right place for keybindings
 
 Find help on [Troubleshooting page ⇗](./troubleshooting.md)
 
-Still got an issue? [Create an issue](https://github.com/curusarn/resh/issues)
+Problem persists? [Issues ⇗](https://github.com/curusarn/resh/issues)
