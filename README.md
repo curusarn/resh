@@ -80,4 +80,4 @@ TODO: This doesn't seem like the right place for keybindings
 
 Find help on [Troubleshooting page ⇗](./troubleshooting.md)
 
-Problem persists? [Issues ⇗](https://github.com/curusarn/resh/issues)
+Problem persists? [Create an issue ⇗](https://github.com/curusarn/resh/issues)
