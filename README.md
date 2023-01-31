@@ -8,8 +8,8 @@
 
 Context-based replacement for `zsh` and `bash` shell history.
 
-Find any command you have used before.  
-Releveant results are displayed first based on current directory, git repo, and exit status.
+Full-text search your shell history.
+Relevant results are displayed first based on current directory, git repo, and exit status.
 
 <!-- Contextual shell history -->
 <!-- Contextual bash history -->
@@ -34,14 +34,6 @@ You will need to have `curl` and `tar` installed.
 
 More options on [Installation page ⇗](./installation.md)
 
-## Update
-
-Once installed RESH can be updated using:
-
-```sh
-reshctl update
-```
-
 ## Search your history
 
 TODO: redo this
@@ -61,8 +53,6 @@ Start searching now - Show search in native shell histories
 
 Press CTRL+R to search.
 Say bye to weak standard history search.
-
-
 
 TODO: This doesn't seem like the right place for keybindings
 
