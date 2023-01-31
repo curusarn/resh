@@ -55,7 +55,7 @@ Find RESH logs in one of:
 Get more detailed logs by setting `LogLevel = "debug"` in [RESH config](#configuration).  
 Restart RESH daemon for the config change to take effect: `resh-daemon-restart`
 
-## Common issues
+## Common problems
 
 ### Using RESH with bash on macOS
 
