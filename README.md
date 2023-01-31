@@ -8,7 +8,7 @@
 
 Context-based replacement for `zsh` and `bash` shell history.
 
-Full-text search your shell history.  
+**Full-text search your shell history.**  
 Relevant results are displayed first based on current directory, git repo, and exit status.
 
 <!-- Contextual shell history -->
