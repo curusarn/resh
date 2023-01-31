@@ -160,51 +160,28 @@ fi
 
 ~/.resh/bin/resh-daemon-start
 
-printf '
-#####################################
-#      ____  _____ ____  _   _      #
-#     |  _ \| ____/ ___|| | | |     #
-#     | |_) |  _| \___ \| |_| |     #
-#     |  _ <| |___ ___) |  _  |     #
-#     |_| \_\_____|____/|_| |_|     #
-#           REcycle SHell           #
-#####################################
-'
-
 # bright green
 high='\e[1m'
 reset='\e[0m'
 
 printf '
-RESH HISTORY SEARCH
+Installation finished successfully.
+
+
+QUICK START
 \e[32;1m    Press CTRL+R to launch RESH SEARCH    \e[0m
-    (you will need to restart your terminal if you just installed RESH)
-
-    Searches your history by commands.
-    Device, directories, git remote, and exit status is used to display relevant results first.
-
-    At first, RESH SEARCH will use bash/zsh history without context.
-    All history recorded from now on will have context which will be used by the RESH SEARCH.
-
-CHECK FOR UPDATES
-    To check for (and install) updates use:
-     $ reshctl update
 '
-# TODO: recorded history section would be better in github readme
-printf "
-RECORDED HISTORY
-    Your resh history will be recorded to '${XDG_DATA_HOME-~/.local/share}/resh/history.reshjson'
-    Look at it using e.g. following command (you might need to install jq)
-     $ cat ${XDG_DATA_HOME-~/.local/share}/resh/history.reshjson | sed 's/^v[^{]*{/{/' | jq .
-
-LOGS
-    RESH logs to '${XDG_DATA_HOME-~/.local/share}/resh/log.json'
-    Logs are useful for troubleshooting issues.
-"
+if [ -z "${__RESH_VERSION-}" ]; then
+    printf 'You will need to restart your terminal first!\n'
+fi
 printf '
-ISSUES & FEEDBACK
-    Please report issues to: https://github.com/curusarn/resh/issues
-    Feedback and suggestions are very welcome!
+    Full-text search your shell history.
+    Relevant results are displayed first based on current directory, git repo, and exit status.
+
+    RESH will locally record and save shell history with context (directory, time, exit status, ...)
+    Start using RESH right away because bash and zsh history are also searched.
+
+    Update RESH by running: reshctl update
     Thank you for using RESH!
 '
 
