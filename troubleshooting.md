@@ -57,7 +57,7 @@ Restart RESH daemon for the config change to take effect: `resh-daemon-restart`
 
 ## Common issues
 
-### Using RESH in bash on macOS
+### Using RESH with bash on macOS
 
 ℹ️ It is recommended to use zsh on macOS.
 
