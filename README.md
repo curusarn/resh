@@ -30,7 +30,7 @@ Install RESH with one command:
 curl -fsSL https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawinstall.sh | sh
 ```
 
-You will need to have `curl` and `tar` installed.
+ℹ️ You will need to have `curl` and `tar` installed.
 
 More options on [Installation page ⇗](./installation.md)
 
