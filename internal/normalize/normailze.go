@@ -11,6 +11,9 @@ import (
 // GitRemote helper
 // Returns normalized git remote - valid even on error
 func GitRemote(sugar *zap.SugaredLogger, gitRemote string) string {
+	if len(gitRemote) == 0 {
+		return ""
+	}
 	gitRemote = strings.TrimSuffix(gitRemote, ".git")
 	parsedURL, err := giturls.Parse(gitRemote)
 	if err != nil {

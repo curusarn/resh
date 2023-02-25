@@ -37,10 +37,15 @@ func TestGitRemote(t *testing.T) {
 				one := normalize.GitRemote(sugar, arr[i])
 				two := normalize.GitRemote(sugar, arr[j])
 				if one != two {
-					t.Fatalf("Normalized git remotes should match for '%s' and '%s'\n -> got: '%s' != '%s'",
+					t.Fatalf("Normalized git remotes should match for '%s' and '%s'\n -> got '%s' != '%s'",
 						arr[i], arr[j], one, two)
 				}
 			}
 		}
+	}
+
+	empty := normalize.GitRemote(sugar, "")
+	if len(empty) != 0 {
+		t.Fatalf("Normalized git remotes for '' should be ''\n -> got '%s'", empty)
 	}
 }

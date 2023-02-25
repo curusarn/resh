@@ -402,7 +402,7 @@ func NewItemFromRecordForQuery(record recordint.SearchApp, query Query, debug bo
 	//		-> N matches against the command
 	//		-> 1 extra match for the actual directory match
 	sameGitRepo := false
-	if query.gitOriginRemote != "" && query.gitOriginRemote == record.GitOriginRemote {
+	if len(query.gitOriginRemote) != 0 && query.gitOriginRemote == record.GitOriginRemote {
 		sameGitRepo = true
 	}
 
