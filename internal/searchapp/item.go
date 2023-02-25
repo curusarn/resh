@@ -31,8 +31,11 @@ type Item struct {
 	sameGitRepo bool
 	exitCode    int
 
+	// Shown in TUI
 	CmdLineWithColor string
 	CmdLine          string
+	// Unchanged cmdline to paste to command line
+	CmdLineOut string
 
 	Score float64
 
@@ -375,8 +378,8 @@ func NewItemFromRecordForQuery(record recordint.SearchApp, query Query, debug bo
 	// DISPLAY > cmdline
 
 	// cmd := "<" + strings.ReplaceAll(record.CmdLine, "\n", ";") + ">"
-	cmdLine := strings.ReplaceAll(record.CmdLine, "\n", ";")
-	cmdLineWithColor := strings.ReplaceAll(cmd, "\n", ";")
+	cmdLine := strings.ReplaceAll(record.CmdLine, "\n", "\\n ")
+	cmdLineWithColor := strings.ReplaceAll(cmd, "\n", "\\n ")
 
 	// KEY for deduplication
 
@@ -391,6 +394,7 @@ func NewItemFromRecordForQuery(record recordint.SearchApp, query Query, debug bo
 		return Item{
 			isRaw: true,
 
+			CmdLineOut:       record.CmdLine,
 			CmdLine:          cmdLine,
 			CmdLineWithColor: cmdLineWithColor,
 			Score:            score,
@@ -443,6 +447,7 @@ func NewItemFromRecordForQuery(record recordint.SearchApp, query Query, debug bo
 
 		sameGitRepo:      sameGitRepo,
 		exitCode:         record.ExitCode,
+		CmdLineOut:       record.CmdLine,
 		CmdLine:          cmdLine,
 		CmdLineWithColor: cmdLineWithColor,
 		Score:            score,
@@ -480,6 +485,7 @@ func GetHeader(compactRendering bool) ItemColumns {
 type RawItem struct {
 	CmdLineWithColor string
 	CmdLine          string
+	CmdLineOut       string
 
 	Score float64
 
