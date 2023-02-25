@@ -40,7 +40,7 @@ Press <kbd>CTRL</kbd> + <kbd>R</kbd> to search.
 
 <img width="906" alt="Screenshot 2023-02-25 at 18 49 07" src="https://user-images.githubusercontent.com/10132717/221371937-d4ba64e0-ede6-4bfa-8b74-529252bf73a3.png">
 
-### IN-app key bindings
+### In-app key bindings
 
 - Type to search
 - <kbd>Up</kbd> / <kbd>Down</kbd> or <kbd>Ctrl</kbd> + <kbd>P</kbd> / <kbd>Ctrl</kbd> + <kbd>N</kbd> to select results
