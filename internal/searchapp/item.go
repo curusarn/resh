@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/curusarn/resh/internal/recordint"
 	"golang.org/x/exp/utf8string"
@@ -382,14 +383,8 @@ func NewItemFromRecordForQuery(record recordint.SearchApp, query Query, debug bo
 	cmdLineWithColor := strings.ReplaceAll(cmd, "\n", "\\n ")
 
 	// KEY for deduplication
+	key := strings.TrimRightFunc(record.CmdLine, unicode.IsSpace)
 
-	key := record.CmdLine
-	// NOTE: since we import standard history we need a compatible key without metadata
-	/*
-		unlikelySeparator := "|||||"
-		key := record.CmdLine + unlikelySeparator + record.Pwd + unlikelySeparator +
-		record.GitOriginRemote + unlikelySeparator + record.Host
-	*/
 	if record.IsRaw {
 		return Item{
 			isRaw: true,
