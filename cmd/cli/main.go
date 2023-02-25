@@ -57,22 +57,23 @@ func main() {
 func runReshCli(out *output.Output, config cfg.Config) (string, int) {
 	args := opt.HandleVersionOpts(out, os.Args, version, commit)
 
+	const missing = "<missing cdxgtcpboqwrdom>"
 	flags := pflag.NewFlagSet("", pflag.ExitOnError)
-	sessionID := flags.String("session-id", "", "Resh generated session ID")
-	pwd := flags.String("pwd", "", "$PWD - present working directory")
-	gitOriginRemote := flags.String("git-origin-remote", "<<<MISSING>>>", "> git origin remote")
+	sessionID := flags.String("session-id", missing, "Resh generated session ID")
+	pwd := flags.String("pwd", missing, "$PWD - present working directory")
+	gitOriginRemote := flags.String("git-remote", missing, "> git remote get-url origin")
 	query := flags.String("query", "", "Search query")
 	flags.Parse(args)
 
 	// TODO: These errors should tell the user that they should not be running the command directly
 	errMsg := "Failed to get required command-line arguments"
-	if *sessionID == "" {
+	if *sessionID == missing {
 		out.FatalE(errMsg, errors.New("missing required option --session-id"))
 	}
-	if *pwd == "" {
+	if *pwd == missing {
 		out.FatalE(errMsg, errors.New("missing required option --pwd"))
 	}
-	if *gitOriginRemote == "<<<MISSING>>>" {
+	if *gitOriginRemote == missing {
 		out.FatalE(errMsg, errors.New("missing required option --git-origin-remote"))
 	}
 	dataDir, err := datadir.GetPath()
@@ -249,7 +250,7 @@ func (m manager) UpdateData(input string) {
 		"recordCount", len(m.s.cliRecords),
 		"itemCount", len(m.s.data),
 	)
-	query := searchapp.NewQueryFromString(input, m.host, m.pwd, m.gitOriginRemote, m.config.Debug)
+	query := searchapp.NewQueryFromString(sugar, input, m.host, m.pwd, m.gitOriginRemote, m.config.Debug)
 	var data []searchapp.Item
 	itemSet := make(map[string]int)
 	m.s.lock.Lock()

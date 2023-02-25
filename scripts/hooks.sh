@@ -125,7 +125,7 @@ __resh_widget_control_R() {
         return $?
     fi
     BUFFER=$(resh-cli -requireVersion "$__RESH_VERSION" \
-        --git-origin-remote "$git_remote" \
+        --git-remote "$git_remote" \
         --pwd "$PWD" \
         --query "$BUFFER" \
         --session-id "$__RESH_SESSION_ID" \

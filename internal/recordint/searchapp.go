@@ -1,12 +1,10 @@
 package recordint
 
 import (
-	"net/url"
 	"strconv"
-	"strings"
 
+	"github.com/curusarn/resh/internal/normalize"
 	"github.com/curusarn/resh/record"
-	giturls "github.com/whilp/git-urls"
 	"go.uber.org/zap"
 )
 
@@ -50,28 +48,9 @@ func NewSearchApp(sugar *zap.SugaredLogger, r *record.V1) SearchApp {
 		Host:      r.Device,
 		Pwd:       r.Pwd,
 		Home:      r.Home,
-		// TODO: is this the right place to normalize the git remote
-		GitOriginRemote: normalizeGitRemote(sugar, r.GitOriginRemote),
+		// TODO: is this the right place to normalize the git remote?
+		GitOriginRemote: normalize.GitRemote(sugar, r.GitOriginRemote),
 		ExitCode:        r.ExitCode,
 		Time:            time,
 	}
-}
-
-// TODO: maybe move this to a more appropriate place
-// normalizeGitRemote helper
-func normalizeGitRemote(sugar *zap.SugaredLogger, gitRemote string) string {
-	gitRemote = strings.TrimSuffix(gitRemote, ".git")
-	parsedURL, err := giturls.Parse(gitRemote)
-	if err != nil {
-		sugar.Errorw("Failed to parse git remote", zap.Error(err),
-			"gitRemote", gitRemote,
-		)
-		return gitRemote
-	}
-	if parsedURL.User == nil || parsedURL.User.Username() == "" {
-		parsedURL.User = url.User("git")
-	}
-	// TODO: figure out what scheme we want
-	parsedURL.Scheme = "git+ssh"
-	return parsedURL.String()
 }

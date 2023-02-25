@@ -3,6 +3,9 @@ package searchapp
 import (
 	"sort"
 	"strings"
+
+	"github.com/curusarn/resh/internal/normalize"
+	"go.uber.org/zap"
 )
 
 // Query holds information that is used for result scoring
@@ -35,7 +38,7 @@ func filterTerms(terms []string) []string {
 }
 
 // NewQueryFromString .
-func NewQueryFromString(queryInput string, host string, pwd string, gitOriginRemote string, debug bool) Query {
+func NewQueryFromString(sugar *zap.SugaredLogger, queryInput string, host string, pwd string, gitOriginRemote string, debug bool) Query {
 	terms := strings.Fields(queryInput)
 	var logStr string
 	for _, term := range terms {
@@ -51,7 +54,7 @@ func NewQueryFromString(queryInput string, host string, pwd string, gitOriginRem
 		terms:           terms,
 		host:            host,
 		pwd:             pwd,
-		gitOriginRemote: gitOriginRemote,
+		gitOriginRemote: normalize.GitRemote(sugar, gitOriginRemote),
 	}
 }
 

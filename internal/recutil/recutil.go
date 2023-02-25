@@ -26,11 +26,11 @@ import (
 // }
 
 // TODO: maybe more to a more appropriate place
-// TODO: cleanup the interface - stop modifying the part1 and returning a ew record at the same time
+// TODO: cleanup the interface - stop modifying the part1 and returning a new record at the same time
 // Merge two records (part1 - collect + part2 - postcollect)
 func Merge(r1 *recordint.Collect, r2 *recordint.Collect) (record.V1, error) {
 	if r1.SessionID != r2.SessionID {
-		return record.V1{}, errors.New("Records to merge are not from the same sesion - r1:" + r1.SessionID + " r2:" + r2.SessionID)
+		return record.V1{}, errors.New("Records to merge are not from the same session - r1:" + r1.SessionID + " r2:" + r2.SessionID)
 	}
 	if r1.Rec.RecordID != r2.Rec.RecordID {
 		return record.V1{}, errors.New("Records to merge do not have the same ID - r1:" + r1.Rec.RecordID + " r2:" + r2.Rec.RecordID)
