@@ -36,35 +36,19 @@ More options on [Installation page ⇗](./installation.md)
 
 ## Search your history
 
-TODO: redo this
+Press <kbd>CTRL</kbd> + <kbd>R</kbd> to search.
 
-Draft:
-See RESH in action - record a terminal video
+<img width="906" alt="Screenshot 2023-02-25 at 18 49 07" src="https://user-images.githubusercontent.com/10132717/221371937-d4ba64e0-ede6-4bfa-8b74-529252bf73a3.png">
 
-Recording content:
-Search your history by commands - Show searching some longer command
+### IN-app key bindings
 
-Get results based on current context - Show getting project-specific commands
-
-Find any command - Show searching where the context brings the relevant command to the top
-
-Start searching now - Show search in native shell histories
-
-
-Press CTRL+R to search.
-Say bye to weak standard history search.
-
-TODO: This doesn't seem like the right place for keybindings
-
-### In-app key bindings
-
-- Type to search/filter
-- Up/Down or Ctrl+P/Ctrl+N to select results
-- Right to paste selected command onto the command line so you can edit it before execution
-- Enter to execute
-- Ctrl+C/Ctrl+D to quit
-- Ctrl+G to abort and paste the current query onto the command line
-- Ctrl+R to switch between RAW and NORMAL mode
+- Type to search
+- <kbd>Up</kbd> / <kbd>Down</kbd> or <kbd>Ctrl</kbd> + <kbd>P</kbd> / <kbd>Ctrl</kbd> + <kbd>N</kbd> to select results
+- <kbd>Enter</kbd> to execute selected command
+- <kbd>Right</kbd> to paste selected command onto the command line so you can edit it before execution
+- <kbd>Ctrl</kbd> + <kbd>C</kbd> or <kbd>Ctrl</kbd> + <kbd>D</kbd> to quit
+- <kbd>Ctrl</kbd> + <kbd>G</kbd> to abort and paste the current query onto the command line
+- <kbd>Ctrl</kbd> + <kbd>R</kbd> to search without context
 
 ## Issues & ideas
 
