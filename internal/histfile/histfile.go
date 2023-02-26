@@ -69,7 +69,7 @@ func (h *Histfile) loadCliRecords(recs []record.V1) {
 		rec := recs[i]
 		h.cliRecords.AddRecord(&rec)
 	}
-	h.sugar.Infow("Resh history loaded",
+	h.sugar.Infow("RESH history loaded",
 		"historyRecordsCount", len(h.cliRecords.List),
 	)
 }
@@ -87,7 +87,7 @@ func (h *Histfile) loadHistory(bashHistoryPath, zshHistoryPath string, maxInitHi
 	useNativeHistories := false
 	if size/1024 < minInitHistSizeKB {
 		useNativeHistories = true
-		h.sugar.Warnw("Resh_history is too small - loading native bash and zsh history ...")
+		h.sugar.Warnw("RESH history is too small - loading native bash and zsh history ...")
 		h.bashCmdLines = records.LoadCmdLinesFromBashFile(h.sugar, bashHistoryPath)
 		h.sugar.Infow("Bash history loaded", "cmdLineCount", len(h.bashCmdLines.List))
 		h.zshCmdLines = records.LoadCmdLinesFromZshFile(h.sugar, zshHistoryPath)
@@ -102,7 +102,7 @@ func (h *Histfile) loadHistory(bashHistoryPath, zshHistoryPath string, maxInitHi
 	if err != nil {
 		h.sugar.Fatalf("Failed to read history file: %v", err)
 	}
-	h.sugar.Infow("Resh history loaded from file",
+	h.sugar.Infow("RESH history loaded from file",
 		"historyFile", h.historyPath,
 		"recordCount", len(history),
 	)
@@ -110,7 +110,7 @@ func (h *Histfile) loadHistory(bashHistoryPath, zshHistoryPath string, maxInitHi
 	// NOTE: keeping this weird interface for now because we might use it in the future
 	//       when we only load bash or zsh history
 	reshCmdLines := loadCmdLines(h.sugar, history)
-	h.sugar.Infow("Resh history loaded and processed",
+	h.sugar.Infow("RESH history loaded and processed",
 		"recordCount", len(reshCmdLines.List),
 	)
 	if !useNativeHistories {

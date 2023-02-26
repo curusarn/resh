@@ -36,7 +36,7 @@ func main() {
 	args := opt.HandleVersionOpts(out, os.Args, version, commit)
 
 	flags := pflag.NewFlagSet("", pflag.ExitOnError)
-	sessionID := flags.String("session-id", "", "Resh generated session ID")
+	sessionID := flags.String("session-id", "", "RESH generated session ID")
 	sessionPID := flags.Int("session-pid", -1, "$$ - Shell session PID")
 	flags.Parse(args)
 

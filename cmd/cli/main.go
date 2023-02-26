@@ -59,7 +59,7 @@ func runReshCli(out *output.Output, config cfg.Config) (string, int) {
 
 	const missing = "<missing cdxgtcpboqwrdom>"
 	flags := pflag.NewFlagSet("", pflag.ExitOnError)
-	sessionID := flags.String("session-id", missing, "Resh generated session ID")
+	sessionID := flags.String("session-id", missing, "RESH generated session ID")
 	pwd := flags.String("pwd", missing, "$PWD - present working directory")
 	gitOriginRemote := flags.String("git-remote", missing, "> git remote get-url origin")
 	query := flags.String("query", "", "Search query")

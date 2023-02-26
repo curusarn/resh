@@ -38,8 +38,8 @@ func main() {
 
 	flags := pflag.NewFlagSet("", pflag.ExitOnError)
 	exitCode := flags.Int("exit-code", -1, "Exit code")
-	sessionID := flags.String("session-id", "", "Resh generated session ID")
-	recordID := flags.String("record-id", "", "Resh generated record ID")
+	sessionID := flags.String("session-id", "", "RESH generated session ID")
+	recordID := flags.String("record-id", "", "RESH generated record ID")
 	shlvl := flags.Int("shlvl", -1, "$SHLVL")
 	rtb := flags.String("time-before", "-1", "Before $EPOCHREALTIME")
 	rta := flags.String("time-after", "-1", "After $EPOCHREALTIME")
