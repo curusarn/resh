@@ -8,9 +8,9 @@ Feel free to check the `rawinstall.sh` script before running it.
 curl -fsSL https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawinstall.sh | sh
 ```
 
-You will need to have `curl` and `tar` installed.
+ℹ️ You will need to have `curl` and `tar` installed.
 
-## Clone & Install
+## Clone & install
 
 ```sh
 git clone https://github.com/curusarn/resh.git
@@ -38,7 +38,8 @@ reshctl update
 ## Disabling RESH
 
 If you have a persistent issue with RESH you can temporarily disable it and then enable it later.  
-You won't lose your history nor configuration.
+
+ℹ️ You won't lose your history nor configuration.
 
 Go to `~/.zshrc` and `~/.bashrc` and comment out following lines:
 ```sh
@@ -52,7 +53,8 @@ You can re-enable RESH by uncommenting the lines above or by re-installing it.
 ## Uninstallation
 
 You can uninstall RESH by running: `rm -rf ~/.resh/`.  
-Restart all open terminals after uninstall!
+
+⚠️ Restart all open terminals after uninstall!
 
 ### Installed files
 
