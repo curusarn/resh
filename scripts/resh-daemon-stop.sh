@@ -1,31 +1,34 @@
 #!/usr/bin/env sh
+set -eu
 
-failed_to_kill() {
-    [ "${1-}" != "-q" ] && echo "Failed to kill the RESH daemon - it probably isn't running"
-}
+q=0
+[ "${1-}" != "-q" ] || q=1
 
 xdg_pid() {
     local path="${XDG_DATA_HOME-}"/resh/daemon.pid
     [ -n "${XDG_DATA_HOME-}" ] && [ -f "$path" ] || return 1
     cat "$path"
+    rm "$path"
 }
 default_pid() {
     local path=~/.local/share/resh/daemon.pid
     [ -f "$path" ] || return 1
     cat "$path"
+    rm "$path"
 }
-legacy_pid() {
-    local path=~/.resh/resh.pid
-    [ -f "$path" ] || return 1
-    cat "$path"
+
+kill_by_pid() {
+    [ -n "$1" ] || return 1
+    [ "$q" = "1" ] || printf "Stopping RESH daemon ... (PID: %s)\n" "$1"
+    kill "$1"
 }
-pid=$(xdg_pid || default_pid || legacy_pid)
+kill_by_name() {
+    [ "$q" = "1" ] || printf "Stopping RESH daemon ...\n"
+    killall -q resh-daemon
+}
+failed_to_kill() {
+    [ "$q" = "1" ] || echo "Failed to kill the RESH daemon - it probably isn't running"
+    return 1
+}
 
-if [ -n "$pid" ]; then
-    [ "${1-}" != "-q" ] && printf "Stopping RESH daemon ... (PID: %s)\n" "$pid"
-    kill "$pid" || failed_to_kill
-else
-    [ "${1-}" != "-q" ] && printf "Stopping RESH daemon ...\n"
-    killall -q resh-daemon || failed_to_kill
-fi
-
+kill_by_pid "$(xdg_pid)" || kill_by_pid "$(default_pid)" || kill_by_name || failed_to_kill
