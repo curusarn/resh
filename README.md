@@ -4,7 +4,7 @@
 [![Go test](https://github.com/curusarn/resh/actions/workflows/go.yaml/badge.svg)](https://github.com/curusarn/resh/actions/workflows/go.yaml)
 [![Shell test](https://github.com/curusarn/resh/actions/workflows/sh.yaml/badge.svg)](https://github.com/curusarn/resh/actions/workflows/sh.yaml)
 
-# REcycle SHell
+# RESH
 
 Context-based replacement for `zsh` and `bash` shell history.
 
@@ -36,7 +36,7 @@ More options on [Installation page ⇗](./installation.md)
 
 ## Search your history
 
-Press <kbd>CTRL</kbd> + <kbd>R</kbd> to search.
+Press <kbd>Ctrl</kbd> + <kbd>R</kbd> to search:
 
 <img width="906" alt="Screenshot 2023-02-25 at 18 49 07" src="https://user-images.githubusercontent.com/10132717/221371937-d4ba64e0-ede6-4bfa-8b74-529252bf73a3.png">
 
@@ -48,7 +48,7 @@ Press <kbd>CTRL</kbd> + <kbd>R</kbd> to search.
 - <kbd>Right</kbd> to paste selected command onto the command line so you can edit it before execution
 - <kbd>Ctrl</kbd> + <kbd>C</kbd> or <kbd>Ctrl</kbd> + <kbd>D</kbd> to quit
 - <kbd>Ctrl</kbd> + <kbd>G</kbd> to abort and paste the current query onto the command line
-- <kbd>Ctrl</kbd> + <kbd>R</kbd> to search without context
+- <kbd>Ctrl</kbd> + <kbd>R</kbd> to search without context (toggle)
 
 ## Issues & ideas
 
