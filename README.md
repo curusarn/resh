@@ -38,7 +38,7 @@ More options on [Installation page ⇗](./installation.md)
 
 Press <kbd>Ctrl</kbd> + <kbd>R</kbd> to search:
 
-<img width="906" alt="Screenshot 2023-02-25 at 18 49 07" src="https://user-images.githubusercontent.com/10132717/221371937-d4ba64e0-ede6-4bfa-8b74-529252bf73a3.png">
+<img width="906" alt="RESH search app screenshot" src="https://user-images.githubusercontent.com/10132717/221371937-d4ba64e0-ede6-4bfa-8b74-529252bf73a3.png">
 
 ### In-app key bindings
 
