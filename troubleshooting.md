@@ -34,7 +34,7 @@ The format is JSON prefixed by version. Display it as json using:
 cat ~/.local/share/resh/history.reshjson | sed 's/^v[^{]*{/{/' | jq .
 ```
 
-You will need `jq` installed.
+ℹ️ You will need `jq` installed.
 
 ## Configuration
 
@@ -67,6 +67,6 @@ Update it using: `brew install bash`
 On macOS, bash shell does not load `~/.bashrc` because every shell runs as login shell.  
 Fix it by running: `echo '[ -f ~/.bashrc ] && . ~/.bashrc' >> ~/.bash_profile`
 
-## Github issues
+## GitHub issues
 
 Problem persists? [Create an issue ⇗](https://github.com/curusarn/resh/issues)
