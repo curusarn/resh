@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
-	"io/ioutil"
-	"log"
+	"io"
 	"net/http"
 	"os"
 	"sort"
@@ -15,84 +13,81 @@ import (
 	"sync"
 	"time"
 
-	"github.com/BurntSushi/toml"
 	"github.com/awesome-gocui/gocui"
-	"github.com/curusarn/resh/pkg/cfg"
-	"github.com/curusarn/resh/pkg/msg"
-	"github.com/curusarn/resh/pkg/records"
-	"github.com/curusarn/resh/pkg/searchapp"
+	"github.com/curusarn/resh/internal/cfg"
+	"github.com/curusarn/resh/internal/datadir"
+	"github.com/curusarn/resh/internal/device"
+	"github.com/curusarn/resh/internal/logger"
+	"github.com/curusarn/resh/internal/msg"
+	"github.com/curusarn/resh/internal/opt"
+	"github.com/curusarn/resh/internal/output"
+	"github.com/curusarn/resh/internal/recordint"
+	"github.com/curusarn/resh/internal/searchapp"
+	"github.com/spf13/pflag"
+	"go.uber.org/zap"
 
-	"os/user"
-	"path/filepath"
 	"strconv"
 )
 
-// version from git set during build
+// info passed during build
 var version string
-
-// commit from git set during build
 var commit string
+var development string
 
 // special constant recognized by RESH wrappers
 const exitCodeExecute = 111
 
-var debug bool
-
 func main() {
-	output, exitCode := runReshCli()
+	config, errCfg := cfg.New()
+	logger, err := logger.New("search-app", config.LogLevel, development)
+	if err != nil {
+		fmt.Printf("Error while creating logger: %v", err)
+	}
+	defer logger.Sync() // flushes buffer, if any
+	if errCfg != nil {
+		logger.Error("Error while getting configuration", zap.Error(errCfg))
+	}
+	out := output.New(logger, "resh-search-app ERROR")
+
+	output, exitCode := runReshCli(out, config)
 	fmt.Print(output)
 	os.Exit(exitCode)
 }
 
-func runReshCli() (string, int) {
-	usr, _ := user.Current()
-	dir := usr.HomeDir
-	configPath := filepath.Join(dir, "/.config/resh.toml")
-	logPath := filepath.Join(dir, ".resh/cli.log")
+func runReshCli(out *output.Output, config cfg.Config) (string, int) {
+	args := opt.HandleVersionOpts(out, os.Args, version, commit)
 
-	f, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	const missing = "<missing cdxgtcpboqwrdom>"
+	flags := pflag.NewFlagSet("", pflag.ExitOnError)
+	sessionID := flags.String("session-id", missing, "Resh generated session ID")
+	pwd := flags.String("pwd", missing, "$PWD - present working directory")
+	gitOriginRemote := flags.String("git-remote", missing, "> git remote get-url origin")
+	query := flags.String("query", "", "Search query")
+	flags.Parse(args)
+
+	// TODO: These errors should tell the user that they should not be running the command directly
+	errMsg := "Failed to get required command-line arguments"
+	if *sessionID == missing {
+		out.FatalE(errMsg, errors.New("missing required option --session-id"))
+	}
+	if *pwd == missing {
+		out.FatalE(errMsg, errors.New("missing required option --pwd"))
+	}
+	if *gitOriginRemote == missing {
+		out.FatalE(errMsg, errors.New("missing required option --git-origin-remote"))
+	}
+	dataDir, err := datadir.GetPath()
 	if err != nil {
-		log.Fatal("Error opening file:", err)
+		out.FatalE("Could not get user data directory", err)
 	}
-	defer f.Close()
-
-	log.SetOutput(f)
-
-	var config cfg.Config
-	if _, err := toml.DecodeFile(configPath, &config); err != nil {
-		log.Fatal("Error reading config:", err)
-	}
-	if config.Debug {
-		debug = true
-		log.SetFlags(log.LstdFlags | log.Lmicroseconds)
-		log.Println("DEBUG is ON")
-	}
-
-	sessionID := flag.String("sessionID", "", "resh generated session id")
-	host := flag.String("host", "", "host")
-	pwd := flag.String("pwd", "", "present working directory")
-	gitOriginRemote := flag.String("gitOriginRemote", "DEFAULT", "git origin remote")
-	query := flag.String("query", "", "search query")
-	testHistory := flag.String("test-history", "", "load history from a file instead from the daemon (for testing purposes only!)")
-	testHistoryLines := flag.Int("test-lines", 0, "the number of lines to load from a file passed with --test-history (for testing purposes only!)")
-	flag.Parse()
-
-	if *sessionID == "" {
-		log.Println("Error: you need to specify sessionId")
-	}
-	if *host == "" {
-		log.Println("Error: you need to specify HOST")
-	}
-	if *pwd == "" {
-		log.Println("Error: you need to specify PWD")
-	}
-	if *gitOriginRemote == "DEFAULT" {
-		log.Println("Error: you need to specify gitOriginRemote")
+	deviceName, err := device.GetName(dataDir)
+	if err != nil {
+		out.FatalE("Could not get device name", err)
 	}
 
 	g, err := gocui.NewGui(gocui.OutputNormal, false)
 	if err != nil {
-		log.Panicln(err)
+		out.FatalE("Failed to launch TUI", err)
 	}
 	defer g.Close()
 
@@ -102,80 +97,79 @@ func runReshCli() (string, int) {
 	g.Highlight = true
 
 	var resp msg.CliResponse
-	if *testHistory == "" {
-		mess := msg.CliMsg{
-			SessionID: *sessionID,
-			PWD:       *pwd,
-		}
-		resp = SendCliMsg(mess, strconv.Itoa(config.Port))
-	} else {
-		resp = searchapp.LoadHistoryFromFile(*testHistory, *testHistoryLines)
+	mess := msg.CliMsg{
+		SessionID: *sessionID,
+		PWD:       *pwd,
 	}
+	resp = SendCliMsg(out, mess, strconv.Itoa(config.Port))
 
 	st := state{
 		// lock sync.Mutex
-		cliRecords:   resp.CliRecords,
+		cliRecords:   resp.Records,
 		initialQuery: *query,
 	}
 
+	// TODO: Use device ID
 	layout := manager{
-		sessionID:       *sessionID,
-		host:            *host,
-		pwd:             *pwd,
-		gitOriginRemote: records.NormalizeGitRemote(*gitOriginRemote),
+		out:             out,
 		config:          config,
+		sessionID:       *sessionID,
+		host:            deviceName,
+		pwd:             *pwd,
+		gitOriginRemote: *gitOriginRemote,
 		s:               &st,
 	}
 	g.SetManager(layout)
 
+	errMsg = "Failed to set keybindings"
 	if err := g.SetKeybinding("", gocui.KeyTab, gocui.ModNone, layout.Next); err != nil {
-		log.Panicln(err)
+		out.FatalE(errMsg, err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyArrowDown, gocui.ModNone, layout.Next); err != nil {
-		log.Panicln(err)
+		out.FatalE(errMsg, err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlN, gocui.ModNone, layout.Next); err != nil {
-		log.Panicln(err)
+		out.FatalE(errMsg, err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyArrowUp, gocui.ModNone, layout.Prev); err != nil {
-		log.Panicln(err)
+		out.FatalE(errMsg, err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlP, gocui.ModNone, layout.Prev); err != nil {
-		log.Panicln(err)
+		out.FatalE(errMsg, err)
 	}
 
 	if err := g.SetKeybinding("", gocui.KeyArrowRight, gocui.ModNone, layout.SelectPaste); err != nil {
-		log.Panicln(err)
+		out.FatalE(errMsg, err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyEnter, gocui.ModNone, layout.SelectExecute); err != nil {
-		log.Panicln(err)
+		out.FatalE(errMsg, err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlG, gocui.ModNone, layout.AbortPaste); err != nil {
-		log.Panicln(err)
+		out.FatalE(errMsg, err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
-		log.Panicln(err)
+		out.FatalE(errMsg, err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlD, gocui.ModNone, quit); err != nil {
-		log.Panicln(err)
+		out.FatalE(errMsg, err)
 	}
 
 	if err := g.SetKeybinding("", gocui.KeyCtrlR, gocui.ModNone, layout.SwitchModes); err != nil {
-		log.Panicln(err)
+		out.FatalE(errMsg, err)
 	}
 
 	layout.UpdateData(*query)
 	layout.UpdateRawData(*query)
 	err = g.MainLoop()
 	if err != nil && !errors.Is(err, gocui.ErrQuit) {
-		log.Panicln(err)
+		out.FatalE("Main application loop finished with error", err)
 	}
 	return layout.s.output, layout.s.exitCode
 }
 
 type state struct {
 	lock                sync.Mutex
-	cliRecords          []records.CliRecord
+	cliRecords          []recordint.SearchApp
 	data                []searchapp.Item
 	rawData             []searchapp.RawItem
 	highlightedItem     int
@@ -190,11 +184,13 @@ type state struct {
 }
 
 type manager struct {
+	out    *output.Output
+	config cfg.Config
+
 	sessionID       string
 	host            string
 	pwd             string
 	gitOriginRemote string
-	config          cfg.Config
 
 	s *state
 }
@@ -204,13 +200,13 @@ func (m manager) SelectExecute(g *gocui.Gui, v *gocui.View) error {
 	defer m.s.lock.Unlock()
 	if m.s.rawMode {
 		if m.s.highlightedItem < len(m.s.rawData) {
-			m.s.output = m.s.rawData[m.s.highlightedItem].CmdLine
+			m.s.output = m.s.rawData[m.s.highlightedItem].CmdLineOut
 			m.s.exitCode = exitCodeExecute
 			return gocui.ErrQuit
 		}
 	} else {
 		if m.s.highlightedItem < len(m.s.data) {
-			m.s.output = m.s.data[m.s.highlightedItem].CmdLine
+			m.s.output = m.s.data[m.s.highlightedItem].CmdLineOut
 			m.s.exitCode = exitCodeExecute
 			return gocui.ErrQuit
 		}
@@ -223,13 +219,13 @@ func (m manager) SelectPaste(g *gocui.Gui, v *gocui.View) error {
 	defer m.s.lock.Unlock()
 	if m.s.rawMode {
 		if m.s.highlightedItem < len(m.s.rawData) {
-			m.s.output = m.s.rawData[m.s.highlightedItem].CmdLine
+			m.s.output = m.s.rawData[m.s.highlightedItem].CmdLineOut
 			m.s.exitCode = 0 // success
 			return gocui.ErrQuit
 		}
 	} else {
 		if m.s.highlightedItem < len(m.s.data) {
-			m.s.output = m.s.data[m.s.highlightedItem].CmdLine
+			m.s.output = m.s.data[m.s.highlightedItem].CmdLineOut
 			m.s.exitCode = 0 // success
 			return gocui.ErrQuit
 		}
@@ -248,18 +244,13 @@ func (m manager) AbortPaste(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-type dedupRecord struct {
-	dataIndex int
-	score     float32
-}
-
 func (m manager) UpdateData(input string) {
-	if debug {
-		log.Println("EDIT start")
-		log.Println("len(fullRecords) =", len(m.s.cliRecords))
-		log.Println("len(data) =", len(m.s.data))
-	}
-	query := searchapp.NewQueryFromString(input, m.host, m.pwd, m.gitOriginRemote, m.config.Debug)
+	sugar := m.out.Logger.Sugar()
+	sugar.Debugw("Starting data update ...",
+		"recordCount", len(m.s.cliRecords),
+		"itemCount", len(m.s.data),
+	)
+	query := searchapp.NewQueryFromString(sugar, input, m.host, m.pwd, m.gitOriginRemote, m.config.Debug)
 	var data []searchapp.Item
 	itemSet := make(map[string]int)
 	m.s.lock.Lock()
@@ -268,7 +259,7 @@ func (m manager) UpdateData(input string) {
 		itm, err := searchapp.NewItemFromRecordForQuery(rec, query, m.config.Debug)
 		if err != nil {
 			// records didn't match the query
-			// log.Println(" * continue (no match)", rec.Pwd)
+			// sugar.Println(" * continue (no match)", rec.Pwd)
 			continue
 		}
 		if idx, ok := itemSet[itm.Key]; ok {
@@ -285,9 +276,9 @@ func (m manager) UpdateData(input string) {
 		itemSet[itm.Key] = len(data)
 		data = append(data, itm)
 	}
-	if debug {
-		log.Println("len(tmpdata) =", len(data))
-	}
+	sugar.Debugw("Got new items from records for query, sorting items ...",
+		"itemCount", len(data),
+	)
 	sort.SliceStable(data, func(p, q int) bool {
 		return data[p].Score > data[q].Score
 	})
@@ -299,19 +290,18 @@ func (m manager) UpdateData(input string) {
 		m.s.data = append(m.s.data, itm)
 	}
 	m.s.highlightedItem = 0
-	if debug {
-		log.Println("len(fullRecords) =", len(m.s.cliRecords))
-		log.Println("len(data) =", len(m.s.data))
-		log.Println("EDIT end")
-	}
+	sugar.Debugw("Done with data update",
+		"recordCount", len(m.s.cliRecords),
+		"itemCount", len(m.s.data),
+	)
 }
 
 func (m manager) UpdateRawData(input string) {
-	if m.config.Debug {
-		log.Println("EDIT start")
-		log.Println("len(fullRecords) =", len(m.s.cliRecords))
-		log.Println("len(data) =", len(m.s.data))
-	}
+	sugar := m.out.Logger.Sugar()
+	sugar.Debugw("Starting RAW data update ...",
+		"recordCount", len(m.s.cliRecords),
+		"itemCount", len(m.s.data),
+	)
 	query := searchapp.GetRawTermsFromString(input, m.config.Debug)
 	var data []searchapp.RawItem
 	itemSet := make(map[string]bool)
@@ -321,20 +311,20 @@ func (m manager) UpdateRawData(input string) {
 		itm, err := searchapp.NewRawItemFromRecordForQuery(rec, query, m.config.Debug)
 		if err != nil {
 			// records didn't match the query
-			// log.Println(" * continue (no match)", rec.Pwd)
+			// sugar.Println(" * continue (no match)", rec.Pwd)
 			continue
 		}
 		if itemSet[itm.Key] {
-			// log.Println(" * continue (already present)", itm.key(), itm.pwd)
+			// sugar.Println(" * continue (already present)", itm.key(), itm.pwd)
 			continue
 		}
 		itemSet[itm.Key] = true
 		data = append(data, itm)
-		// log.Println("DATA =", itm.display)
+		// sugar.Println("DATA =", itm.display)
 	}
-	if debug {
-		log.Println("len(tmpdata) =", len(data))
-	}
+	sugar.Debugw("Got new RAW items from records for query, sorting items ...",
+		"itemCount", len(data),
+	)
 	sort.SliceStable(data, func(p, q int) bool {
 		return data[p].Score > data[q].Score
 	})
@@ -346,11 +336,10 @@ func (m manager) UpdateRawData(input string) {
 		m.s.rawData = append(m.s.rawData, itm)
 	}
 	m.s.highlightedItem = 0
-	if debug {
-		log.Println("len(fullRecords) =", len(m.s.cliRecords))
-		log.Println("len(data) =", len(m.s.data))
-		log.Println("EDIT end")
-	}
+	sugar.Debugw("Done with RAW data update",
+		"recordCount", len(m.s.cliRecords),
+		"itemCount", len(m.s.data),
+	)
 }
 func (m manager) Edit(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
 	gocui.DefaultEditor.Edit(v, key, ch, mod)
@@ -398,7 +387,7 @@ func (m manager) Layout(g *gocui.Gui) error {
 
 	v, err := g.SetView("input", 0, 0, maxX-1, 2, b)
 	if err != nil && !errors.Is(err, gocui.ErrUnknownView) {
-		log.Panicln(err.Error())
+		m.out.FatalE("Failed to set view 'input'", err)
 	}
 
 	v.Editable = true
@@ -421,7 +410,7 @@ func (m manager) Layout(g *gocui.Gui) error {
 
 	v, err = g.SetView("body", 0, 2, maxX-1, maxY, b)
 	if err != nil && !errors.Is(err, gocui.ErrUnknownView) {
-		log.Panicln(err.Error())
+		m.out.FatalE("Failed to set view 'body'", err)
 	}
 	v.Frame = false
 	v.Autoscroll = false
@@ -438,13 +427,14 @@ func quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
 
-const smallTerminalTresholdWidth = 110
+const smallTerminalThresholdWidth = 110
 
 func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
+	sugar := m.out.Logger.Sugar()
 	maxX, maxY := g.Size()
 
 	compactRenderingMode := false
-	if maxX < smallTerminalTresholdWidth {
+	if maxX < smallTerminalThresholdWidth {
 		compactRenderingMode = true
 	}
 
@@ -459,7 +449,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 		if i == maxY {
 			break
 		}
-		ic := itm.DrawItemColumns(compactRenderingMode, debug)
+		ic := itm.DrawItemColumns(compactRenderingMode, m.config.Debug)
 		data = append(data, ic)
 		if i > maxPossibleMainViewHeight {
 			// do not stretch columns because of results that will end up outside of the page
@@ -505,7 +495,7 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 	// header
 	// header := getHeader()
 	// error is expected for header
-	dispStr, _, _ := header.ProduceLine(longestDateLen, longestLocationLen, longestFlagsLen, true, true, debug)
+	dispStr, _, _ := header.ProduceLine(longestDateLen, longestLocationLen, longestFlagsLen, true, true, m.config.Debug)
 	dispStr = searchapp.DoHighlightHeader(dispStr, maxX*2)
 	v.WriteString(dispStr + "\n")
 
@@ -513,33 +503,24 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 	for index < len(data) {
 		itm := data[index]
 		if index >= mainViewHeight {
-			if debug {
-				log.Printf("Finished drawing page. mainViewHeight: %v, predictedMax: %v\n",
-					mainViewHeight, maxPossibleMainViewHeight)
-			}
+			sugar.Debugw("Reached bottom of the page while producing lines",
+				"mainViewHeight", mainViewHeight,
+				"predictedMaxViewHeight", maxPossibleMainViewHeight,
+			)
 			// page is full
 			break
 		}
 
-		displayStr, _, err := itm.ProduceLine(longestDateLen, longestLocationLen, longestFlagsLen, false, true, debug)
+		displayStr, _, err := itm.ProduceLine(longestDateLen, longestLocationLen, longestFlagsLen, false, true, m.config.Debug)
 		if err != nil {
-			log.Printf("produceLine error: %v\n", err)
+			sugar.Error("Error while drawing item", zap.Error(err))
 		}
 		if m.s.highlightedItem == index {
 			// maxX * 2 because there are escape sequences that make it hard to tell the real string length
 			displayStr = searchapp.DoHighlightString(displayStr, maxX*3)
-			if debug {
-				log.Println("### HightlightedItem string :", displayStr)
-			}
-		} else if debug {
-			log.Println(displayStr)
 		}
 		if strings.Contains(displayStr, "\n") {
-			log.Println("display string contained \\n")
 			displayStr = strings.ReplaceAll(displayStr, "\n", "#")
-			if debug {
-				log.Println("display string contained \\n")
-			}
 		}
 		v.WriteString(displayStr + "\n")
 		index++
@@ -553,59 +534,46 @@ func (m manager) normalMode(g *gocui.Gui, v *gocui.View) error {
 		v.WriteString(line)
 	}
 	v.WriteString(helpLine)
-	if debug {
-		log.Println("len(data) =", len(m.s.data))
-		log.Println("highlightedItem =", m.s.highlightedItem)
-	}
+	sugar.Debugw("Done drawing page",
+		"itemCount", len(m.s.data),
+		"highlightedItemIndex", m.s.highlightedItem,
+	)
 	return nil
 }
 
 func (m manager) rawMode(g *gocui.Gui, v *gocui.View) error {
+	sugar := m.out.Logger.Sugar()
 	maxX, maxY := g.Size()
 	topBoxSize := 3
 	m.s.displayedItemsCount = maxY - topBoxSize
 
 	for i, itm := range m.s.rawData {
 		if i == maxY {
-			if debug {
-				log.Println(maxY)
-			}
 			break
 		}
 		displayStr := itm.CmdLineWithColor
 		if m.s.highlightedItem == i {
-			// use actual min requried length instead of 420 constant
+			// Use actual min required length instead of 420 constant
 			displayStr = searchapp.DoHighlightString(displayStr, maxX*2)
-			if debug {
-				log.Println("### HightlightedItem string :", displayStr)
-			}
-		} else if debug {
-			log.Println(displayStr)
 		}
 		if strings.Contains(displayStr, "\n") {
-			log.Println("display string contained \\n")
 			displayStr = strings.ReplaceAll(displayStr, "\n", "#")
-			if debug {
-				log.Println("display string contained \\n")
-			}
 		}
 		v.WriteString(displayStr + "\n")
-		// if m.s.highlightedItem == i {
-		// 	v.SetHighlight(m.s.highlightedItem, true)
-		// }
 	}
-	if debug {
-		log.Println("len(data) =", len(m.s.data))
-		log.Println("highlightedItem =", m.s.highlightedItem)
-	}
+	sugar.Debugw("Done drawing page in RAW mode",
+		"itemCount", len(m.s.data),
+		"highlightedItemIndex", m.s.highlightedItem,
+	)
 	return nil
 }
 
 // SendCliMsg to daemon
-func SendCliMsg(m msg.CliMsg, port string) msg.CliResponse {
+func SendCliMsg(out *output.Output, m msg.CliMsg, port string) msg.CliResponse {
+	sugar := out.Logger.Sugar()
 	recJSON, err := json.Marshal(m)
 	if err != nil {
-		log.Fatalf("Failed to marshal message: %v\n", err)
+		out.FatalE("Failed to marshal message", err)
 	}
 
 	req, err := http.NewRequest(
@@ -613,7 +581,7 @@ func SendCliMsg(m msg.CliMsg, port string) msg.CliResponse {
 		"http://localhost:"+port+"/dump",
 		bytes.NewBuffer(recJSON))
 	if err != nil {
-		log.Fatalf("Failed to build request: %v\n", err)
+		out.FatalE("Failed to build request", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
@@ -622,22 +590,22 @@ func SendCliMsg(m msg.CliMsg, port string) msg.CliResponse {
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal("resh-daemon is not running - try restarting this terminal")
+		out.FatalDaemonNotRunning(err)
 	}
 
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalf("Read response error: %v\n", err)
+		out.FatalE("Failed read response", err)
 	}
-	// log.Println(string(body))
+	// sugar.Println(string(body))
 	response := msg.CliResponse{}
 	err = json.Unmarshal(body, &response)
 	if err != nil {
-		log.Fatalf("Unmarshal resp error: %v\n", err)
+		out.FatalE("Failed decode response", err)
 	}
-	if debug {
-		log.Printf("Recieved %d records from daemon\n", len(response.CliRecords))
-	}
+	sugar.Debugw("Received records from daemon",
+		"recordCount", len(response.Records),
+	)
 	return response
 }

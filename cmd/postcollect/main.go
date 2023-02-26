@@ -1,154 +1,74 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"log"
 	"os"
 
-	"github.com/BurntSushi/toml"
-	"github.com/curusarn/resh/pkg/cfg"
-	"github.com/curusarn/resh/pkg/collect"
-	"github.com/curusarn/resh/pkg/records"
+	"github.com/curusarn/resh/internal/cfg"
+	"github.com/curusarn/resh/internal/collect"
+	"github.com/curusarn/resh/internal/logger"
+	"github.com/curusarn/resh/internal/opt"
+	"github.com/curusarn/resh/internal/output"
+	"github.com/curusarn/resh/internal/recordint"
+	"github.com/curusarn/resh/record"
+	"github.com/spf13/pflag"
+	"go.uber.org/zap"
 
-	//  "os/exec"
-	"os/user"
-	"path/filepath"
 	"strconv"
 )
 
-// version from git set during build
+// info passed during build
 var version string
-
-// commit from git set during build
 var commit string
+var development string
 
 func main() {
-	usr, _ := user.Current()
-	dir := usr.HomeDir
-	configPath := filepath.Join(dir, "/.config/resh.toml")
-	reshUUIDPath := filepath.Join(dir, "/.resh/resh-uuid")
-
-	machineIDPath := "/etc/machine-id"
-
-	var config cfg.Config
-	if _, err := toml.DecodeFile(configPath, &config); err != nil {
-		log.Fatal("Error reading config:", err)
-	}
-	showVersion := flag.Bool("version", false, "Show version and exit")
-	showRevision := flag.Bool("revision", false, "Show git revision and exit")
-
-	requireVersion := flag.String("requireVersion", "", "abort if version doesn't match")
-	requireRevision := flag.String("requireRevision", "", "abort if revision doesn't match")
-
-	cmdLine := flag.String("cmdLine", "", "command line")
-	exitCode := flag.Int("exitCode", -1, "exit code")
-	sessionID := flag.String("sessionId", "", "resh generated session id")
-	recordID := flag.String("recordId", "", "resh generated record id")
-
-	shlvl := flag.Int("shlvl", -1, "$SHLVL")
-	shell := flag.String("shell", "", "actual shell")
-
-	// posix variables
-	pwdAfter := flag.String("pwdAfter", "", "$PWD after command")
-
-	// non-posix
-	// sessionPid := flag.Int("sessionPid", -1, "$$ at session start")
-
-	gitCdupAfter := flag.String("gitCdupAfter", "", "git rev-parse --show-cdup")
-	gitRemoteAfter := flag.String("gitRemoteAfter", "", "git remote get-url origin")
-
-	gitCdupExitCodeAfter := flag.Int("gitCdupExitCodeAfter", -1, "... $?")
-	gitRemoteExitCodeAfter := flag.Int("gitRemoteExitCodeAfter", -1, "... $?")
-
-	// before after
-	timezoneAfter := flag.String("timezoneAfter", "", "")
-
-	rtb := flag.String("realtimeBefore", "-1", "before $EPOCHREALTIME")
-	rta := flag.String("realtimeAfter", "-1", "after $EPOCHREALTIME")
-	flag.Parse()
-
-	if *showVersion == true {
-		fmt.Println(version)
-		os.Exit(0)
-	}
-	if *showRevision == true {
-		fmt.Println(commit)
-		os.Exit(0)
-	}
-	if *requireVersion != "" && *requireVersion != version {
-		fmt.Println("Please restart/reload this terminal session " +
-			"(resh version: " + version +
-			"; resh version of this terminal session: " + *requireVersion +
-			")")
-		os.Exit(3)
-	}
-	if *requireRevision != "" && *requireRevision != commit {
-		fmt.Println("Please restart/reload this terminal session " +
-			"(resh revision: " + commit +
-			"; resh revision of this terminal session: " + *requireRevision +
-			")")
-		os.Exit(3)
-	}
-	realtimeAfter, err := strconv.ParseFloat(*rta, 64)
+	config, errCfg := cfg.New()
+	logger, err := logger.New("postcollect", config.LogLevel, development)
 	if err != nil {
-		log.Fatal("Flag Parsing error (rta):", err)
+		fmt.Printf("Error while creating logger: %v", err)
 	}
-	realtimeBefore, err := strconv.ParseFloat(*rtb, 64)
+	defer logger.Sync() // flushes buffer, if any
+	if errCfg != nil {
+		logger.Error("Error while getting configuration", zap.Error(errCfg))
+	}
+	out := output.New(logger, "resh-postcollect ERROR")
+
+	args := opt.HandleVersionOpts(out, os.Args, version, commit)
+
+	flags := pflag.NewFlagSet("", pflag.ExitOnError)
+	exitCode := flags.Int("exit-code", -1, "Exit code")
+	sessionID := flags.String("session-id", "", "Resh generated session ID")
+	recordID := flags.String("record-id", "", "Resh generated record ID")
+	shlvl := flags.Int("shlvl", -1, "$SHLVL")
+	rtb := flags.String("time-before", "-1", "Before $EPOCHREALTIME")
+	rta := flags.String("time-after", "-1", "After $EPOCHREALTIME")
+	flags.Parse(args)
+
+	timeAfter, err := strconv.ParseFloat(*rta, 64)
 	if err != nil {
-		log.Fatal("Flag Parsing error (rtb):", err)
+		out.FatalE("Error while parsing flag --time-after", err)
 	}
-	realtimeDuration := realtimeAfter - realtimeBefore
-
-	timezoneAfterOffset := collect.GetTimezoneOffsetInSeconds(*timezoneAfter)
-	realtimeAfterLocal := realtimeAfter + timezoneAfterOffset
-
-	realPwdAfter, err := filepath.EvalSymlinks(*pwdAfter)
+	timeBefore, err := strconv.ParseFloat(*rtb, 64)
 	if err != nil {
-		log.Println("err while handling pwdAfter realpath:", err)
-		realPwdAfter = ""
+		out.FatalE("Error while parsing flag --time-before", err)
 	}
+	duration := timeAfter - timeBefore
 
-	gitDirAfter, gitRealDirAfter := collect.GetGitDirs(*gitCdupAfter, *gitCdupExitCodeAfter, *pwdAfter)
-	if *gitRemoteExitCodeAfter != 0 {
-		*gitRemoteAfter = ""
-	}
+	// FIXME: use recordint.Postcollect
+	rec := recordint.Collect{
+		SessionID: *sessionID,
+		Shlvl:     *shlvl,
 
-	rec := records.Record{
-		// core
-		BaseRecord: records.BaseRecord{
-			CmdLine:   *cmdLine,
-			ExitCode:  *exitCode,
-			SessionID: *sessionID,
+		Rec: record.V1{
 			RecordID:  *recordID,
-			Shlvl:     *shlvl,
-			Shell:     *shell,
+			SessionID: *sessionID,
 
-			PwdAfter: *pwdAfter,
+			ExitCode: *exitCode,
+			Duration: fmt.Sprintf("%.4f", duration),
 
-			// non-posix
-			RealPwdAfter: realPwdAfter,
-
-			// before after
-			TimezoneAfter: *timezoneAfter,
-
-			RealtimeBefore:     realtimeBefore,
-			RealtimeAfter:      realtimeAfter,
-			RealtimeAfterLocal: realtimeAfterLocal,
-
-			RealtimeDuration: realtimeDuration,
-
-			GitDirAfter:          gitDirAfter,
-			GitRealDirAfter:      gitRealDirAfter,
-			GitOriginRemoteAfter: *gitRemoteAfter,
-			MachineID:            collect.ReadFileContent(machineIDPath),
-
-			PartOne: false,
-
-			ReshUUID:     collect.ReadFileContent(reshUUIDPath),
-			ReshVersion:  version,
-			ReshRevision: commit,
+			PartsNotMerged: true,
 		},
 	}
-	collect.SendRecord(rec, strconv.Itoa(config.Port), "/record")
+	collect.SendRecord(out, rec, strconv.Itoa(config.Port), "/record")
 }

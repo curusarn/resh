@@ -2,37 +2,49 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"log"
+	"io"
 	"net/http"
 
-	"github.com/curusarn/resh/pkg/records"
+	"github.com/curusarn/resh/internal/recordint"
+	"go.uber.org/zap"
 )
 
 type sessionInitHandler struct {
-	subscribers []chan records.Record
+	sugar       *zap.SugaredLogger
+	subscribers []chan recordint.SessionInit
 }
 
 func (h *sessionInitHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	sugar := h.sugar.With(zap.String("endpoint", "/session_init"))
+	sugar.Debugw("Handling request, sending response, reading body ...")
 	w.Write([]byte("OK\n"))
-	jsn, err := ioutil.ReadAll(r.Body)
+	// TODO: should we somehow check for errors here?
+	jsn, err := io.ReadAll(r.Body)
 	// run rest of the handler as goroutine to prevent any hangups
 	go func() {
 		if err != nil {
-			log.Println("Error reading the body", err)
+			sugar.Errorw("Error reading body", "error", err)
 			return
 		}
 
-		record := records.Record{}
-		err = json.Unmarshal(jsn, &record)
+		sugar.Debugw("Unmarshaling record ...")
+		rec := recordint.SessionInit{}
+		err = json.Unmarshal(jsn, &rec)
 		if err != nil {
-			log.Println("Decoding error: ", err)
-			log.Println("Payload: ", jsn)
+			sugar.Errorw("Error during unmarshaling",
+				"error", err,
+				"payload", jsn,
+			)
 			return
 		}
+		sugar := sugar.With(
+			"sessionID", rec.SessionID,
+			"sessionPID", rec.SessionPID,
+		)
+		sugar.Infow("Got session, sending to subscribers ...")
 		for _, sub := range h.subscribers {
-			sub <- record
+			sub <- rec
 		}
-		log.Println("/session_init - id:", record.SessionID, " - pid:", record.SessionPID)
+		sugar.Debugw("Session sent to subscribers")
 	}()
 }

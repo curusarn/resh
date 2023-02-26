@@ -2,16 +2,19 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
-	"strconv"
 
-	"github.com/curusarn/resh/pkg/httpclient"
-	"github.com/curusarn/resh/pkg/msg"
+	"github.com/curusarn/resh/internal/msg"
+	"go.uber.org/zap"
 )
 
-func statusHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("/status START")
+type statusHandler struct {
+	sugar *zap.SugaredLogger
+}
+
+func (h *statusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	sugar := h.sugar.With(zap.String("endpoint", "/status"))
+	sugar.Debugw("Handling request ...")
 	resp := msg.StatusResponse{
 		Status:  true,
 		Version: version,
@@ -19,23 +22,12 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	jsn, err := json.Marshal(&resp)
 	if err != nil {
-		log.Println("Encoding error:", err)
-		log.Println("Response:", resp)
+		sugar.Errorw("Error when marshaling",
+			"error", err,
+			"response", resp,
+		)
 		return
 	}
 	w.Write(jsn)
-	log.Println("/status END")
-}
-
-func isDaemonRunning(port int) (bool, error) {
-	url := "http://localhost:" + strconv.Itoa(port) + "/status"
-	client := httpclient.New()
-	resp, err := client.Get(url)
-	if err != nil {
-		log.Printf("Error while checking daemon status - "+
-			"it's probably not running: %v\n", err)
-		return false, err
-	}
-	defer resp.Body.Close()
-	return true, nil
+	sugar.Infow("Request handled")
 }

@@ -1,11 +1,16 @@
 
-![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/curusarn/resh?sort=semver)
-![Go test](https://github.com/curusarn/resh/actions/workflows/go.yaml/badge.svg)
-![Shell test](https://github.com/curusarn/resh/actions/workflows/sh.yaml/badge.svg)
+[![Latest version](https://img.shields.io/github/v/tag/curusarn/resh?sort=semver)](https://github.com/curusarn/resh/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/curusarn/resh)](https://goreportcard.com/report/github.com/curusarn/resh)
+[![Go test](https://github.com/curusarn/resh/actions/workflows/go.yaml/badge.svg)](https://github.com/curusarn/resh/actions/workflows/go.yaml)
+[![Shell test](https://github.com/curusarn/resh/actions/workflows/sh.yaml/badge.svg)](https://github.com/curusarn/resh/actions/workflows/sh.yaml)
 
-# Rich Enhanced Shell History
+# RESH
 
-Context-based replacement/enhancement for zsh and bash shell history
+Context-based replacement for `zsh` and `bash` shell history.
+
+**Full-text search your shell history.**  
+Relevant results are displayed first based on current directory, git repo, and exit status.
+
 <!-- Contextual shell history -->
 <!-- Contextual bash history -->
 <!-- Contextual zsh history -->
@@ -17,114 +22,36 @@ Context-based replacement/enhancement for zsh and bash shell history
 <!-- Better zsh history -->
 <!-- PWD Directory -->
 
-**Search your history by commands and get relevant results based on current directory, git repo, exit status, and host.**
+## Install
 
-## Installation
-
-### Prerequisites
-
-Standard stuff: `bash(4.3+)`, `curl`, `tar`, ...
-
-Bash completions will only work if you have `bash-completion` installed
-
-MacOS: `coreutils` (`brew install coreutils`)
-
-### Simplest installation
-
-Run this command.
+Install RESH with one command:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawinstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawinstall.sh | sh
 ```
 
-### Simple installation
+ℹ️ You will need to have `curl` and `tar` installed.
 
-Run
+More options on [Installation page ⇗](./installation.md)
 
-```shell
-git clone https://github.com/curusarn/resh.git
-cd resh && scripts/rawinstall.sh
-```
+## Search your history
 
-### Update
+Press <kbd>Ctrl</kbd> + <kbd>R</kbd> to search:
 
-Check for updates and update
-
-```sh
-reshctl update
-```
-
-## Roadmap
-
-[Overview of the features of the project](./roadmap.md)
-
-## RESH SEARCH application
-
-This is the most important part of this project.
-
-RESH SEARCH app searches your history by commands. It uses host, directories, git remote, and exit status to show you relevant results first.  
-
-All this context is not in the regular shell history. RESH records shell history with context to use it when searching.
-
-At first, the search application will look something like this. Some history with context and most of it without. As you can see, you can still search the history just fine.
-
-![resh search app](img/screen-resh-cli-v2-7-init.png)
-
-Eventually most of your history will have context and RESH SEARCH app will get more useful.
-
-![resh search app](img/screen-resh-cli-v2-7.png)
-
-Without a query, RESH SEARCH app shows you the latest history based on the current context (host, directory, git).
-
-![resh search app](img/screen-resh-cli-v2-7-no-query.png)
-
-RESH SEARCH app replaces the standard reverse search - launch it using Ctrl+R.
-
-Enable/disable the Ctrl+R keybinding:
-
-```sh
-reshctl enable ctrl_r_binding
-reshctl disable ctrl_r_binding
-```
+<img width="906" alt="RESH search app screenshot" src="https://user-images.githubusercontent.com/10132717/221371937-d4ba64e0-ede6-4bfa-8b74-529252bf73a3.png">
 
 ### In-app key bindings
 
-- Type to search/filter
-- Up/Down or Ctrl+P/Ctrl+N to select results
-- Right to paste selected command onto the command line so you can edit it before execution
-- Enter to execute
-- Ctrl+C/Ctrl+D to quit
-- Ctrl+G to abort and paste the current query onto the command line
-- Ctrl+R to switch between RAW and NORMAL mode
+- Type to search
+- <kbd>Up</kbd> / <kbd>Down</kbd> or <kbd>Ctrl</kbd> + <kbd>P</kbd> / <kbd>Ctrl</kbd> + <kbd>N</kbd> to select results
+- <kbd>Enter</kbd> to execute selected command
+- <kbd>Right</kbd> to paste selected command onto the command line so you can edit it before execution
+- <kbd>Ctrl</kbd> + <kbd>C</kbd> or <kbd>Ctrl</kbd> + <kbd>D</kbd> to quit
+- <kbd>Ctrl</kbd> + <kbd>G</kbd> to abort and paste the current query onto the command line
+- <kbd>Ctrl</kbd> + <kbd>R</kbd> to search without context (toggle)
 
-### View the recorded history
+## Issues & ideas
 
-Resh history is saved to `~/.resh_history.json`
+Find help on [Troubleshooting page ⇗](./troubleshooting.md)
 
-Each line is a JSON that represents one executed command line.
-
-This is how I view it `tail -f ~/.resh_history.json | jq` or `jq < ~/.resh_history.json`.  
-
-You can install `jq` using your favourite package manager or you can use other JSON parser to view the history.
-
-![screenshot](img/screen.png)
-
-*Recorded metadata will be reduced to only include useful information in the future.*
-
-## Known issues
-
-### Q: I use bash on macOS and resh doesn't work
-
-**A:** You have to add `[ -f ~/.bashrc ] && . ~/.bashrc` to your `~/.bash_profile`.  
-
-**Long Answer:** Under macOS bash shell only loads `~/.bash_profile` because every shell runs as login shell. I will definitely work around this in the future but since this doesn't affect many people I decided to not solve this issue at the moment.
-
-## Issues and ideas
-
-Please do create issues if you encounter any problems or if you have a suggestions: https://github.com/curusarn/resh/issues
-
-## Uninstallation
-
-You can uninstall this project at any time by running `rm -rf ~/.resh/`.
-
-You won't lose any recorded history by removing `~/.resh` directory because history is saved in `~/.resh_history.json`.
+Problem persists? [Create an issue ⇗](https://github.com/curusarn/resh/issues)

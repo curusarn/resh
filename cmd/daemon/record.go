@@ -2,46 +2,64 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"log"
+	"io"
 	"net/http"
 
-	"github.com/curusarn/resh/pkg/records"
+	"github.com/curusarn/resh/internal/recordint"
+	"go.uber.org/zap"
 )
 
+func NewRecordHandler(sugar *zap.SugaredLogger, subscribers []chan recordint.Collect) recordHandler {
+	return recordHandler{
+		sugar:       sugar.With(zap.String("endpoint", "/record")),
+		subscribers: subscribers,
+	}
+}
+
 type recordHandler struct {
-	subscribers []chan records.Record
+	sugar       *zap.SugaredLogger
+	subscribers []chan recordint.Collect
+
+	deviceID   string
+	deviceName string
 }
 
 func (h *recordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	sugar := h.sugar.With(zap.String("endpoint", "/record"))
+	sugar.Debugw("Handling request, sending response, reading body ...")
 	w.Write([]byte("OK\n"))
-	jsn, err := ioutil.ReadAll(r.Body)
+	jsn, err := io.ReadAll(r.Body)
 	// run rest of the handler as goroutine to prevent any hangups
 	go func() {
 		if err != nil {
-			log.Println("Error reading the body", err)
+			sugar.Errorw("Error reading body", "error", err)
 			return
 		}
 
-		record := records.Record{}
-		err = json.Unmarshal(jsn, &record)
+		sugar.Debugw("Unmarshaling record ...")
+		rec := recordint.Collect{}
+		err = json.Unmarshal(jsn, &rec)
 		if err != nil {
-			log.Println("Decoding error: ", err)
-			log.Println("Payload: ", jsn)
+			sugar.Errorw("Error during unmarshaling",
+				"error", err,
+				"payload", jsn,
+			)
 			return
-		}
-		for _, sub := range h.subscribers {
-			sub <- record
 		}
 		part := "2"
-		if record.PartOne {
+		if rec.Rec.PartOne {
 			part = "1"
 		}
-		log.Println("/record - ", record.CmdLine, " - part", part)
+		sugar := sugar.With(
+			"cmdLine", rec.Rec.CmdLine,
+			"part", part,
+		)
+		rec.Rec.DeviceID = h.deviceID
+		rec.Rec.Device = h.deviceName
+		sugar.Debugw("Got record, sending to subscribers ...")
+		for _, sub := range h.subscribers {
+			sub <- rec
+		}
+		sugar.Debugw("Record sent to subscribers")
 	}()
-
-	// fmt.Println("cmd:", r.CmdLine)
-	// fmt.Println("pwd:", r.Pwd)
-	// fmt.Println("git:", r.GitWorkTree)
-	// fmt.Println("exit_code:", r.ExitCode)
 }

@@ -1,15 +1,24 @@
 SHELL=/bin/bash
 LATEST_TAG=$(shell git describe --tags)
-REVISION=$(shell [ -z "$(git status --untracked-files=no --porcelain)" ] && git rev-parse --short=12 HEAD || echo "no_revision")
-VERSION="${LATEST_TAG}-DEV"
-GOFLAGS=-ldflags "-X main.version=${VERSION} -X main.commit=${REVISION}"
+VERSION:="${LATEST_TAG}-$(shell date +%s)"
+COMMIT:=$(shell [ -z "$(git status --untracked-files=no --porcelain)" ] && git rev-parse --short=12 HEAD || echo "no_commit")
+GOFLAGS=-ldflags "-X main.version=${VERSION} -X main.commit=${COMMIT} -X main.development=true"
 
+build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect\
+  bin/resh-daemon bin/resh-control bin/resh-config bin/resh-cli\
+  bin/resh-install-utils bin/resh-generate-uuid bin/resh-get-epochtime
 
-build: submodules bin/resh-session-init bin/resh-collect bin/resh-postcollect bin/resh-daemon\
- bin/resh-evaluate bin/resh-sanitize bin/resh-control bin/resh-config bin/resh-inspect bin/resh-cli
-
+# We disable jobserver for the actual installation because we want it to run serially
+# Make waits to the daemon process we launch during install and hangs
 install: build
 	scripts/install.sh
+
+# Rebuild binaries and install
+# Very useful to ensure that all binaries get new VERSION variable which is used for shell config reloading
+clean_install:
+	make clean
+	make build
+	make install
 
 test:
 	go test -v ./...
@@ -21,18 +30,18 @@ rebuild:
 	make build
 
 clean:
-	rm -f bin/resh-*
+	rm -f -- bin/*
 
 uninstall:
 	# Uninstalling ...
-	-rm -rf ~/.resh/
+	-rm -rf -- ~/.resh/
 
-bin/resh-%: cmd/%/*.go pkg/*/*.go cmd/control/cmd/*.go cmd/control/status/status.go
+go_files = $(shell find -name '*.go')
+bin/resh-%: $(go_files)
 	grep $@ .goreleaser.yml -q # all build targets need to be included in .goreleaser.yml
 	go build ${GOFLAGS} -o $@ cmd/$*/*.go
 
 .PHONY: submodules build install rebuild uninstall clean test
-
 
 submodules: | submodules/bash-preexec/bash-preexec.sh submodules/bash-zsh-compat-widgets/bindfunc.sh
 	@# sets submodule.recurse to true if unset
