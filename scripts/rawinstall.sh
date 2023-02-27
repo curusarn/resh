@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+set -eu
 
 echo
 echo "Please report any issues you encounter to: https://github.com/curusarn/resh/issues"
