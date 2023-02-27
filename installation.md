@@ -5,10 +5,10 @@
 Feel free to check the `rawinstall.sh` script before running it.
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawinstall.sh | sh
+curl -fsSL https://raw.githubusercontent.com/curusarn/resh/master/scripts/rawinstall.sh | bash
 ```
 
-ℹ️ You will need to have `curl` and `tar` installed.
+ℹ️ You will need to have `bash`, `curl`, and `tar` installed.
 
 ## Clone & install
 
