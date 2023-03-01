@@ -362,9 +362,15 @@ func NewItemFromRecordForQuery(record recordint.SearchApp, query Query, debug bo
 	const timeScoreCoef = 1e-13
 	// nonZeroExitCodeScorePenalty + differentHostScorePenalty
 
+	// Trim trailing whitespace before highlighting
+	trimmedCmdLine := strings.TrimRightFunc(record.CmdLine, unicode.IsSpace)
+
+	// KEY for deduplication
+	key := trimmedCmdLine
+
 	score := 0.0
 	anyHit := false
-	cmd := record.CmdLine
+	cmd := trimmedCmdLine
 	for _, term := range query.terms {
 		c := strings.Count(record.CmdLine, term)
 		if c > 0 {
@@ -379,11 +385,8 @@ func NewItemFromRecordForQuery(record recordint.SearchApp, query Query, debug bo
 	// DISPLAY > cmdline
 
 	// cmd := "<" + strings.ReplaceAll(record.CmdLine, "\n", ";") + ">"
-	cmdLine := strings.ReplaceAll(record.CmdLine, "\n", "\\n ")
+	cmdLine := strings.ReplaceAll(trimmedCmdLine, "\n", "\\n ")
 	cmdLineWithColor := strings.ReplaceAll(cmd, "\n", "\\n ")
-
-	// KEY for deduplication
-	key := strings.TrimRightFunc(record.CmdLine, unicode.IsSpace)
 
 	if record.IsRaw {
 		return Item{
