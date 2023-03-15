@@ -61,6 +61,7 @@ type ItemColumns struct {
 	FlagsWithColor string
 	Flags          string
 
+	// Shown in TUI
 	CmdLineWithColor string
 	CmdLine          string
 
@@ -334,6 +335,14 @@ func properMatch(str, term, padChar string) bool {
 	return strings.Contains(padChar+str+padChar, padChar+term+padChar)
 }
 
+func trimCmdLine(cmdLine string) string {
+	return strings.TrimRightFunc(cmdLine, unicode.IsSpace)
+}
+
+func replaceNewLines(cmdLine string) string {
+	return strings.ReplaceAll(cmdLine, "\n", "\\n ")
+}
+
 // NewItemFromRecordForQuery creates new item from record based on given query
 //
 //	returns error if the query doesn't match the record
@@ -363,7 +372,7 @@ func NewItemFromRecordForQuery(record recordint.SearchApp, query Query, debug bo
 	// nonZeroExitCodeScorePenalty + differentHostScorePenalty
 
 	// Trim trailing whitespace before highlighting
-	trimmedCmdLine := strings.TrimRightFunc(record.CmdLine, unicode.IsSpace)
+	trimmedCmdLine := trimCmdLine(record.CmdLine)
 
 	// KEY for deduplication
 	key := trimmedCmdLine
@@ -385,8 +394,8 @@ func NewItemFromRecordForQuery(record recordint.SearchApp, query Query, debug bo
 	// DISPLAY > cmdline
 
 	// cmd := "<" + strings.ReplaceAll(record.CmdLine, "\n", ";") + ">"
-	cmdLine := strings.ReplaceAll(trimmedCmdLine, "\n", "\\n ")
-	cmdLineWithColor := strings.ReplaceAll(cmd, "\n", "\\n ")
+	cmdLine := replaceNewLines(trimmedCmdLine)
+	cmdLineWithColor := replaceNewLines(cmd)
 
 	if record.IsRaw {
 		return Item{
@@ -483,7 +492,8 @@ func GetHeader(compactRendering bool) ItemColumns {
 type RawItem struct {
 	CmdLineWithColor string
 	CmdLine          string
-	CmdLineOut       string
+	// Unchanged cmdline to paste to command line
+	CmdLineOut string
 
 	Score float64
 
@@ -501,8 +511,14 @@ func NewRawItemFromRecordForQuery(record recordint.SearchApp, terms []string, de
 
 	const timeScoreCoef = 1e-13
 
+	// Trim trailing whitespace before highlighting
+	trimmedCmdLine := strings.TrimRightFunc(record.CmdLine, unicode.IsSpace)
+
+	// KEY for deduplication
+	key := trimmedCmdLine
+
 	score := 0.0
-	cmd := record.CmdLine
+	cmd := trimmedCmdLine
 	for _, term := range terms {
 		c := strings.Count(record.CmdLine, term)
 		if c > 0 {
@@ -514,16 +530,14 @@ func NewRawItemFromRecordForQuery(record recordint.SearchApp, terms []string, de
 		}
 	}
 	score += record.Time * timeScoreCoef
-	// KEY for deduplication
-	key := record.CmdLine
-
 	// DISPLAY > cmdline
 
 	// cmd := "<" + strings.ReplaceAll(record.CmdLine, "\n", ";") + ">"
-	cmdLine := strings.ReplaceAll(record.CmdLine, "\n", ";")
-	cmdLineWithColor := strings.ReplaceAll(cmd, "\n", ";")
+	cmdLine := replaceNewLines(trimmedCmdLine)
+	cmdLineWithColor := replaceNewLines(cmd)
 
 	it := RawItem{
+		CmdLineOut:       record.CmdLine,
 		CmdLine:          cmdLine,
 		CmdLineWithColor: cmdLineWithColor,
 		Score:            score,
