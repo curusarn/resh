@@ -17,11 +17,11 @@
 # Backwards compatibilty: Please see notes above before making any changes here.
 __resh_reload_msg() {
     printf '\n'
-    printf '+--------------------------------------------------------------+\n'
-    printf '| New version of RESH shell files was loaded in this terminal. |\n'
-    printf '| This is an informative message - no action is necessary.     |\n'
-    printf '| Please restart this terminal if you encounter any issues.    |\n'
-    printf '+--------------------------------------------------------------+\n'
+    printf '┌──────────────────────────────────────────────────────────────┐\n'
+    printf '│ New version of RESH shell files was loaded in this terminal. │\n'
+    printf '│ This is an informative message - no action is necessary.     │\n'
+    printf '│ Please restart this terminal if you encounter any issues.    │\n'
+    printf '└──────────────────────────────────────────────────────────────┘\n'
     printf '\n'
 }
 
