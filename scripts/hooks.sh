@@ -168,7 +168,7 @@ resh() {
     local buffer
     local git_remote; git_remote="$(git remote get-url origin 2>/dev/null)"
     buffer=$(resh-cli -requireVersion "$__RESH_VERSION" \
-        --git-origin-remote "$git_remote" \
+        --git-remote "$git_remote" \
         --pwd "$PWD" \
         --session-id "$__RESH_SESSION_ID" \
         "$@"
