@@ -38,6 +38,9 @@ func BashVersion() (string, error) {
 	verStr := strings.TrimSuffix(string(out), "\n")
 	ver, err := parseVersion(verStr)
 	if err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok && exitError.ExitCode() == 127 {
+			return "Bash not installed", nil
+		}
 		return "", fmt.Errorf("failed to parse version: %w", err)
 	}
 
@@ -55,6 +58,9 @@ func ZshVersion() (string, error) {
 	verStr := strings.TrimSuffix(string(out), "\n")
 	ver, err := parseVersion(string(out))
 	if err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok && exitError.ExitCode() == 127 {
+			return "Zsh not installed", nil
+		}
 		return "", fmt.Errorf("failed to parse version: %w", err)
 	}
 
