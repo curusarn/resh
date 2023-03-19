@@ -86,7 +86,7 @@ if [ -z "${__RESH_VERSION-}" ]; then
     # First installation
     # Stop the daemon anyway just to be sure
     # But don't output anything
-    ./scripts/resh-daemon-stop.sh -q
+    ./scripts/resh-daemon-stop.sh -q ||:
 else
     ./scripts/resh-daemon-stop.sh
 fi

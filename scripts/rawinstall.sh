@@ -94,7 +94,7 @@ fname_binaries="resh_${version}_${OS}_${ARCH}.tar.gz"
 dl_binaries="$dl_base/$fname_binaries"
 
 
-tmpdir="$(mktemp -d /tmp/resh-rawinstall-XXXXXX)"
+tmpdir="$(mktemp -d /tmp/resh-rawinstall-XXXXXXXX)"
 # echo
 # echo "Changing to $tmpdir ..."
 cd "$tmpdir"

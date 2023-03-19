@@ -75,3 +75,19 @@ RESH also adds a following lines to `~/.zshrc` and `~/.bashrc` to load itself on
 ```
 
 :information_source: RESH follows [XDG directory specification ⇗](https://maex.me/2019/12/the-power-of-the-xdg-base-directory-specification/)
+
+#### Backup files
+
+During update **config** and **history** files are backed up to:
+
+- `~/.config/resh.toml.backup-<timestamp>`
+- `~/.local/share/resh/history.reshjson.backup-<timestamp>`
+- `$XDG_DATA_HOME/resh/history.reshjson.backup-<timestamp>` (if set)
+
+Backups allow safe rollbacks during or after installation.
+They are not deleted automatically. You can delete them with:
+
+```shell
+rm ~/.config/resh.toml.backup-*
+rm ${XDG_DATA_HOME-~/.local/share}/resh/history.reshjson.backup-*
+```
