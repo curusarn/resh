@@ -126,20 +126,18 @@ func promptForName(out *output.Output, fpath string) (string, error) {
 		return "", fmt.Errorf("could not get hostname (prompt default): %w", err)
 	}
 	hostStub := strings.Split(host, ".")[0]
-	fmt.Printf("\nPlease choose a short name for this device (default: '%s'): ", hostStub)
-	var input string
-	scanner := bufio.NewScanner(os.Stdin)
-	if scanner.Scan() {
-		input = scanner.Text()
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Printf("\nChoose a short name for this device (default: '%s'): ", hostStub)
+	input, err := reader.ReadString('\n')
+	name := strings.TrimRight(input, "\n")
+	if err != nil {
+		return "", fmt.Errorf("reader error: %w", err)
 	}
-	if err = scanner.Err(); err != nil {
-		return "", fmt.Errorf("scanner error: %w", err)
-	}
-	if input == "" {
+	if name == "" {
 		out.Info("Got no input - using default ...")
-		input = hostStub
+		name = hostStub
 	}
-	out.Info(fmt.Sprintf("Device name set to '%s'", input))
+	out.Info(fmt.Sprintf("Device name set to '%s'", name))
 	fmt.Printf("You can change the device name at any time by editing '%s' file\n", fpath)
 	return input, nil
 }

@@ -187,10 +187,10 @@ printf '
 
 # Show banner if RESH is not loaded in the terminal
 if [ -z "${__RESH_VERSION-}" ]; then printf '
-##############################################################
-#                                                            #
-#    Finish the installation by RESTARTING this terminal!    #
-#                                                            #
-##############################################################
+┌────────────────────────────────────────────────────────────┐
+│                                                            │
+│    Finish the installation by RESTARTING this terminal!    │
+│                                                            │
+└────────────────────────────────────────────────────────────┘
 '
 fi
