@@ -136,13 +136,18 @@ echo " * OK"
 if ! scripts/install.sh; then
     if [ $? != 130 ]; then
         echo
-        echo "INSTALLATION FAILED!"
-        echo "I'm sorry for the inconvenience."
+        printf '\e[31;1m' # red color on
+        printf '┌────────────────────────────┐\n'
+        printf '│                            │\n'
+        printf '│    INSTALLATION FAILED!    │\n'
+        printf '│                            │\n'
+        printf '└────────────────────────────┘\n'
+        printf '\e[0m' # reset
         echo
         echo "Please create an issue: https://github.com/curusarn/resh/issues"
     fi
     echo
-    echo "You can rerun the installation by executing: (this will skip downloading)"
+    echo "Rerun the installation and skip downloading by running:"
     echo
     echo "cd $PWD && scripts/install.sh"
     echo
