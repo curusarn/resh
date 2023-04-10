@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -105,6 +106,7 @@ func runReshCli(out *output.Output, config cfg.Config) (string, int) {
 
 	st := state{
 		// lock sync.Mutex
+		gui:          g,
 		cliRecords:   resp.Records,
 		initialQuery: *query,
 	}
@@ -158,8 +160,9 @@ func runReshCli(out *output.Output, config cfg.Config) (string, int) {
 		out.FatalE(errMsg, err)
 	}
 
-	layout.UpdateData(*query)
-	layout.UpdateRawData(*query)
+	ctx := context.Background()
+	layout.updateData(ctx, *query)
+	layout.updateRawData(ctx, *query)
 	err = g.MainLoop()
 	if err != nil && !errors.Is(err, gocui.ErrQuit) {
 		out.FatalE("Main application loop finished with error", err)
@@ -168,8 +171,13 @@ func runReshCli(out *output.Output, config cfg.Config) (string, int) {
 }
 
 type state struct {
-	lock                sync.Mutex
-	cliRecords          []recordint.SearchApp
+	gui *gocui.Gui
+
+	cliRecords []recordint.SearchApp
+
+	lock sync.Mutex
+
+	cancelUpdate        *context.CancelFunc
 	data                []searchapp.Item
 	rawData             []searchapp.RawItem
 	highlightedItem     int
@@ -244,7 +252,8 @@ func (m manager) AbortPaste(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func (m manager) UpdateData(input string) {
+func (m manager) updateData(ctx context.Context, input string) {
+	timeStart := time.Now()
 	sugar := m.out.Logger.Sugar()
 	sugar.Debugw("Starting data update ...",
 		"recordCount", len(m.s.cliRecords),
@@ -253,9 +262,14 @@ func (m manager) UpdateData(input string) {
 	query := searchapp.NewQueryFromString(sugar, input, m.host, m.pwd, m.gitOriginRemote, m.config.Debug)
 	var data []searchapp.Item
 	itemSet := make(map[string]int)
-	m.s.lock.Lock()
-	defer m.s.lock.Unlock()
 	for _, rec := range m.s.cliRecords {
+		if shouldCancel(ctx) {
+			timeEnd := time.Now()
+			sugar.Infow("Update got canceled",
+				"duration", timeEnd.Sub(timeStart),
+			)
+			return
+		}
 		itm, err := searchapp.NewItemFromRecordForQuery(rec, query, m.config.Debug)
 		if err != nil {
 			// records didn't match the query
@@ -282,6 +296,9 @@ func (m manager) UpdateData(input string) {
 	sort.SliceStable(data, func(p, q int) bool {
 		return data[p].Score > data[q].Score
 	})
+
+	m.s.lock.Lock()
+	defer m.s.lock.Unlock()
 	m.s.data = nil
 	for _, itm := range data {
 		if len(m.s.data) > 420 {
@@ -290,13 +307,17 @@ func (m manager) UpdateData(input string) {
 		m.s.data = append(m.s.data, itm)
 	}
 	m.s.highlightedItem = 0
+	timeEnd := time.Now()
 	sugar.Debugw("Done with data update",
+		"duration", timeEnd.Sub(timeStart),
 		"recordCount", len(m.s.cliRecords),
 		"itemCount", len(m.s.data),
+		"input", input,
 	)
 }
 
-func (m manager) UpdateRawData(input string) {
+func (m manager) updateRawData(ctx context.Context, input string) {
+	timeStart := time.Now()
 	sugar := m.out.Logger.Sugar()
 	sugar.Debugw("Starting RAW data update ...",
 		"recordCount", len(m.s.cliRecords),
@@ -305,9 +326,14 @@ func (m manager) UpdateRawData(input string) {
 	query := searchapp.GetRawTermsFromString(input, m.config.Debug)
 	var data []searchapp.RawItem
 	itemSet := make(map[string]bool)
-	m.s.lock.Lock()
-	defer m.s.lock.Unlock()
 	for _, rec := range m.s.cliRecords {
+		if shouldCancel(ctx) {
+			timeEnd := time.Now()
+			sugar.Debugw("Update got canceled",
+				"duration", timeEnd.Sub(timeStart),
+			)
+			return
+		}
 		itm, err := searchapp.NewRawItemFromRecordForQuery(rec, query, m.config.Debug)
 		if err != nil {
 			// records didn't match the query
@@ -328,6 +354,8 @@ func (m manager) UpdateRawData(input string) {
 	sort.SliceStable(data, func(p, q int) bool {
 		return data[p].Score > data[q].Score
 	})
+	m.s.lock.Lock()
+	defer m.s.lock.Unlock()
 	m.s.rawData = nil
 	for _, itm := range data {
 		if len(m.s.rawData) > 420 {
@@ -336,18 +364,52 @@ func (m manager) UpdateRawData(input string) {
 		m.s.rawData = append(m.s.rawData, itm)
 	}
 	m.s.highlightedItem = 0
+	timeEnd := time.Now()
 	sugar.Debugw("Done with RAW data update",
+		"duration", timeEnd.Sub(timeStart),
 		"recordCount", len(m.s.cliRecords),
 		"itemCount", len(m.s.data),
 	)
 }
+
+func shouldCancel(ctx context.Context) bool {
+	select {
+	case <-ctx.Done():
+		return true
+	default:
+		return false
+	}
+}
+
+func (m manager) getCtxAndCancel() context.Context {
+	m.s.lock.Lock()
+	defer m.s.lock.Unlock()
+	if m.s.cancelUpdate != nil {
+		(*m.s.cancelUpdate)()
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	m.s.cancelUpdate = &cancel
+	return ctx
+}
+
+func (m manager) update(input string) {
+	ctx := m.getCtxAndCancel()
+	if m.s.rawMode {
+		m.updateRawData(ctx, input)
+	} else {
+		m.updateData(ctx, input)
+	}
+	m.flush()
+}
+
+func (m manager) flush() {
+	f := func(_ *gocui.Gui) error { return nil }
+	m.s.gui.Update(f)
+}
+
 func (m manager) Edit(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
 	gocui.DefaultEditor.Edit(v, key, ch, mod)
-	if m.s.rawMode {
-		m.UpdateRawData(v.Buffer())
-		return
-	}
-	m.UpdateData(v.Buffer())
+	go m.update(v.Buffer())
 }
 
 func (m manager) Next(g *gocui.Gui, v *gocui.View) error {
@@ -373,11 +435,7 @@ func (m manager) SwitchModes(g *gocui.Gui, v *gocui.View) error {
 	m.s.rawMode = !m.s.rawMode
 	m.s.lock.Unlock()
 
-	if m.s.rawMode {
-		m.UpdateRawData(v.Buffer())
-		return nil
-	}
-	m.UpdateData(v.Buffer())
+	go m.update(v.Buffer())
 	return nil
 }
 
