@@ -28,7 +28,7 @@ Your RESH history is saved in one of:
 - `~/.local/share/resh/history.reshjson`
 - `$XDG_DATA_HOME/resh/history.reshjson`
 
-The format is JSON prefixed by version. Display it as json using:
+Each line is one JSON record prefixed by version. Display it as JSON using:
 
 ```sh
 cat ~/.local/share/resh/history.reshjson | sed 's/^v[^{]*{/{/' | jq .
