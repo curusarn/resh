@@ -47,7 +47,7 @@ RESH config is read from one of:
 Logs can be useful for troubleshooting issues.
 
 Find RESH logs in one of:
-- `~/.local/share//resh/log.json`
+- `~/.local/share/resh/log.json`
 - `$XDG_DATA_HOME/resh/log.json`
 
 ### Log verbosity
