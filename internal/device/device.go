@@ -130,7 +130,7 @@ func promptForName(out *output.Output, fpath string) (string, error) {
 	fmt.Printf("\nChoose a short name for this device (default: '%s'): ", hostStub)
 	input, err := reader.ReadString('\n')
 	name := strings.TrimRight(input, "\n")
-	if err != nil {
+	if err != nil && err.Error() != "EOF" {
 		return "", fmt.Errorf("reader error: %w", err)
 	}
 	if name == "" {

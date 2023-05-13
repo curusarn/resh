@@ -23,6 +23,7 @@ var updateCmd = &cobra.Command{
 			execArgs = append(execArgs, "--beta")
 		}
 		execCmd := exec.Command("bash", execArgs...)
+		execCmd.Stdin = os.Stdin
 		execCmd.Stdout = os.Stdout
 		execCmd.Stderr = os.Stderr
 		err = execCmd.Run()

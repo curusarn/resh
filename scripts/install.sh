@@ -88,7 +88,7 @@ if [ -z "${__RESH_VERSION-}" ]; then
     # But don't output anything
     ./scripts/resh-daemon-stop.sh -q ||:
 else
-    ./scripts/resh-daemon-stop.sh
+    ./scripts/resh-daemon-stop.sh ||:
 fi
 
 echo "Installing ..."
